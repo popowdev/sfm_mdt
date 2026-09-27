@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDT - Heures de Service</title>
+    <link href="/assets/fonts/inter.css" rel="stylesheet">
+    <link href="/assets/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --bg:#0f172a; --panel:#1e293b; --card:#0f172a; --primary:#10b981; --text:#f1f5f9; --muted:#94a3b8; --dim:#64748b; --border:#334155; --danger:#ef4444; --warning:#f59e0b; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        .navbar { background:rgba(30,41,59,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:14px 28px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; }
+        .navbar h1 { font-size:1.1rem; font-weight:800; display:flex; align-items:center; gap:8px; }
+        .navbar h1 i { color:var(--primary); }
+        .btn-nav { display:inline-flex; align-items:center; gap:6px; background:#334155; color:white; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:600; font-size:.85rem; transition:.2s; }
+        .btn-nav:hover { background:#475569; }
+        .container { max-width:1400px; margin:0 auto; padding:24px 20px; }
+
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+        .stat-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+        .stat-val { font-size:1.6em; font-weight:800; }
+        .stat-lbl { font-size:.72em; color:var(--dim); text-transform:uppercase; font-weight:700; margin-top:2px; }
+
+        .week-nav { display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:20px; }
+        .week-nav button { background:#334155; border:none; color:white; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:.9em; font-family:inherit; transition:.15s; }
+        .week-nav button:hover { background:#475569; }
+        .week-label { font-weight:800; font-size:1em; min-width:280px; text-align:center; }
+
+        .search-bar { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+        .search-bar i { color:var(--dim); }
+        .search-bar input { flex:1; padding:4px 0; background:transparent; border:none; color:white; font-size:.88rem; font-family:inherit; outline:none; }
+
+        .hours-table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+        .hours-table thead { background:rgba(15,23,42,0.6); }
+        .hours-table th { padding:10px 12px; text-align:center; font-size:.7rem; color:var(--dim); font-weight:700; text-transform:uppercase; border-bottom:1px solid var(--border); white-space:nowrap; }
+        .hours-table th:nth-child(1), .hours-table th:nth-child(2), .hours-table th:nth-child(3) { text-align:left; }
+        .hours-table td { padding:8px 12px; border-bottom:1px solid rgba(51,65,85,0.4); font-size:.85em; text-align:center; }
+        .hours-table td:nth-child(1) { text-align:left; font-weight:800; color:var(--primary); width:50px; }
+        .hours-table td:nth-child(2) { text-align:left; font-weight:600; }
+        .hours-table td:nth-child(3) { text-align:left; font-size:.78em; color:var(--muted); }
+        .hours-table tr:hover td { background:rgba(6,182,212,0.03); }
+        .hours-table .h-total { font-weight:800; color:white; }
+        .hours-table .h-salary { font-weight:800; color:var(--warning); }
+        .hours-table .h-cell { display:inline-block; min-width:28px; padding:2px 6px; border-radius:4px; font-weight:600; font-size:.82em; }
+        .hours-table .h-cell.has { background:rgba(16,185,129,0.1); color:var(--primary); }
+        .hours-table .h-cell.zero { color:#334155; }
+        .h-paid { width:20px; height:20px; border-radius:4px; border:2px solid var(--border); background:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:transparent; transition:.15s; }
+        .h-paid.checked { background:var(--primary); border-color:var(--primary); color:white; }
+        .h-paid:hover { border-color:var(--primary); }
+        .h-account { font-size:.75em; color:#475569; max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .no-data { text-align:center; color:var(--dim); padding:40px; }
+
+        .h-adjust { opacity:0; background:none; border:none; color:var(--dim); cursor:pointer; font-size:.65em; padding:1px 3px; border-radius:3px; transition:.15s; vertical-align:middle; margin-left:2px; }
+        tr:hover .h-adjust { opacity:1; }
+        .h-adjust:hover { color:var(--warning); background:rgba(245,158,11,0.1); }
+
+        /* Boutons +/-1h dans chaque cellule jour */
+        .h-cell-wrap { display:inline-flex; align-items:center; gap:2px; vertical-align:middle; }
+        .h-step { opacity:0; background:transparent; border:1px solid transparent; color:#64748b; cursor:pointer; font-size:.8em; font-weight:700; width:18px; height:18px; padding:0; border-radius:4px; line-height:1; transition:.15s; font-family:inherit; }
+        tr:hover .h-step { opacity:.55; }
+        .h-step:hover { opacity:1 !important; color:white; border-color:currentColor; background:rgba(255,255,255,0.05); }
+        .h-step.h-step-minus:hover { color:#ef4444; background:rgba(239,68,68,0.12); }
+        .h-step.h-step-plus:hover { color:#10b981; background:rgba(16,185,129,0.12); }
+        .h-step:disabled { opacity:.15; cursor:not-allowed; }
+
+        .adjust-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:9999; display:flex; align-items:center; justify-content:center; }
+        .adjust-modal { background:linear-gradient(145deg,#1e293b,#0f172a); border:1px solid var(--border); border-radius:16px; padding:28px; width:90%; max-width:380px; box-shadow:0 25px 60px rgba(0,0,0,0.5); }
+        .adjust-modal h3 { margin:0 0 16px; font-size:1em; color:white; }
+        .adjust-modal h3 i { color:var(--warning); margin-right:8px; }
+        .adjust-modal label { font-size:.75em; color:var(--dim); font-weight:700; display:block; margin-bottom:4px; text-transform:uppercase; }
+        .adjust-modal input, .adjust-modal select { width:100%; padding:10px; background:var(--card); border:1px solid var(--border); border-radius:8px; color:white; font-family:inherit; font-size:.9em; outline:none; box-sizing:border-box; margin-bottom:12px; }
+        .adjust-modal input:focus, .adjust-modal select:focus { border-color:var(--warning); }
+        .adjust-btns { display:flex; gap:10px; margin-top:4px; }
+        .adjust-btns button { flex:1; padding:10px; border-radius:10px; font-weight:700; font-size:.85em; cursor:pointer; font-family:inherit; }
+        .adjust-cancel { border:1px solid var(--border); background:var(--panel); color:var(--muted); }
+        .adjust-save { border:none; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; }
+
+        .toast-zone { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast { padding:12px 20px; border-radius:10px; font-weight:600; font-size:.88em; box-shadow:0 4px 20px rgba(0,0,0,0.3); animation:toastIn .3s ease; }
+        .toast.success { background:#065f46; color:#6ee7b7; border:1px solid #10b981; }
+        .toast.error { background:#7f1d1d; color:#fca5a5; border:1px solid #ef4444; }
+        @keyframes toastIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+    </style>
+</head>
+<body>
+<script>(function(){var _f=window.fetch;window.fetch=function(i,init){try{var u=(typeof i==='string')?i:(i&&i.url)||'';if(/_api\.php/.test(u)){init=init||{};var t=localStorage.getItem('mdt_auth_token');if(t){var h=new Headers((init&&init.headers)||{});if(!h.has('Authorization'))h.set('Authorization','Bearer '+t);init.headers=h;}}}catch(e){}return _f.call(this,i,init);};})();</script>
+    <div class="navbar">
+        <h1><i class="fa-solid fa-clock"></i> Heures de Service & Salaires</h1>
+        <a href="/index" class="btn-nav"><i class="fa-solid fa-arrow-left"></i> Menu</a>
+    </div>
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-val" id="stAgents" style="color:#3b82f6;">0</div><div class="stat-lbl">Agents actifs</div></div>
+            <div class="stat-card"><div class="stat-val" id="stHeures" style="color:var(--primary);">0h</div><div class="stat-lbl">Heures totales</div></div>
+            <div class="stat-card"><div class="stat-val" id="stSalaires" style="color:var(--warning);">$0</div><div class="stat-lbl">Salaires totaux</div></div>
+            <div class="stat-card"><div class="stat-val" id="stPaids" style="color:#8b5cf6;">0</div><div class="stat-lbl">Payes</div></div>
+        </div>
+
+        <div class="week-nav">
+            <button onclick="changeWeek(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <span class="week-label" id="weekLabel">—</span>
+            <button onclick="changeWeek(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Rechercher par nom, matricule, grade..." oninput="filterTable()">
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="hours-table">
+                <thead>
+                    <tr><th>Mat.</th><th>Nom</th><th>Grade</th><th>Total</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th><th>Salaire</th><th>Paye</th><th>Compte</th></tr>
+                </thead>
+                <tbody id="hoursBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="toast-zone" id="toast-zone"></div>
+
+<script>
+var DISPATCH_API = '/dispatch/dispatch_api.php';
+var TAUX = {};
+var DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+var currentWeekStart = getMonday(new Date());
+var hoursData = null;
+var canEdit = false;
+var SUPER_ADMINS = ['543211066805452805'];
+var DEV_DISCORD_IDS = ['543211066805452805'];
+var SUPERVISION_ROLE_ID = '1210813640987377761';
+
+function isDevUser() {
+    try {
+        var u = JSON.parse(localStorage.getItem('mdt_user'));
+        if (!u) return false;
+        if (DEV_DISCORD_IDS.indexOf(u.discord_id) !== -1) return true;
+        if (sessionStorage.getItem('mdt_is_dev') === 'true') return true;
+    } catch(e) {}
+    return false;
+}
+
+var _cqaCache = null;
+function canQuickAdjust() {
+    if (_cqaCache !== null) return _cqaCache = _cqaCache;
+    if (isDevUser()) return _cqaCache = true;
+    try {
+        var u = JSON.parse(localStorage.getItem('mdt_user'));
+        if (!u) return _cqaCache = false;
+        var roles = u.discord_roles || [];
+        if (roles.indexOf(SUPERVISION_ROLE_ID) !== -1) return _cqaCache = true;
+    } catch(e) {}
+    return _cqaCache = false;
+}
+
+function fmtLocalDate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+}
+
+function getMonday(d) { var day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1); var m = new Date(d); m.setDate(diff); return fmtLocalDate(m); }
+var toast = function(m,t){ if (!window.MDT_TOAST) return; if (t === 'error') MDT_TOAST.err(m); else MDT_TOAST.ok(m); };
+function esc(s){if(!s)return '';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+(function() {
+    try {
+        var user = JSON.parse(localStorage.getItem('mdt_user'));
+        if (!user) return;
+        var uid = user.discord_id || '';
+        if (SUPER_ADMINS.indexOf(uid) !== -1) { canEdit = true; return; }
+        var isDev = sessionStorage.getItem('mdt_is_dev');
+        if (isDev === 'true') { canEdit = true; return; }
+        var roles = user.discord_roles || [];
+        if (roles.indexOf('1210813640987377758') !== -1 || roles.indexOf('1210813640987377761') !== -1) { canEdit = true; }
+    } catch(e) {}
+})();
+
+function changeWeek(delta) {
+    var d = new Date(currentWeekStart + 'T00:00:00');
+    d.setDate(d.getDate() + delta * 7);
+    currentWeekStart = fmtLocalDate(d);
+    loadHours();
+}
+
+function loadHours() {
+    var scrollY = window.scrollY || window.pageYOffset || 0;
+    fetch(DISPATCH_API + '?action=service_hours&week_start=' + currentWeekStart + '&_=' + Date.now(), { cache: 'no-store' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            hoursData = data;
+            var ws = new Date(data.week_start + 'T00:00:00');
+            var we = new Date(data.week_end + 'T00:00:00');
+            var opts = { day:'numeric', month:'short' };
+            document.getElementById('weekLabel').textContent = 'Semaine du ' + ws.toLocaleDateString('fr-FR', opts) + ' au ' + we.toLocaleDateString('fr-FR', opts) + ' ' + ws.getFullYear();
+            renderTable();
+            window.scrollTo(0, scrollY);
+        }).catch(function() { document.getElementById('hoursBody').innerHTML = '<tr><td colspan="14" class="no-data">Erreur chargement</td></tr>'; });
+}
+
+function renderTable() {
+    if (!hoursData) return;
+    var d = hoursData.data;
+    var userInfo = hoursData.user_info || {};
+    TAUX = {};
+    (hoursData.grades || []).forEach(function (g) { TAUX[g.id] = g.rate; });
+    var paidMap = hoursData.paid || {};
+
+    var agents = {};
+    d.forEach(function(row) {
+        var rid = row.roster_id;
+        if (!agents[rid]) {
+            var ui = (row.discord_id && userInfo[row.discord_id]) ? userInfo[row.discord_id] : {};
+            agents[rid] = { roster_id: rid, matricule: row.matricule, nom_prenom: row.nom_prenom, grade: ui.grade || null, grade_id: ui.grade_id || null, compte: ui.compte_bancaire || null, days: {}, total: 0 };
+        }
+        var dayIdx = new Date(row.service_date + 'T00:00:00').getDay();
+        var mins = parseInt(row.total_minutes) || 0;
+        agents[rid].days[dayIdx] = (agents[rid].days[dayIdx] || 0) + mins;
+        agents[rid].total += mins;
+    });
+
+    var agentList = Object.values(agents).sort(function(a,b) { return a.matricule.localeCompare(b.matricule); });
+
+    var body = document.getElementById('hoursBody');
+    body.innerHTML = '';
+
+    var totalMinutes = 0, totalSalary = 0, nbActifs = 0, nbPaids = 0;
+
+    agentList.forEach(function(ag) {
+        if (ag.total === 0) return;
+        nbActifs++;
+        var taux = TAUX[ag.grade_id] || 0;
+        var salary = Math.round(ag.total / 60 * taux);
+        totalMinutes += ag.total;
+        totalSalary += salary;
+        var isPaid = !!paidMap[ag.roster_id];
+        if (isPaid) nbPaids++;
+
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-search', (ag.matricule + ' ' + ag.nom_prenom + ' ' + (ag.grade||'')).toLowerCase());
+
+        var html = '<td>' + esc(ag.matricule) + '</td>';
+        html += '<td>' + esc(ag.nom_prenom) + '</td>';
+        html += '<td>' + esc(ag.grade || '—') + '</td>';
+        html += '<td class="h-total">' + fmtHM(ag.total) + '</td>';
+
+        var dateMap = {};
+        var wsDate = new Date(hoursData.week_start + 'T00:00:00');
+        for (var di = 0; di < 7; di++) {
+            var dd = new Date(wsDate); dd.setDate(dd.getDate() + di);
+            var dayOfWeek = dd.getDay();
+            dateMap[dayOfWeek] = fmtLocalDate(dd);
+        }
+        var allowStep = canQuickAdjust();
+        [1,2,3,4,5,6,0].forEach(function(dayIdx) {
+            var mins = ag.days[dayIdx] || 0;
+            var dateStr = dateMap[dayIdx];
+            var agentLabel = esc(ag.matricule) + ' ' + esc(ag.nom_prenom);
+            var cellHtml = '<span class="h-cell ' + (mins > 0 ? 'has' : 'zero') + '"' + (canEdit ? ' onclick="openAdjust(' + ag.roster_id + ',\'' + agentLabel + '\',\'' + dateStr + '\',' + mins + ')" style="cursor:pointer;" title="Cliquer pour ajustement detaille"' : '') + '>' + (mins > 0 ? fmtHM(mins) : '—') + '</span>';
+            if (allowStep) {
+                html += '<td><div class="h-cell-wrap">'
+                     + '<button class="h-step h-step-minus" onclick="quickAdjust(' + ag.roster_id + ',\'' + agentLabel + '\',\'' + dateStr + '\',-60)" title="Retirer 1h">&minus;</button>'
+                     + cellHtml
+                     + '<button class="h-step h-step-plus" onclick="quickAdjust(' + ag.roster_id + ',\'' + agentLabel + '\',\'' + dateStr + '\',60)" title="Ajouter 1h">+</button>'
+                     + '</div></td>';
+            } else {
+                html += '<td>' + cellHtml + '</td>';
+            }
+        });
+
+        html += '<td class="h-salary">$' + salary.toLocaleString() + '</td>';
+
+        if (canEdit) {
+            html += '<td><button class="h-paid ' + (isPaid ? 'checked' : '') + '" onclick="togglePaid(' + ag.roster_id + ',' + (isPaid ? 'true' : 'false') + ')">' + (isPaid ? '<i class="fa-solid fa-check" style="font-size:.7em;"></i>' : '') + '</button></td>';
+        } else {
+            html += '<td>' + (isPaid ? '<i class="fa-solid fa-check" style="color:var(--primary);font-size:.8em;"></i>' : '<i class="fa-solid fa-minus" style="color:#334155;font-size:.7em;"></i>') + '</td>';
+        }
+
+        html += '<td class="h-account" title="' + esc(ag.compte || '') + '">' + esc(ag.compte || '—') + '</td>';
+        tr.innerHTML = html;
+        body.appendChild(tr);
+    });
+
+    if (agentList.length === 0 || nbActifs === 0) {
+        body.innerHTML = '<tr><td colspan="14" class="no-data">Aucune heure enregistree cette semaine</td></tr>';
+    }
+
+    document.getElementById('stAgents').textContent = nbActifs;
+    document.getElementById('stHeures').textContent = fmtHM(totalMinutes);
+    document.getElementById('stSalaires').textContent = '$' + totalSalary.toLocaleString();
+    document.getElementById('stPaids').textContent = nbPaids + '/' + nbActifs;
+
+    if (typeof filterTable === 'function') filterTable();
+}
+
+function fmtHM(mins) {
+    mins = Math.max(0, Math.floor(mins));
+    var h = Math.floor(mins / 60), m = mins % 60;
+    if (h > 0 && m > 0) return h + 'h' + (m < 10 ? '0' + m : m);
+    if (h > 0) return h + 'h';
+    return m + 'min';
+}
+function togglePaid(rosterId, currentlyPaid) {
+    fetch(DISPATCH_API + '?action=mark_paid', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roster_id: rosterId, week_start: currentWeekStart, unpaid: currentlyPaid })
+    }).then(function(r) { if (!r.ok) return r.json().catch(function(){ return { error: 'HTTP ' + r.status }; }); return r.json(); })
+    .then(function(data) {
+        if (data.success) { toast(currentlyPaid ? 'Paiement annule' : 'Marque comme paye', 'success'); loadHours(); }
+        else { toast(data.error || 'Erreur', 'error'); }
+    }).catch(function() { toast('Erreur reseau', 'error'); });
+}
+
+function filterTable() {
+    var q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#hoursBody tr').forEach(function(tr) {
+        var search = tr.getAttribute('data-search') || '';
+        tr.style.display = (!q || search.indexOf(q) !== -1) ? '' : 'none';
+    });
+}
+
+function openAdjust(rosterId, agentName, serviceDate, currentMins) {
+    var dateFmt = new Date(serviceDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+
+    var overlay = document.createElement('div');
+    overlay.className = 'adjust-overlay';
+    overlay.id = 'adjust-modal';
+    overlay.innerHTML = '<div class="adjust-modal">' +
+        '<h3><i class="fa-solid fa-sliders"></i>Ajustement heures</h3>' +
+        '<div style="padding:10px 14px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;margin-bottom:16px;font-size:.85em;">' +
+            '<div style="font-weight:700;color:white;">' + esc(agentName) + '</div>' +
+            '<div style="color:var(--muted);font-size:.9em;margin-top:2px;">' + dateFmt + ' — actuellement <b style="color:var(--primary);">' + fmtHM(currentMins) + '</b></div>' +
+        '</div>' +
+        '<label>Action</label>' +
+        '<select id="adj-action">' +
+            '<option value="add">+ Ajouter des heures</option>' +
+            '<option value="remove">- Retirer des heures</option>' +
+            '<option value="set">= Definir le total</option>' +
+        '</select>' +
+        '<label>Nombre d\'heures</label>' +
+        '<input type="number" id="adj-hours" min="0" max="24" value="1" step="1">' +
+        '<label>Raison</label>' +
+        '<input type="text" id="adj-reason" placeholder="Ex: Regulation, erreur comptage...">' +
+        '<div class="adjust-btns">' +
+            '<button class="adjust-cancel" onclick="document.getElementById(\'adjust-modal\').remove()">Annuler</button>' +
+            '<button class="adjust-save" onclick="saveAdjust(' + rosterId + ',\'' + serviceDate + '\',' + currentMins + ')"><i class="fa-solid fa-check" style="margin-right:4px;"></i>Appliquer</button>' +
+        '</div></div>';
+    document.body.appendChild(overlay);
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    document.getElementById('adj-hours').focus();
+}
+
+var _quickAdjustLock = false;
+function quickAdjust(rosterId, agentLabel, serviceDate, deltaMinutes) {
+    if (_quickAdjustLock) return;
+    _quickAdjustLock = true;
+
+    var label = (deltaMinutes > 0 ? '+' : '') + (deltaMinutes / 60) + 'h';
+    var reason = 'Ajustement rapide (' + label + ')';
+
+    fetch(DISPATCH_API + '?action=adjust_hours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            roster_id: rosterId,
+            minutes: deltaMinutes,
+            service_date: serviceDate,
+            reason: reason,
+            quick: true
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            toast(agentLabel + ' : ' + label + ' applique', 'success');
+            loadHours();
+        } else {
+            toast(data.error || 'Erreur ajustement', 'error');
+        }
+    })
+    .catch(function() { toast('Erreur reseau', 'error'); })
+    .then(function() { _quickAdjustLock = false; });
+}
+
+function saveAdjust(rosterId, serviceDate, currentMins) {
+    var action = document.getElementById('adj-action').value;
+    var hours = parseInt(document.getElementById('adj-hours').value) || 0;
+    var reason = document.getElementById('adj-reason').value.trim() || 'Ajustement manuel';
+
+    if (hours <= 0 && action !== 'set') { toast('Entrez un nombre d\'heures valide', 'error'); return; }
+
+    var adjustMinutes;
+    if (action === 'add') {
+        adjustMinutes = hours * 60;
+    } else if (action === 'remove') {
+        adjustMinutes = -(hours * 60);
+    } else {
+        adjustMinutes = (hours * 60) - currentMins;
+    }
+
+    if (adjustMinutes === 0) { toast('Aucun changement', 'error'); return; }
+
+    fetch(DISPATCH_API + '?action=adjust_hours', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roster_id: rosterId, minutes: adjustMinutes, service_date: serviceDate, reason: reason })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var label = adjustMinutes > 0 ? '+' + (adjustMinutes/60) + 'h' : (adjustMinutes/60) + 'h';
+            toast('Heures ajustees (' + label + ') — ' + reason, 'success');
+            document.getElementById('adjust-modal').remove();
+            loadHours();
+        } else { toast(data.error || 'Erreur', 'error'); }
+    }).catch(function() { toast('Erreur reseau', 'error'); });
+}
+
+loadHours();
+</script>
+<script src="/assets/toast.js"></script>
+<script src="/login/secure.js"></script>
+<script src="/dispatch_widget.js?v=18"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/nui-bridge.js"></script>
+</body>
+</html>

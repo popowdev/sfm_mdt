@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paramètres — RP MDT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);background-image:var(--bg-radial);background-attachment:fixed;color:var(--text);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:38px 22px 70px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .page-h{display:flex;align-items:center;gap:14px;margin-bottom:26px;animation:fadeUp .4s ease both;}
+  .page-h .ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(148,163,184,.12);border:1px solid rgba(148,163,184,.25);color:#cbd5e1;}
+  .page-h h1{margin:0;font-size:1.45rem;font-weight:800;letter-spacing:-.02em;color:var(--text-strong);}
+  .page-h p{margin:3px 0 0;font-size:.82rem;color:var(--muted);}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:18px;animation:fadeUp .4s ease both;}
+  .card-h{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .card-h .cic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.8rem;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.25);color:var(--accent-2);}
+  .card-h h2{margin:0;font-size:.98rem;font-weight:800;color:var(--text-strong);}
+  .card > p{margin:0 0 14px;font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+  .ord{display:flex;flex-direction:column;gap:6px;}
+  .ord-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface-3);border:1px solid var(--border);cursor:grab;transition:border-color .15s,box-shadow .15s,opacity .15s,transform .15s;user-select:none;}
+  .ord-row:hover{border-color:color-mix(in srgb,var(--mc) 45%,var(--border));}
+  .ord-row.dragging{opacity:.4;border-style:dashed;transform:scale(.99);cursor:grabbing;}
+  .ord-grip{color:var(--muted-2);font-size:.75rem;flex:0 0 auto;}
+  .ord-ic{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.82rem;background:color-mix(in srgb,var(--mc) 16%,transparent);color:var(--mc);border:1px solid color-mix(in srgb,var(--mc) 28%,transparent);flex:0 0 32px;}
+  .ord-l{flex:1;min-width:0;font-size:.86rem;font-weight:700;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ord-pos{font-size:.68rem;color:var(--muted-2);font-weight:700;width:20px;text-align:center;}
+  .ord-btns{display:flex;gap:4px;}
+  .ord-btns button{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.68rem;transition:.15s;display:flex;align-items:center;justify-content:center;}
+  .ord-btns button:hover:not([disabled]){color:var(--text-strong);border-color:var(--muted);}
+  .ord-btns button[disabled]{opacity:.25;cursor:default;}
+  .ord-row.hid{opacity:.45;}
+  .ord-row.hid .ord-l{text-decoration:line-through;text-decoration-color:var(--muted-2);}
+  .ord-btns button.eye.off{color:#f87171;border-color:rgba(239,68,68,.35);}
+
+  .card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap;}
+  .saved-note{font-size:.72rem;color:var(--success);opacity:0;transition:opacity .25s;}
+  .saved-note.show{opacity:1;}
+  .btn-reset{font-family:inherit;font-size:.76rem;font-weight:700;padding:8px 14px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:.15s;}
+  .btn-reset:hover{color:#f87171;border-color:rgba(239,68,68,.4);}
+  .note{font-size:.72rem;color:var(--muted-2);line-height:1.5;margin-top:10px;}
+  .note i{margin-right:5px;}
+
+  /* ── Profil (fusion de /login/profil) ── */
+  .profile-row{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+  .profile-avatar{width:60px;height:60px;border-radius:50%;border:3px solid var(--border);object-fit:cover;}
+  .profile-avatar-placeholder{width:60px;height:60px;border-radius:50%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4rem;font-weight:800;border:3px solid var(--border);}
+  .profile-name{font-weight:800;font-size:1.05rem;color:var(--text-strong);}
+  .profile-sub{font-size:.78rem;color:var(--muted);margin-top:2px;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .info-label{font-size:.66rem;font-weight:700;color:var(--muted-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+  .info-value{font-size:.85rem;color:var(--text);font-weight:600;}
+  .info-value.muted{color:var(--muted-2);font-style:italic;font-weight:400;}
+  .rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .rp-grid label{font-size:.72rem;font-weight:700;color:var(--muted-2);display:block;margin-bottom:5px;}
+  .rp-grid input{width:100%;box-sizing:border-box;padding:10px 13px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;color:var(--text-strong);font-size:.85rem;font-family:inherit;outline:none;transition:border-color .15s;}
+  .rp-grid input:focus{border-color:var(--accent);}
+  .discord-status{display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:12px;margin-bottom:13px;}
+  .discord-status.linked{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);}
+  .discord-status.not-linked{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.22);}
+  .discord-status i{font-size:1.25rem;}
+  .discord-status.linked i{color:#10b981;}
+  .discord-status.not-linked i{color:#f59e0b;}
+  .ds-title{font-weight:700;font-size:.83rem;}
+  .discord-status.linked .ds-title{color:#34d399;}
+  .discord-status.not-linked .ds-title{color:#fbbf24;}
+  .ds-sub{font-size:.72rem;color:var(--muted);}
+  .btn-p{padding:10px 18px;border:none;border-radius:10px;font-weight:700;font-size:.8rem;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
+  .btn-p.discord{background:#5865F2;color:white;}
+  .btn-p.discord:hover{background:#4752c4;transform:translateY(-1px);}
+  .btn-p.outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-p.outline:hover{color:var(--text-strong);border-color:var(--muted);}
+  .btn-p.danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.22);}
+  .btn-p.danger:hover{background:rgba(239,68,68,.2);color:#fca5a5;}
+  .btn-p.save{background:#10b981;color:white;width:100%;justify-content:center;}
+  .btn-p.install{background:#a855f7;color:#fff;}
+  .btn-p.install:hover{background:#c084fc;transform:translateY(-1px);}
+  .btn-p.install:disabled{transform:none;}
+  a.btn-p{text-decoration:none;}
+  .btn-group{display:flex;gap:10px;flex-wrap:wrap;}
+</style>
+</head>
+<body class="app">
+
+<div class="wrap">
+  <div class="page-h">
+    <span class="ic"><i class="fa-solid fa-gear"></i></span>
+    <div>
+      <h1>Paramètres</h1>
+      <p>Personnalisation du RP MDT — propre à ce navigateur.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="cic"><i class="fa-solid fa-user"></i></span><h2>Mon profil</h2></div>
+    <p>Compte MDT et liaison Discord.</p>
+    <div class="profile-row">
+      <div id="avatarSlot"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="profile-name" id="profileName">-</div>
+        <div class="profile-sub" id="profileSub">-</div>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div><div class="info-label">Identifiant</div><div class="info-value" id="infoUsername">-</div></div>
+      <div><div class="info-label">Membre depuis</div><div class="info-value" id="infoCreated">-</div></div>
+      <div><div class="info-label">Discord ID</div><div class="info-value" id="infoDiscordId">-</div></div>
+      <div><div class="info-label">Pseudo serveur</div><div class="info-value" id="infoDiscordNick">-</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="cic" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:#34d399;"><i class="fa-solid fa-id-card"></i></span><h2>Informations RP</h2></div>
+    <p>Pré-remplies automatiquement dans le dispatch et les modules.</p>
+    <div class="rp-grid">
+      <div><label><i class="fa-solid fa-phone" style="margin-right:4px;color:#3b82f6;"></i>Téléphone RP</label><input type="text" id="inputTelephone" placeholder="555-0000"></div>
+      <div><label><i class="fa-solid fa-building-columns" style="margin-right:4px;color:#f59e0b;"></i>Compte bancaire RP</label><input type="text" id="inputCompteBancaire" placeholder="Ex: SA-12345678"></div>
+    </div>
+    <button class="btn-p save" onclick="saveInfosRP()"><i class="fa-solid fa-check"></i> Sauvegarder</button>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="cic" style="background:rgba(88,101,242,.14);border-color:rgba(88,101,242,.32);color:#818cf8;"><i class="fa-brands fa-discord"></i></span><h2>Liaison Discord</h2></div>
+    <p></p>
+    <div id="discordStatusSlot"></div>
+    <div class="btn-group" id="discordActions"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="cic" style="background:rgba(168,85,247,.14);border-color:rgba(168,85,247,.32);color:#c084fc;"><i class="fa-solid fa-desktop"></i></span><h2>Application de bureau</h2></div>
+    <p>Ouvre le RP MDT dans <b>sa propre fenêtre</b>, sans onglets ni barre d'adresse — pratique à côté du jeu. L'installation depuis le navigateur est la méthode recommandée : rien à télécharger, donc aucun blocage antivirus, et l'appli se met à jour toute seule avec le site.</p>
+    <div class="btn-group">
+      <button class="btn-p install" id="btn-install-app" onclick="installApp()"><i class="fa-solid fa-download"></i> Installer l'application</button>
+      <a class="btn-p outline" href="/downloads/MDT-Tool.zip"><i class="fa-solid fa-file-zipper"></i> Lanceur .exe (61 Ko)</a>
+      <a class="btn-p outline" href="/downloads/LISEZ-MOI.txt" target="_blank"><i class="fa-solid fa-circle-question"></i> Aide</a>
+    </div>
+    <div class="note" id="install-note"><i class="fa-solid fa-circle-info"></i><span id="install-hint">Sur Edge ou Chrome, le bouton ci-dessus installe l'appli en un clic.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="cic"><i class="fa-solid fa-grip"></i></span><h2>Ordre de la barre de navigation</h2></div>
+    <p>Glissez les lignes (ou utilisez les flèches) pour choisir l'ordre des boutons — il s'applique à la <b>barre du bas</b> et aux <b>modules de l'accueil</b>. L'œil <i class="fa-solid fa-eye" style="font-size:.85em"></i> masque un bouton de la barre (le module reste accessible depuis l'accueil). « Menu » et « Paramètres » restent fixes aux extrémités.</p>
+    <div class="ord" id="ord-list"></div>
+    <div class="card-foot">
+      <span class="saved-note" id="saved-note"><i class="fa-solid fa-check"></i> Ordre enregistré</span>
+      <button class="btn-reset" onclick="resetOrder()"><i class="fa-solid fa-rotate-left"></i> Réinitialiser l'ordre par défaut</button>
+    </div>
+    <div class="note"><i class="fa-solid fa-eye-slash"></i>Les modules auxquels vous n'avez pas accès n'apparaissent ni ici, ni dans la barre, ni sur l'accueil.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><span class="cic" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.28);color:#f87171;"><i class="fa-solid fa-right-from-bracket"></i></span><h2>Session</h2></div>
+    <p></p>
+    <div class="btn-group">
+      <button class="btn-p danger" onclick="confirmLogout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
+    </div>
+  </div>
+</div>
+
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js?v=20260801a"></script>
+<script src="/assets/skeleton.js?v=20260801a"></script>
+<script src="/assets/modules.js?v=20260801a"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/dock.js?v=20260801a"></script>
+<script>
+window.MDT_SHELL = { module: 'parametres', icon: 'fa-gear', title: 'Paramètres' };
+(function () {
+  function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML.replace(/"/g, '&quot;'); }
+  var listEl = document.getElementById('ord-list');
+  var MODS = [];
+  var dragKey = null;
+  var savedT = null;
+
+  function flashSaved() {
+    var n = document.getElementById('saved-note');
+    n.classList.add('show');
+    if (savedT) clearTimeout(savedT);
+    savedT = setTimeout(function () { n.classList.remove('show'); }, 1800);
+  }
+
+  function currentKeys() {
+    return Array.prototype.slice.call(listEl.querySelectorAll('.ord-row'))
+      .map(function (el) { return el.getAttribute('data-modkey'); });
+  }
+
+  function save() {
+    if (window.MDT_MODULE_ORDER_SET) window.MDT_MODULE_ORDER_SET(currentKeys());
+    render();
+    flashSaved();
+  }
+
+  function move(key, dir) {
+    var rows = Array.prototype.slice.call(listEl.querySelectorAll('.ord-row'));
+    var i = rows.findIndex(function (r) { return r.getAttribute('data-modkey') === key; });
+    var j = i + dir;
+    if (i < 0 || j < 0 || j >= rows.length) return;
+    if (dir < 0) listEl.insertBefore(rows[i], rows[j]);
+    else listEl.insertBefore(rows[j], rows[i]);
+    save();
+  }
+  window.__prmMove = move;
+
+  function hiddenSet() {
+    var h = {};
+    (window.MDT_MODULE_HIDDEN_GET ? window.MDT_MODULE_HIDDEN_GET() : []).forEach(function (k) { h[k] = 1; });
+    return h;
+  }
+  window.__prmToggleHide = function (key) {
+    var h = hiddenSet();
+    if (h[key]) delete h[key]; else h[key] = 1;
+    if (window.MDT_MODULE_HIDDEN_SET) window.MDT_MODULE_HIDDEN_SET(Object.keys(h));
+    render();
+    flashSaved();
+  };
+
+  function render() {
+    var sorted = window.MDT_MODULES_SORTED ? window.MDT_MODULES_SORTED(MODS) : MODS;
+    var hid = hiddenSet();
+    listEl.innerHTML = sorted.map(function (m, i) {
+      var off = !!hid[m.key];
+      return '<div class="ord-row' + (off ? ' hid' : '') + '" draggable="true" data-modkey="' + esc(m.key) + '" style="--mc:' + esc(m.color) + '">' +
+        '<span class="ord-grip"><i class="fa-solid fa-grip-vertical"></i></span>' +
+        '<span class="ord-pos">' + (i + 1) + '</span>' +
+        '<span class="ord-ic"><i class="fa-solid ' + esc(m.icon) + '"></i></span>' +
+        '<span class="ord-l">' + esc(m.label) + '</span>' +
+        '<span class="ord-btns">' +
+          '<button type="button" class="eye' + (off ? ' off' : '') + '" title="' + (off ? 'Réafficher dans la barre' : 'Masquer de la barre') + '" onclick="__prmToggleHide(\'' + esc(m.key) + '\')"><i class="fa-solid ' + (off ? 'fa-eye-slash' : 'fa-eye') + '"></i></button>' +
+          '<button type="button" title="Monter" ' + (i === 0 ? 'disabled' : '') + ' onclick="__prmMove(\'' + esc(m.key) + '\',-1)"><i class="fa-solid fa-chevron-up"></i></button>' +
+          '<button type="button" title="Descendre" ' + (i === sorted.length - 1 ? 'disabled' : '') + ' onclick="__prmMove(\'' + esc(m.key) + '\',1)"><i class="fa-solid fa-chevron-down"></i></button>' +
+        '</span>' +
+        '</div>';
+    }).join('');
+    wireDnd();
+  }
+
+  function wireDnd() {
+    listEl.addEventListener('dragover', function (e) { if (dragKey) e.preventDefault(); });
+    listEl.addEventListener('drop', function (e) { if (dragKey) e.preventDefault(); });
+    Array.prototype.slice.call(listEl.querySelectorAll('.ord-row')).forEach(function (el) {
+      el.addEventListener('dragstart', function (e) {
+        dragKey = el.getAttribute('data-modkey');
+        el.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', dragKey); e.dataTransfer.effectAllowed = 'move'; } catch (err) {}
+      });
+      el.addEventListener('dragend', function () {
+        el.classList.remove('dragging');
+        if (dragKey) { dragKey = null; save(); }
+      });
+      el.addEventListener('dragover', function (e) {
+        if (!dragKey) return;
+        e.preventDefault();
+        if (dragKey === el.getAttribute('data-modkey')) return;
+        var dragged = listEl.querySelector('.ord-row[data-modkey="' + dragKey + '"]');
+        if (!dragged) return;
+        var r = el.getBoundingClientRect();
+        if (e.clientY < r.top + r.height / 2) listEl.insertBefore(dragged, el);
+        else listEl.insertBefore(dragged, el.nextSibling);
+      });
+    });
+  }
+
+  window.resetOrder = function () {
+    if (window.MDT_MODULE_ORDER_SET) window.MDT_MODULE_ORDER_SET([]);
+    if (window.MDT_MODULE_HIDDEN_SET) window.MDT_MODULE_HIDDEN_SET([]);
+    render();
+    flashSaved();
+    if (window.MDT_TOAST) window.MDT_TOAST.ok('Barre restaurée par défaut');
+  };
+
+  function initList() {
+    if (!window.MDT_MODULES_ALLOWED) return;
+    window.MDT_MODULES_ALLOWED(function (visible) {
+      MODS = visible.filter(function (m) { return m.dock !== false; });
+      render();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initList);
+  else initList();
+})();
+</script>
+<script>
+(function() {
+  var API = '/login/auth_api.php';
+  var token = null;
+  try { token = localStorage.getItem('mdt_auth_token'); } catch(e) {}
+  var user = null;
+  try { user = JSON.parse(localStorage.getItem('mdt_user')); } catch(e) {}
+
+  function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+  function pToast(msg, type) {
+    if (window.MDT_TOAST) { if (type === 'error') MDT_TOAST.err(msg); else MDT_TOAST.ok(msg); }
+  }
+
+  function render() {
+    if (!user) return;
+    var displayName = user.discord_nick || user.discord_username || user.username || 'Utilisateur';
+    var avatarSlot = document.getElementById('avatarSlot');
+    if (user.discord_avatar) {
+      avatarSlot.innerHTML = '<img class="profile-avatar" src="' + esc(user.discord_avatar) + '" alt="" onerror="this.outerHTML=\'<div class=profile-avatar-placeholder>' + esc(displayName.charAt(0).toUpperCase()) + '</div>\'">';
+    } else {
+      avatarSlot.innerHTML = '<div class="profile-avatar-placeholder">' + esc(displayName.charAt(0).toUpperCase()) + '</div>';
+    }
+    document.getElementById('profileName').textContent = displayName;
+    document.getElementById('profileSub').textContent = user.discord_username ? '@' + user.discord_username : (user.username || '');
+    document.getElementById('infoUsername').textContent = user.username || '-';
+    document.getElementById('infoDiscordId').textContent = user.discord_id || '-';
+    document.getElementById('infoDiscordId').className = 'info-value' + (user.discord_id ? '' : ' muted');
+    document.getElementById('infoDiscordNick').textContent = user.discord_nick || '-';
+    document.getElementById('infoDiscordNick').className = 'info-value' + (user.discord_nick ? '' : ' muted');
+    if (user.created_at) {
+      var d = new Date(user.created_at);
+      if (!isNaN(d)) document.getElementById('infoCreated').textContent = d.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    }
+    document.getElementById('inputTelephone').value = user.telephone || '';
+    document.getElementById('inputCompteBancaire').value = user.compte_bancaire || '';
+
+    var statusSlot = document.getElementById('discordStatusSlot');
+    var actionsSlot = document.getElementById('discordActions');
+    if (user.discord_id) {
+      statusSlot.innerHTML = '<div class="discord-status linked"><i class="fa-solid fa-circle-check"></i><div style="flex:1"><div class="ds-title">Compte Discord lié</div><div class="ds-sub">' + esc(user.discord_username || user.discord_id) + '</div></div></div>';
+      actionsSlot.innerHTML =
+        '<button class="btn-p discord" id="btnRefreshRoles" onclick="refreshDiscordRoles()" title="Resync rapide des rôles sans repasser par OAuth"><i class="fa-solid fa-arrows-rotate"></i> Rafraîchir mes rôles</button>' +
+        '<button class="btn-p outline" onclick="relinkDiscord()" title="Refaire le lien OAuth complet"><i class="fa-brands fa-discord"></i> Relier (OAuth)</button>' +
+        '<button class="btn-p outline" onclick="confirmUnlink()"><i class="fa-solid fa-link-slash"></i> Délier</button>';
+    } else {
+      statusSlot.innerHTML = '<div class="discord-status not-linked"><i class="fa-solid fa-triangle-exclamation"></i><div style="flex:1"><div class="ds-title">Discord non lié</div><div class="ds-sub">Liez votre Discord pour accéder à toutes les fonctionnalités</div></div></div>';
+      actionsSlot.innerHTML = '<button class="btn-p discord" onclick="linkDiscord()"><i class="fa-brands fa-discord"></i> Lier mon compte Discord</button>';
+    }
+  }
+
+  if (token) {
+    fetch(API + '?action=me', { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) { if (data.user) { user = data.user; try { localStorage.setItem('mdt_user', JSON.stringify(user)); } catch(e) {} render(); } })
+      .catch(function() {});
+  }
+  if (user) render();
+
+  window.refreshDiscordRoles = function() {
+    var btn = document.getElementById('btnRefreshRoles');
+    if (!btn) return;
+    var oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation…';
+    fetch(API + '?action=refresh_discord_roles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+      .then(function(res) {
+        btn.disabled = false; btn.innerHTML = oldHtml;
+        if (!res.ok) { pToast((res.data && res.data.error ? res.data.error : 'Erreur') + ' (HTTP ' + res.status + ')', 'error'); return; }
+        var d = res.data;
+        if (d.discord_roles) user.discord_roles = d.discord_roles;
+        if (d.discord_nick) user.discord_nick = d.discord_nick;
+        if (d.discord_username) user.discord_username = d.discord_username;
+        if (d.discord_avatar) user.discord_avatar = d.discord_avatar;
+        try { localStorage.setItem('mdt_user', JSON.stringify(user)); } catch(e) {}
+        if (d.changes) {
+          var parts = [];
+          if (d.added && d.added.length) parts.push('+' + d.added.length + ' rôle(s)');
+          if (d.removed && d.removed.length) parts.push('-' + d.removed.length + ' rôle(s)');
+          pToast('Rôles à jour : ' + parts.join(', ') + ' (' + d.roles_count + ' au total)');
+        } else {
+          pToast('Rôles déjà à jour (' + d.roles_count + ' rôle(s))');
+        }
+        render();
+      })
+      .catch(function() { btn.disabled = false; btn.innerHTML = oldHtml; pToast('Erreur réseau', 'error'); });
+  };
+
+  window.linkDiscord = function() { window.location.href = '/login/auth.php?action=link'; };
+  window.relinkDiscord = function() { window.location.href = '/login/auth.php?action=link'; };
+
+  window.confirmUnlink = async function() {
+    if (!await MDT_CONFIRM('Voulez-vous vraiment délier votre compte Discord ? Vous perdrez l\'accès aux fonctionnalités basées sur les rôles.')) return;
+    fetch(API + '?action=unlink_discord', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ token: token }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          user.discord_id = null; user.discord_username = null; user.discord_avatar = null; user.discord_nick = null; user.discord_roles = null;
+          try { localStorage.setItem('mdt_user', JSON.stringify(user)); } catch(e) {}
+          pToast('Discord délié');
+          render();
+        } else { pToast(data.error || 'Erreur', 'error'); }
+      })
+      .catch(function() { pToast('Erreur réseau', 'error'); });
+  };
+
+  window.confirmLogout = async function() {
+    if (!await MDT_CONFIRM('Voulez-vous vraiment vous déconnecter ?')) return;
+    if (typeof window.MDT_LOGOUT === 'function') { window.MDT_LOGOUT(); return; }
+    fetch(API + '?action=logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: token }) }).catch(function() {});
+    try { localStorage.clear(); } catch(e) {}
+    window.location.href = '/login/connexion';
+  };
+
+  window.saveInfosRP = function() {
+    var tel = document.getElementById('inputTelephone').value.trim();
+    var cb = document.getElementById('inputCompteBancaire').value.trim();
+    if (!token) { pToast('Non connecté', 'error'); return; }
+    fetch(API + '?action=update_telephone', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ telephone: tel || null, compte_bancaire: cb || null }) })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          user.telephone = tel || null; user.compte_bancaire = cb || null;
+          try { localStorage.setItem('mdt_user', JSON.stringify(user)); } catch(e) {}
+          pToast('Informations RP enregistrées');
+        } else { pToast(data.error || 'Erreur', 'error'); }
+      })
+      .catch(function() { pToast('Erreur réseau', 'error'); });
+  };
+
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('discord_linked') === '1') {
+    var discordData = null;
+    try { discordData = JSON.parse(sessionStorage.getItem('discord_link_data')); } catch(e) {}
+    if (!discordData) {
+      pToast('Données Discord introuvables, réessaie la liaison', 'error');
+    } else if (!token) {
+      pToast('Reconnecte-toi pour finaliser la liaison Discord', 'error');
+    } else {
+      fetch(API + '?action=link_discord', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(discordData) })
+        .then(function(r) { return r.json().then(function(d) { return { status: r.status, data: d }; }); })
+        .then(function(res) {
+          var data = res.data;
+          if (data && data.success) {
+            user.discord_id = discordData.discord_id; user.discord_username = discordData.discord_username;
+            user.discord_avatar = discordData.discord_avatar; user.discord_nick = discordData.discord_nick;
+            user.discord_roles = discordData.discord_roles;
+            try { localStorage.setItem('mdt_user', JSON.stringify(user)); } catch(e) {}
+            try { sessionStorage.removeItem('discord_link_data'); } catch(e) {}
+            pToast('Compte Discord lié avec succès !');
+            render();
+          } else { pToast((data && data.error) ? data.error : ('Erreur HTTP ' + res.status), 'error'); }
+        })
+        .catch(function() { pToast('Erreur réseau pendant la liaison Discord', 'error'); });
+    }
+    try { window.history.replaceState({}, '', '/parametres'); } catch(e) {}
+  }
+})();
+
+  function installApp() {
+    if (window.MDT_INSTALL && window.MDT_INSTALL()) return;
+    var ua = navigator.userAgent;
+    var std = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+    if (std) { MDT_TOAST && MDT_TOAST.info("L'application est déjà installée — vous l'utilisez en ce moment."); return; }
+    var msg = /Firefox/i.test(ua)
+      ? "Firefox ne gère pas l'installation d'applications. Utilisez Microsoft Edge ou Google Chrome, ou téléchargez le lanceur .exe."
+      : "Votre navigateur n'a pas proposé l'installation. Dans Edge : menu ⋯ → Applications → Installer ce site en tant qu'application. Dans Chrome : menu ⋮ → Diffuser, enregistrer et partager → Installer la page en tant qu'application.";
+    if (window.MDT_ALERT) MDT_ALERT(msg, { title: "Installer l'application", icon: 'fa-desktop' });
+    else if (window.MDT_TOAST) MDT_TOAST.info(msg);
+  }
+  (function () {
+    function refresh() {
+      var b = document.getElementById('btn-install-app'), h = document.getElementById('install-hint');
+      if (!b) return;
+      var std = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      if (std) {
+        b.innerHTML = '<i class="fa-solid fa-check"></i> Application installée';
+        b.disabled = true; b.style.opacity = '.65'; b.style.cursor = 'default';
+        if (h) h.textContent = "Vous utilisez déjà l'application. Pour la retirer : menu ⋯ de la fenêtre → Désinstaller.";
+      } else if (document.documentElement.getAttribute('data-installable')) {
+        if (h) h.textContent = "Votre navigateur est prêt : un clic et l'appli s'installe.";
+      }
+    }
+    window.addEventListener('beforeinstallprompt', function () { setTimeout(refresh, 60); });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refresh); else refresh();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr" data-module="npu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - NPU · Gestion du recrutement</title>
+<link rel="stylesheet" href="/assets/app.css">
+<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+html[data-module="npu"]{ --accent:#0ea5e9; --accent-2:#7dd3fc; --accent-rgb:14,165,233; }
+.app a { color:inherit; text-decoration:none; }
+.np-wrap { max-width:1180px; margin:0 auto; padding:22px 18px 60px; }
+.np-head { display:flex; align-items:center; gap:13px; margin-bottom:18px; flex-wrap:wrap; }
+.np-head .ic { width:44px; height:44px; border-radius:12px; background:rgba(var(--accent-rgb),.16); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.2em; }
+.np-head h1 { font-size:1.25em; font-weight:800; }
+.np-sp { flex:1; }
+.np-btn { border:none; background:var(--accent); color:#04222e; font-family:inherit; font-weight:800; font-size:.85em; padding:10px 18px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
+.np-btn.ghost { background:var(--surface-2); color:var(--muted); border:1px solid var(--border); }
+.np-btn.danger { background:#ef4444; color:#fff; }
+.np-btn[disabled]{ opacity:.4; cursor:not-allowed; }
+.tabs { display:inline-flex; gap:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:4px; margin-bottom:18px; }
+.tabs button { border:none; background:none; color:var(--muted); font-family:inherit; font-weight:700; font-size:.85em; padding:8px 16px; border-radius:8px; cursor:pointer; }
+.tabs button.on { background:var(--accent); color:#04222e; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:14px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:900px){ .grid2 { grid-template-columns:1fr; } }
+#gMap { height:460px; border-radius:12px; border:1px solid var(--border); }
+.leaflet-container { background:#0b1220; font-family:var(--font); outline:none; }
+table.t { width:100%; border-collapse:collapse; font-size:.88em; }
+table.t th { text-align:left; font-size:.68em; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-2); font-weight:700; padding:9px 12px; border-bottom:1px solid var(--border); }
+table.t td { padding:11px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+table.t tr:hover td { background:rgba(var(--accent-rgb),.05); }
+.pl { display:flex; align-items:center; gap:11px; padding:9px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); margin-bottom:8px; cursor:pointer; }
+.pl.on { border-color:var(--accent); background:rgba(var(--accent-rgb),.1); }
+.pl img { width:64px; height:44px; object-fit:cover; border-radius:7px; background:#000; }
+.pl .n { flex:1; font-size:.86em; font-weight:600; }
+.pl .c { font-size:.72em; color:var(--muted-2); }
+.miss { color:#f59e0b; font-weight:700; font-size:.75em; }
+input[type=text]{ width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-family:inherit; font-size:.87em; }
+label { display:block; font-size:.75em; color:var(--muted); margin-bottom:5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.empty { text-align:center; padding:44px 20px; color:var(--muted); }
+.ovl { position:fixed; inset:0; z-index:9000; background:rgba(2,6,23,.82); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:20px; }
+.ovl.on { display:flex; }
+.ovl-box { width:min(1080px,96vw); max-height:92vh; overflow:auto; background:var(--surface); border:1px solid var(--border); border-radius:16px; }
+.ovl-hd { display:flex; align-items:center; gap:12px; padding:15px 20px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:2; }
+.ovl-hd b { flex:1; }
+#dMap { height:420px; border-radius:12px; border:1px solid var(--border); }
+.leg { display:flex; gap:16px; font-size:.78em; color:var(--muted); margin:10px 0 14px; flex-wrap:wrap; }
+.leg i { width:11px; height:11px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:-1px; }
+.gr { display:flex; align-items:center; gap:11px; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2); margin-bottom:7px; cursor:pointer; }
+.gr.on { border-color:var(--accent); }
+.gr img { width:58px; height:40px; object-fit:cover; border-radius:6px; background:#000; }
+.gr .m { flex:1; font-size:.83em; }
+.gr .p { font-weight:800; font-size:.9em; }
+#gDenied { display:none; text-align:center; padding:70px 20px; }
+</style>
+</head>
+<body class="app">
+<div class="app-bg"></div>
+<div class="np-wrap" id="gShell">
+  <div class="np-head">
+    <a class="np-btn ghost" href="/npu/"><i class="fa-solid fa-arrow-left"></i></a>
+    <span class="ic"><i class="fa-solid fa-sliders"></i></span>
+    <div><h1>NPU · Gestion du recrutement</h1></div>
+    <div class="np-sp"></div>
+    <button class="np-btn" id="gOpen"></button>
+  </div>
+  <div class="tabs"><button data-t="places" class="on">Photos de l’épreuve</button><button data-t="res">Résultats</button><button data-t="chr">Chronos</button></div>
+  <div id="gBody"></div>
+</div>
+<div class="ovl" id="dOvl"><div class="ovl-box">
+  <div class="ovl-hd"><b id="dTitre">Détail</b><button class="np-btn ghost" id="dClose"><i class="fa-solid fa-xmark"></i></button></div>
+  <div style="padding:18px"><div class="grid2"><div><div id="dMap"></div>
+  <div class="leg"><span><i style="background:#22c55e"></i>Bonne position</span><span><i style="background:#ef4444"></i>Réponse du candidat</span><span>Le trait relie les deux.</span></div></div>
+  <div id="dList"></div></div></div></div></div>
+<div id="gDenied"><h2>Accès refusé</h2><p style="color:var(--muted);margin-top:8px">La gestion du recrutement NPU est réservée au commandement.</p><a class="np-btn ghost" href="/" style="margin-top:16px"><i class="fa-solid fa-arrow-left"></i> Menu</a></div>
+
+<script>
+window.MDT_SHELL = { module: 'npu', title: 'NPU', icon: 'fa-mountain-sun', back: { href: '/npu/', label: 'NPU' } };
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script src="/assets/vendor/leaflet/leaflet.js"></script>
+<script>
+var API='/npu/npu_api.php';
+var PLACES=[], SEL=null, MAP=null, MARKS={}, OPEN=false, TAB='places';
+var TILE=6144, MZ=5;
+function $(i){ return document.getElementById(i); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+function hdr(x){ var h=x||{}; try{ var t=localStorage.getItem('mdt_auth_token')||''; if(t) h['Authorization']='Bearer '+t; }catch(e){} return h; }
+function notify(m,ok){ if(typeof toast==='function') toast(m,!!ok); }
+
+function majOpen(){
+  var b=$('gOpen');
+  b.className='np-btn '+(OPEN?'':'ghost');
+  b.innerHTML=OPEN?'<i class="fa-solid fa-lock-open"></i> Épreuve ouverte':'<i class="fa-solid fa-lock"></i> Épreuve fermée';
+}
+$('gOpen').onclick=function(){
+  fetch(API+'?action=set_open',{method:'POST',headers:hdr({'Content-Type':'application/json'}),body:JSON.stringify({open:!OPEN})})
+   .then(function(r){return r.json();}).then(function(d){ if(d&&d.success){ OPEN=!!d.open; majOpen(); notify(OPEN?'Épreuve ouverte':'Épreuve fermée',true); } })
+   .catch(function(){ notify('Erreur réseau',false); });
+};
+Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
+  b.onclick=function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(x){x.classList.remove('on');});
+    this.classList.add('on'); TAB=this.getAttribute('data-t');
+    if(TAB==='places') vuePlaces(); else if(TAB==='res') vueResultats(); else vueChronos();
+  };
+});
+
+function chargePlaces(cb){
+  fetch(API+'?action=admin_places',{headers:hdr()}).then(function(r){
+    if(r.status===403) throw new Error('denied');
+    return r.json();
+  }).then(function(d){ PLACES=d.places||[]; OPEN=!!d.open; majOpen(); cb&&cb(); })
+   .catch(function(e){ if(e&&e.message==='denied'){ $('gShell').style.display='none'; $('gDenied').style.display='block'; } else notify('Erreur de chargement',false); });
+}
+
+function vuePlaces(){
+  $('gBody').innerHTML='<div class="grid2"><div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
+    +'<b style="flex:1">Photos</b><label style="margin:0"><input type="file" id="gFile" accept="image/*" style="display:none"></label>'
+    +'<button class="np-btn" id="gAdd"><i class="fa-solid fa-plus"></i> Ajouter</button></div>'
+    +'<div id="gList"></div></div>'
+    +'<div class="card"><b>Position de la réponse</b><div style="font-size:.8em;color:var(--muted);margin:6px 0 12px">'
+    +'Sélectionne une photo puis clique sur la carte pour définir le bon emplacement.</div>'
+    +'<div id="gMap"></div><div style="margin-top:12px"><label>Nom du lieu (optionnel)</label><input type="text" id="gNom" placeholder="ex. Mont Chiliad"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:12px"><button class="np-btn" id="gSave" disabled><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>'
+    +'<button class="np-btn danger" id="gDel" disabled><i class="fa-solid fa-trash"></i></button></div></div></div>';
+
+  MAP=L.map('gMap',{crs:L.CRS.Simple,minZoom:0,maxZoom:MZ+2,attributionControl:false});
+  var bounds=L.latLngBounds(MAP.unproject([0,TILE],MZ),MAP.unproject([TILE,0],MZ));
+  L.tileLayer('/tiles/gta/{z}/{x}/{y}.png',{tileSize:256,minZoom:0,maxNativeZoom:MZ,maxZoom:MZ+2,noWrap:true,bounds:bounds}).addTo(MAP);
+  MAP.setMaxBounds(bounds.pad(0.25)); MAP.fitBounds(bounds);
+  MAP.on('click',function(e){
+    if(!SEL) return notify('Sélectionne d’abord une photo',false);
+    var p=MAP.project(e.latlng,MZ), n={x:p.x/TILE,y:p.y/TILE};
+    if(n.x<0||n.x>1||n.y<0||n.y>1) return;
+    SEL.x=n.x; SEL.y=n.y; dessine(); majListe();
+  });
+  $('gAdd').onclick=function(){ $('gFile').click(); };
+  $('gFile').onchange=function(){ if(this.files&&this.files[0]) televerse(this.files[0]); };
+  $('gSave').onclick=enregistre;
+  $('gDel').onclick=supprime;
+  majListe(); dessine();
+}
+
+function majListe(){
+  var h=PLACES.map(function(p,i){
+    var pos=(p.x!=null&&p.y!=null)?('x '+Number(p.x).toFixed(3)+' · y '+Number(p.y).toFixed(3)):'<span class="miss">position à définir</span>';
+    return '<div class="pl '+(SEL&&SEL.id===p.id?'on':'')+'" data-id="'+p.id+'">'
+      +'<img src="'+esc(p.photo||'')+'" alt=""><div class="n">'+esc(p.nom||('Photo '+(i+1)))+'<div class="c">'+pos+'</div></div></div>';
+  }).join('') || '<div class="empty">Aucune photo. Clique sur « Ajouter ».</div>';
+  $('gList').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('.pl'),function(el){
+    el.onclick=function(){
+      var id=parseInt(this.getAttribute('data-id'),10);
+      SEL=PLACES.filter(function(x){return x.id===id;})[0]||null;
+      $('gNom').value=SEL?(SEL.nom||''):'';
+      $('gSave').disabled=!SEL; $('gDel').disabled=!SEL;
+      majListe(); dessine();
+      if(SEL&&SEL.x!=null) MAP.setView(MAP.unproject([SEL.x*TILE,SEL.y*TILE],MZ),3);
+    };
+  });
+}
+
+function dessine(){
+  Object.keys(MARKS).forEach(function(k){ MAP.removeLayer(MARKS[k]); });
+  MARKS={};
+  PLACES.forEach(function(p,i){
+    if(p.x==null||p.y==null) return;
+    var m=L.marker(MAP.unproject([p.x*TILE,p.y*TILE],MZ),{opacity:(SEL&&SEL.id===p.id)?1:.45}).addTo(MAP);
+    m.bindTooltip(p.nom||('Photo '+(i+1)),{direction:'top'});
+    MARKS[p.id]=m;
+  });
+}
+
+function televerse(f){
+  var fd=new FormData(); fd.append('photo',f);
+  notify('Envoi de la photo…',true);
+  fetch(API+'?action=upload',{method:'POST',headers:hdr(),body:fd})
+   .then(function(r){return r.json();})
+   .then(function(d){
+     if(!d||!d.success) return notify((d&&d.error)||'Upload refusé',false);
+     return fetch(API+'?action=save_place',{method:'POST',headers:hdr({'Content-Type':'application/json'}),
+       body:JSON.stringify({photo:d.photo,ordre:PLACES.length+1})}).then(function(r){return r.json();})
+       .then(function(){ chargePlaces(function(){ majListe(); dessine(); notify('Photo ajoutée',true); }); });
+   })
+   .catch(function(){ notify('Erreur réseau',false); });
+}
+
+function enregistre(){
+  if(!SEL) return;
+  fetch(API+'?action=save_place',{method:'POST',headers:hdr({'Content-Type':'application/json'}),
+    body:JSON.stringify({id:SEL.id,nom:$('gNom').value,x:SEL.x,y:SEL.y,ordre:SEL.ordre||0})})
+   .then(function(r){return r.json();})
+   .then(function(d){ if(d&&d.success){ notify('Enregistré',true); chargePlaces(function(){ majListe(); dessine(); }); } else notify('Refusé',false); })
+   .catch(function(){ notify('Erreur réseau',false); });
+}
+
+async function supprime(){
+  if(!SEL) return;
+  var ok=await MDT_CONFIRM('Supprimer cette photo de l’épreuve ?',{title:'Supprimer',okLabel:'Supprimer',icon:'fa-trash'});
+  if(!ok) return;
+  fetch(API+'?action=delete_place',{method:'POST',headers:hdr({'Content-Type':'application/json'}),body:JSON.stringify({id:SEL.id})})
+   .then(function(r){return r.json();})
+   .then(function(){ SEL=null; $('gSave').disabled=true; $('gDel').disabled=true; chargePlaces(function(){ majListe(); dessine(); notify('Supprimée',true); }); })
+   .catch(function(){ notify('Erreur réseau',false); });
+}
+
+function ms(v){ if(v==null) return '—'; var s=Math.round(v/1000); return Math.floor(s/60)+'min '+('0'+(s%60)).slice(-2)+'s'; }
+
+function vueResultats(){
+  $('gBody').innerHTML='<div class="card"><div class="empty">Chargement…</div></div>';
+  fetch(API+'?action=admin_results',{headers:hdr()}).then(function(r){return r.json();}).then(function(d){
+    var rs=d.results||[];
+    if(!rs.length){ $('gBody').innerHTML='<div class="card"><div class="empty">Aucun candidat n’a encore passé l’épreuve.</div></div>'; return; }
+    var h='<div class="card"><table class="t"><thead><tr><th>Candidat</th><th>Questionnaire</th><th>Repérage</th><th>Total</th><th>Temps</th><th>Passé le</th><th></th></tr></thead><tbody>';
+    rs.forEach(function(r){
+      var tot=(r.quiz_score*250)+parseInt(r.geo_score||0,10);
+      h+='<tr><td><b>'+esc(r.nom||r.discord_id)+'</b></td>'
+        +'<td>'+r.quiz_score+' / '+d.total_quiz+'</td>'
+        +'<td>'+r.geo_score+'</td>'
+        +'<td><b style="color:var(--accent-2)">'+tot+'</b></td>'
+        +'<td>'+ms(r.temps_ms)+'</td>'
+        +'<td style="color:var(--muted-2);white-space:nowrap">'+esc(r.submitted_at||'')+'</td>'
+        +'<td style="white-space:nowrap"><button class="np-btn ghost" data-detail="'+esc(r.discord_id)+'" title="Voir le détail du repérage"><i class="fa-solid fa-map-location-dot"></i></button> '
+        +'<button class="np-btn ghost" data-reset="'+esc(r.discord_id)+'" title="Autoriser une nouvelle tentative"><i class="fa-solid fa-rotate-left"></i></button></td></tr>';
+    });
+    h+='</tbody></table><div style="font-size:.78em;color:var(--muted-2);margin-top:12px">Total = questionnaire × 250 + points de repérage.</div></div>';
+    $('gBody').innerHTML=h;
+    RES=d;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-detail]'),function(b){
+      b.onclick=function(){ detail(this.getAttribute('data-detail')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-reset]'),function(b){
+      b.onclick=async function(){
+        var did=this.getAttribute('data-reset');
+        var ok=await MDT_CONFIRM('Effacer le résultat de ce candidat ?\n\nIl pourra repasser l’épreuve depuis le début.',{title:'Nouvelle tentative',okLabel:'Effacer',icon:'fa-rotate-left'});
+        if(!ok) return;
+        fetch(API+'?action=reset_session',{method:'POST',headers:hdr({'Content-Type':'application/json'}),body:JSON.stringify({discord_id:did})})
+         .then(function(r){return r.json();}).then(function(){ notify('Résultat effacé',true); vueResultats(); })
+         .catch(function(){ notify('Erreur réseau',false); });
+      };
+    });
+  }).catch(function(){ $('gBody').innerHTML='<div class="card"><div class="empty">Erreur de chargement.</div></div>'; });
+}
+
+function msToInput(v){
+  if(v==null) return '';
+  var s=Math.round(v/1000);
+  return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2);
+}
+function inputToMs(v){
+  v=String(v||'').trim();
+  if(v==='') return null;
+  var m=v.match(/^(\d+):([0-5]?\d)$/);
+  if(m) return (parseInt(m[1],10)*60+parseInt(m[2],10))*1000;
+  if(/^\d+$/.test(v)) return parseInt(v,10)*1000;
+  return undefined;
+}
+
+var RES=null, DMAP=null, DLAY=null;
+
+function detail(did){
+  if(!RES) return;
+  var r=(RES.results||[]).filter(function(x){return String(x.discord_id)===String(did);})[0];
+  if(!r) return;
+  var coords={}; (RES.places||[]).forEach(function(p,i){ coords[p.id]={x:parseFloat(p.x),y:parseFloat(p.y),photo:p.photo,nom:p.nom,n:i+1}; });
+  var rep=[]; try{ rep=JSON.parse(r.geo_answers||'[]')||[]; }catch(e){ rep=[]; }
+
+  $('dTitre').innerHTML=esc(r.nom||r.discord_id)+' <span style="font-weight:400;color:var(--muted);font-size:.85em">— '+r.geo_score+' points de repérage</span>';
+  $('dOvl').classList.add('on');
+
+  if(!DMAP){
+    DMAP=L.map('dMap',{crs:L.CRS.Simple,minZoom:0,maxZoom:MZ+2,attributionControl:false});
+    var b=L.latLngBounds(DMAP.unproject([0,TILE],MZ),DMAP.unproject([TILE,0],MZ));
+    L.tileLayer('/tiles/gta/{z}/{x}/{y}.png',{tileSize:256,minZoom:0,maxNativeZoom:MZ,maxZoom:MZ+2,noWrap:true,bounds:b}).addTo(DMAP);
+    DMAP.setMaxBounds(b.pad(0.25));
+  }
+  setTimeout(function(){ DMAP.invalidateSize(); DMAP.fitBounds(L.latLngBounds(DMAP.unproject([0,TILE],MZ),DMAP.unproject([TILE,0],MZ))); },60);
+
+  if(DLAY) DMAP.removeLayer(DLAY);
+  DLAY=L.layerGroup().addTo(DMAP);
+
+  function pt(n){ return DMAP.unproject([n.x*TILE,n.y*TILE],MZ); }
+  function rond(ll,col,txt){
+    return L.circleMarker(ll,{radius:7,color:col,fillColor:col,fillOpacity:.85,weight:2}).bindTooltip(txt,{direction:'top'});
+  }
+
+  var lignes=[];
+  rep.forEach(function(g){
+    var c=coords[g.id]; if(!c) return;
+    var bonne=pt(c);
+    rond(bonne,'#22c55e','Photo '+c.n+' — bonne position').addTo(DLAY);
+    if(g.gx==null||g.gy==null){ lignes.push({c:c,pts:0,dist:null}); return; }
+    var rep_ll=pt({x:g.gx,y:g.gy});
+    rond(rep_ll,'#ef4444','Photo '+c.n+' — réponse ('+g.pts+' pts)').addTo(DLAY);
+    L.polyline([bonne,rep_ll],{color:'#f59e0b',weight:2,dashArray:'5,6',opacity:.8}).addTo(DLAY);
+    lignes.push({c:c,pts:g.pts,dist:g.dist});
+  });
+
+  lignes.sort(function(a,b){ return a.c.n-b.c.n; });
+  $('dList').innerHTML='<div style="font-size:.8em;color:var(--muted);margin-bottom:10px">'
+    +'Écart exprimé en % de la largeur de la carte. Clique une ligne pour la centrer.</div>'
+    +lignes.map(function(l){
+      var ec=(l.dist==null)?'pas de réponse':(Math.round(l.dist*1000)/10)+' %';
+      var col=l.pts>=3000?'#22c55e':(l.pts>=1000?'#f59e0b':'#ef4444');
+      return '<div class="gr" data-n="'+l.c.n+'"><img src="'+esc(l.c.photo||'')+'" alt="">'
+        +'<div class="m"><b>Photo '+l.c.n+'</b>'+(l.c.nom?' — '+esc(l.c.nom):'')+'<div style="color:var(--muted-2);font-size:.9em">écart '+ec+'</div></div>'
+        +'<div class="p" style="color:'+col+'">'+l.pts+'</div></div>';
+    }).join('');
+
+  Array.prototype.forEach.call(document.querySelectorAll('.gr'),function(el){
+    el.onclick=function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.gr'),function(x){x.classList.remove('on');});
+      this.classList.add('on');
+      var n=parseInt(this.getAttribute('data-n'),10);
+      var l=lignes.filter(function(z){return z.c.n===n;})[0];
+      if(l) DMAP.setView(pt(l.c),3);
+    };
+  });
+}
+$('dClose').onclick=function(){ $('dOvl').classList.remove('on'); };
+$('dOvl').onclick=function(e){ if(e.target===this) this.classList.remove('on'); };
+
+function vueChronos(){
+  $('gBody').innerHTML='<div class="card"><div class="empty">Chargement…</div></div>';
+  fetch(API+'?action=participants',{headers:hdr()}).then(function(r){return r.json();}).then(function(d){
+    var ps=d.participants||[];
+    if(!ps.length){ $('gBody').innerHTML='<div class="card"><div class="empty">Aucun candidat n’a encore passé l’épreuve.</div></div>'; return; }
+    var h='<div class="card"><div style="font-size:.82em;color:var(--muted);margin-bottom:14px">'
+      +'Temps de l’épreuve pratique, saisi par le staff. Format <b>mm:ss</b> (ou un nombre de secondes). '
+      +'Un candidat éliminé reste dans la liste mais est marqué comme tel.</div>'
+      +'<table class="t"><thead><tr><th>Candidat</th><th>Écrit</th><th style="width:110px">Temps</th>'
+      +'<th style="width:90px">Éliminé</th><th>Remarque</th><th style="width:52px"></th></tr></thead><tbody>';
+    ps.forEach(function(p){
+      var tot=(p.quiz_score*250)+p.geo_score;
+      h+='<tr data-did="'+esc(p.discord_id)+'"'+(p.eliminated?' style="opacity:.55"':'')+'>'
+        +'<td><b>'+esc(p.nom||p.discord_id)+'</b>'+(p.eliminated?' <span style="color:#ef4444;font-weight:800;font-size:.8em">éliminé</span>':'')+'</td>'
+        +'<td style="color:var(--muted-2);white-space:nowrap">'+p.quiz_score+'/'+(d.total_quiz||20)+' · '+p.geo_score+' <span style="opacity:.6">('+tot+')</span></td>'
+        +'<td><input type="text" class="c-t" value="'+esc(msToInput(p.temps_ms))+'" placeholder="mm:ss"></td>'
+        +'<td style="text-align:center"><input type="checkbox" class="c-e"'+(p.eliminated?' checked':'')+' style="width:18px;height:18px;cursor:pointer"></td>'
+        +'<td><input type="text" class="c-n" value="'+esc(p.note||'')+'" placeholder="optionnel"></td>'
+        +'<td><button class="np-btn c-s" title="Enregistrer"><i class="fa-solid fa-floppy-disk"></i></button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    $('gBody').innerHTML=h;
+    Array.prototype.forEach.call(document.querySelectorAll('.c-s'),function(b){
+      b.onclick=function(){
+        var tr=this.closest('tr');
+        var ms=inputToMs(tr.querySelector('.c-t').value);
+        if(ms===undefined) return notify('Temps invalide — utilise mm:ss (ex. 4:35)',false);
+        var btn=this; btn.disabled=true;
+        fetch(API+'?action=chrono_save',{method:'POST',headers:hdr({'Content-Type':'application/json'}),
+          body:JSON.stringify({discord_id:tr.getAttribute('data-did'),temps_ms:ms,
+            eliminated:tr.querySelector('.c-e').checked, note:tr.querySelector('.c-n').value})})
+         .then(function(r){return r.json();})
+         .then(function(x){ btn.disabled=false; if(x&&x.success){ notify('Chrono enregistré',true); vueChronos(); } else notify((x&&x.error)||'Refusé',false); })
+         .catch(function(){ btn.disabled=false; notify('Erreur réseau',false); });
+      };
+    });
+  }).catch(function(){ $('gBody').innerHTML='<div class="card"><div class="empty">Erreur de chargement.</div></div>'; });
+}
+
+(function(){
+  var t=''; try{ t=localStorage.getItem('mdt_auth_token')||''; }catch(e){}
+  if(!t){ $('gShell').style.display='none'; $('gDenied').style.display='block'; return; }
+  chargePlaces(function(){ vuePlaces(); });
+})();
+</script>
+</body>
+</html>

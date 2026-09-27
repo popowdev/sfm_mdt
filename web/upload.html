@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - Hébergement</title>
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+html[data-module="upload"]{ --accent:#f59e0b; --accent-2:#fbbf24; --accent-rgb:245,158,11; }
+.app a { color:inherit; text-decoration:none; }
+.wrap { max-width:960px; margin:0 auto; padding:24px 20px 90px; }
+.sec-head h1 { font-size:1.5em; display:flex; align-items:center; gap:11px; flex-wrap:wrap; }
+.sec-head h1 .ic { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.05em; flex:0 0 auto; background:rgba(var(--accent-rgb),.15); color:var(--accent-2); }
+.sec-head .sub { color:var(--muted); font-size:.9em; margin-top:5px; }
+.section-title { font-size:.82em; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-2); font-weight:700; margin:28px 0 14px; display:flex; align-items:center; gap:8px; }
+.section-title .cnt { color:var(--muted); font-weight:600; }
+
+.up-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; margin-top:22px; overflow:hidden; }
+.up-head { display:flex; align-items:center; gap:14px; padding:18px 20px; }
+.up-ic { width:48px; height:48px; border-radius:50%; background:rgba(var(--accent-rgb),.15); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.15em; flex:0 0 auto; }
+.up-title { font-size:1.05em; font-weight:800; color:var(--text-strong); }
+.up-sub { font-size:.84em; color:var(--muted); margin-top:2px; }
+.up-drop { margin:0 20px 20px; border:2px dashed var(--border); border-radius:13px; padding:30px 20px; text-align:center; cursor:pointer; transition:border-color .18s, background .18s; }
+.up-drop:hover { border-color:rgba(var(--accent-rgb),.5); }
+.up-drop.drag { border-color:var(--accent); background:rgba(var(--accent-rgb),.08); }
+.up-drop-ic { font-size:2em; color:var(--muted-2); margin-bottom:12px; }
+.up-drop-t { font-weight:700; color:var(--text-strong); }
+.up-drop-h { font-size:.78em; color:var(--muted); margin-top:5px; }
+.up-browse { margin-top:14px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-family:inherit; font-size:.82em; font-weight:700; padding:8px 16px; border-radius:9px; cursor:pointer; }
+.up-browse:hover { border-color:var(--accent); }
+
+.up-active { padding:0 20px; }
+.up-active:not(:empty) { padding:4px 20px 18px; border-top:1px solid var(--border); }
+.up-file { display:flex; align-items:center; gap:12px; padding:11px 0; }
+.uf-ic { width:42px; height:42px; border-radius:9px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:.68em; font-weight:800; color:var(--muted); flex:0 0 auto; }
+.uf-b { flex:1; min-width:0; }
+.uf-name { font-size:.86em; font-weight:600; color:var(--text-strong); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.uf-meta { font-size:.74em; color:var(--muted); margin-top:2px; }
+.uf-meta .ok { color:#34d399; } .uf-meta .err { color:#f87171; }
+.uf-bar { height:6px; background:var(--surface-2); border-radius:999px; overflow:hidden; margin-top:6px; }
+.uf-fill { height:100%; background:var(--accent); border-radius:999px; transition:width .15s; }
+.uf-x { border:none; background:none; color:var(--muted-2); cursor:pointer; font-size:.95em; padding:6px 8px; flex:0 0 auto; border-radius:8px; }
+.uf-x:hover { color:#ef4444; background:rgba(239,68,68,.1); }
+.uf-done { color:#34d399; font-size:1.1em; flex:0 0 auto; }
+
+.up-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+.gm { background:var(--surface); border:1px solid var(--border); border-radius:13px; overflow:hidden; display:flex; flex-direction:column; }
+.gm-thumb { position:relative; aspect-ratio:16/10; background:var(--surface-2); display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
+.gm-thumb img, .gm-thumb video { width:100%; height:100%; object-fit:cover; }
+.gm-thumb .play { position:absolute; width:40px; height:40px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.9em; pointer-events:none; }
+.gm-thumb .kindtag { position:absolute; top:7px; left:7px; font-size:.62em; font-weight:800; padding:2px 7px; border-radius:6px; background:rgba(0,0,0,.6); color:#fff; }
+.gm-info { padding:9px 11px; flex:1; }
+.gm-name { font-size:.82em; font-weight:600; color:var(--text-strong); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gm-size { font-size:.72em; color:var(--muted); margin-top:2px; }
+.gm-actions { display:flex; border-top:1px solid var(--border); }
+.gm-actions button { flex:1; border:none; background:none; color:var(--muted); font-family:inherit; font-size:.8em; padding:9px 0; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:.12s; }
+.gm-actions button:hover { background:var(--surface-2); color:var(--text-strong); }
+.gm-actions button.del:hover { color:#ef4444; }
+.gm-actions button + button { border-left:1px solid var(--border); }
+
+.up-empty { border:1px dashed var(--border); border-radius:14px; padding:44px 22px; text-align:center; color:var(--muted-2); }
+.up-empty i { font-size:2em; display:block; margin-bottom:12px; opacity:.7; }
+
+.up-pager { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:22px; }
+.up-pager button { border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit; font-size:.82em; min-width:36px; height:36px; padding:0 10px; border-radius:9px; cursor:pointer; }
+.up-pager button:hover:not(:disabled) { border-color:var(--accent); }
+.up-pager button.on { background:var(--accent); border-color:var(--accent); color:#3a2a05; font-weight:800; }
+.up-pager button:disabled { opacity:.4; cursor:default; }
+
+.lb { position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:200; padding:24px; }
+.lb.open { display:flex; }
+.lb img, .lb video { max-width:94%; max-height:94%; border-radius:8px; }
+.lb-x { position:fixed; top:18px; right:18px; width:42px; height:42px; border-radius:50%; border:1px solid rgba(255,255,255,.25); background:rgba(15,23,42,.8); color:#fff; font-size:1.05em; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <h1><span class="ic"><i class="fa-solid fa-cloud-arrow-up"></i></span> Hébergement</h1>
+        <div class="sub">Envoie tes images et vidéos, récupère un lien partageable. Tu ne vois que tes propres fichiers.</div>
+      </div>
+    </div>
+
+    <div class="up-card">
+      <div class="up-head">
+        <div class="up-ic"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <div><div class="up-title">Héberger un fichier</div><div class="up-sub">Sélectionne et envoie les fichiers de ton choix.</div></div>
+      </div>
+      <div class="up-drop" id="upDrop">
+        <input type="file" id="upInput" multiple accept="image/*,video/*" hidden>
+        <div class="up-drop-ic"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <div class="up-drop-t">Choisis un fichier ou glisse-le ici.</div>
+        <div class="up-drop-h">JPG, PNG, GIF, WebP, MP4, MOV, WebM — jusqu'à 500 Mo.</div>
+        <button class="up-browse" type="button" id="upBrowse">Parcourir</button>
+      </div>
+      <div class="up-active" id="upActive"></div>
+    </div>
+
+    <div class="section-title">Mes fichiers <span class="cnt" id="upCount"></span></div>
+    <div id="upGrid" class="up-grid"></div>
+    <div id="upPager" class="up-pager"></div>
+  </div>
+</div>
+
+<div class="lb" id="upLb"><button class="lb-x" id="upLbX"><i class="fa-solid fa-xmark"></i></button><div id="upLbBody"></div></div>
+
+<script>
+window.MDT_SHELL = { module: 'upload', title: 'Hébergement', icon: 'fa-cloud-arrow-up', back: { href: '/', label: 'Menu' }, nav: [] };
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/skeleton.js"></script>
+<script src="/assets/select.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/modules.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/dock.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script>
+(function(){
+  var API = '/upload_api.php';
+  function tok(){ try { return localStorage.getItem('mdt_auth_token') || ''; } catch(e){ return ''; } }
+  function esc(s){ var d = document.createElement('div'); d.textContent = (s==null?'':String(s)); return d.innerHTML; }
+  function toast(m, ok){ if (window.MDT_TOAST) MDT_TOAST[ok===false?'err':'ok'](m); }
+  function fmtSize(b){ b = +b || 0; if (b < 1024) return b + ' o'; var u = ['Ko','Mo','Go','To'], i = -1; do { b /= 1024; i++; } while (b >= 1024 && i < 3); return (Math.round(b*10)/10) + ' ' + u[i]; }
+
+  var PAGE = 1, PAGES = 1, TOTAL = 0, PER = 24;
+
+  function load(page){
+    PAGE = page || PAGE;
+    var grid = document.getElementById('upGrid');
+    if (window.MDT_SKEL) MDT_SKEL.show(grid, 'cards', { rows:6 });
+    fetch(API + '?action=list&page=' + PAGE + '&per_page=' + PER, { headers: { Authorization: 'Bearer ' + tok() } })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d || !d.success){ grid.innerHTML = '<div class="up-empty">Erreur de chargement</div>'; return; }
+        TOTAL = d.total; PAGES = d.pages; PAGE = d.page; PER = d.per_page;
+        renderGrid(d.items); renderPager();
+        document.getElementById('upCount').textContent = TOTAL ? '· ' + TOTAL + ' fichier' + (TOTAL>1?'s':'') : '';
+      })
+      .catch(function(){ grid.innerHTML = '<div class="up-empty">Erreur réseau</div>'; });
+  }
+
+  function renderGrid(items){
+    var grid = document.getElementById('upGrid');
+    if (!items.length){ grid.innerHTML = '<div class="up-empty"><i class="fa-solid fa-photo-film"></i>Aucun fichier pour l\'instant. Envoie ton premier média ci-dessus.</div>'; return; }
+    grid.innerHTML = items.map(function(it){
+      var thumb = it.kind === 'video'
+        ? '<video src="' + esc(it.url) + '#t=0.1" preload="metadata" muted></video><span class="play"><i class="fa-solid fa-play"></i></span><span class="kindtag">VIDÉO</span>'
+        : '<img src="' + esc(it.url) + '" alt="" loading="lazy">';
+      return '<div class="gm"><div class="gm-thumb" data-view="' + esc(it.url) + '" data-kind="' + esc(it.kind) + '">' + thumb + '</div>' +
+        '<div class="gm-info"><div class="gm-name" title="' + esc(it.name) + '">' + esc(it.name) + '</div><div class="gm-size">' + fmtSize(it.size) + ' · ' + esc(String(it.created_at).slice(0,16).replace('T',' ')) + '</div></div>' +
+        '<div class="gm-actions"><button data-copy="' + esc(it.url) + '"><i class="fa-solid fa-link"></i> Lien</button>' +
+        '<button class="del" data-del="' + it.id + '" data-name="' + esc(it.name) + '"><i class="fa-solid fa-trash"></i> Suppr.</button></div></div>';
+    }).join('');
+  }
+
+  function renderPager(){
+    var host = document.getElementById('upPager');
+    if (PAGES <= 1){ host.innerHTML = ''; return; }
+    var h = '<button data-go="' + (PAGE-1) + '"' + (PAGE<=1?' disabled':'') + '><i class="fa-solid fa-chevron-left"></i></button>';
+    var from = Math.max(1, PAGE-2), to = Math.min(PAGES, PAGE+2);
+    if (from > 1){ h += '<button data-go="1">1</button>'; if (from > 2) h += '<span style="color:var(--muted-2)">…</span>'; }
+    for (var p = from; p <= to; p++) h += '<button data-go="' + p + '"' + (p===PAGE?' class="on"':'') + '>' + p + '</button>';
+    if (to < PAGES){ if (to < PAGES-1) h += '<span style="color:var(--muted-2)">…</span>'; h += '<button data-go="' + PAGES + '">' + PAGES + '</button>'; }
+    h += '<button data-go="' + (PAGE+1) + '"' + (PAGE>=PAGES?' disabled':'') + '><i class="fa-solid fa-chevron-right"></i></button>';
+    host.innerHTML = h;
+  }
+
+  function uploadFile(file){
+    var active = document.getElementById('upActive');
+    var uid = 'u' + Math.round(performance.now()) + Math.floor(Math.random()*1000);
+    var ext = (file.name.split('.').pop() || 'FILE').toUpperCase().slice(0,4);
+    var el = document.createElement('div');
+    el.className = 'up-file'; el.id = uid;
+    el.innerHTML = '<div class="uf-ic">' + esc(ext) + '</div><div class="uf-b"><div class="uf-name">' + esc(file.name) + '</div>' +
+      '<div class="uf-meta"><span class="uf-p">0 o</span> / ' + fmtSize(file.size) + ' · <span class="uf-status">Envoi…</span></div>' +
+      '<div class="uf-bar"><div class="uf-fill" style="width:0%"></div></div></div><button class="uf-x" title="Annuler"><i class="fa-solid fa-xmark"></i></button>';
+    active.appendChild(el);
+    var fill = el.querySelector('.uf-fill'), pTxt = el.querySelector('.uf-p'), status = el.querySelector('.uf-status'), xBtn = el.querySelector('.uf-x');
+
+    var fd = new FormData(); fd.append('file', file);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', API + '?action=upload');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + tok());
+    xhr.upload.onprogress = function(e){ if (e.lengthComputable){ var pct = Math.round(e.loaded / e.total * 100); fill.style.width = pct + '%'; pTxt.textContent = fmtSize(e.loaded); } };
+    xhr.onload = function(){
+      var d = null; try { d = JSON.parse(xhr.responseText); } catch(e){}
+      if (xhr.status === 200 && d && d.success){
+        fill.style.width = '100%'; status.innerHTML = '<span class="ok">Terminé</span>'; xBtn.outerHTML = '<i class="fa-solid fa-circle-check uf-done"></i>';
+        setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 1400);
+        load(1);
+      } else {
+        status.innerHTML = '<span class="err">' + esc((d && d.error) || 'Échec') + '</span>';
+        el.querySelector('.uf-bar').style.display = 'none';
+      }
+    };
+    xhr.onerror = function(){ status.innerHTML = '<span class="err">Erreur réseau</span>'; };
+    xBtn.addEventListener('click', function(){ xhr.abort(); if (el.parentNode) el.parentNode.removeChild(el); });
+    xhr.send(fd);
+  }
+
+  function handleFiles(files){
+    var arr = Array.prototype.slice.call(files || []);
+    var okExt = /\.(mp4|mov|webm|gif|jpe?g|png|webp)$/i;
+    arr.forEach(function(f){ if (!okExt.test(f.name)){ toast('Format non autorisé : ' + f.name, false); return; } uploadFile(f); });
+  }
+
+  var drop = document.getElementById('upDrop'), input = document.getElementById('upInput');
+  document.getElementById('upBrowse').addEventListener('click', function(e){ e.stopPropagation(); input.click(); });
+  drop.addEventListener('click', function(){ input.click(); });
+  input.addEventListener('change', function(){ handleFiles(input.files); input.value = ''; });
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); drop.classList.add('drag'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); drop.classList.remove('drag'); }); });
+  drop.addEventListener('drop', function(e){ if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+
+  document.addEventListener('click', function(e){
+    var go = e.target.closest('[data-go]'); if (go){ var p = +go.getAttribute('data-go'); if (p >= 1 && p <= PAGES && p !== PAGE) load(p); return; }
+    var cp = e.target.closest('[data-copy]'); if (cp){ var url = location.origin + cp.getAttribute('data-copy'); if (navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ toast('Lien copié'); }, function(){ toast('Copie impossible', false); }); else toast(url); return; }
+    var del = e.target.closest('[data-del]'); if (del){ doDelete(del.getAttribute('data-del'), del.getAttribute('data-name')); return; }
+    var vw = e.target.closest('[data-view]'); if (vw){ openLb(vw.getAttribute('data-view'), vw.getAttribute('data-kind')); return; }
+  });
+
+  function doDelete(id, name){
+    var run = function(){ fetch(API + '?action=delete', { method:'POST', headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ id: +id }) })
+      .then(function(r){ return r.json(); }).then(function(d){ if (d && d.success){ toast('Fichier supprimé'); load(PAGE); } else toast((d && d.error) || 'Suppression impossible', false); })
+      .catch(function(){ toast('Erreur réseau', false); }); };
+    if (window.MDT_CONFIRM) MDT_CONFIRM('Supprimer « ' + name + ' » ? Le lien ne fonctionnera plus.', { title:'Supprimer le fichier', okLabel:'Supprimer', danger:true }).then(function(ok){ if (ok) run(); });
+    else run();
+  }
+
+  var lb = document.getElementById('upLb'), lbBody = document.getElementById('upLbBody');
+  function openLb(url, kind){ lbBody.innerHTML = kind === 'video' ? '<video src="' + esc(url) + '" controls autoplay></video>' : '<img src="' + esc(url) + '" alt="">'; lb.classList.add('open'); }
+  function closeLb(){ lb.classList.remove('open'); lbBody.innerHTML = ''; }
+  document.getElementById('upLbX').addEventListener('click', closeLb);
+  lb.addEventListener('click', function(e){ if (e.target === lb) closeLb(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && lb.classList.contains('open')) closeLb(); });
+
+  load(1);
+})();
+</script>
+</body>
+</html>

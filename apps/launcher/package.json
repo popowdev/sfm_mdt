@@ -1,0 +1,66 @@
+{
+  "name": "mdt-tool-app",
+  "version": "1.0.0",
+  "description": "Application de bureau RP MDT — exemple.tld en fenetre dediee, optimisee CPU en arriere-plan.",
+  "main": "main.js",
+  "author": {
+    "name": "RP MDT",
+    "email": "contact@exemple.tld"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "fr.rp-mdt.app",
+    "productName": "RP MDT",
+    "copyright": "Copyright (c) 2026 RP MDT",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "assets/**/*",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://exemple.tld/downloads/app/",
+        "channel": "latest"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "verifyUpdateCodeSignature": false,
+      "signAndEditExecutable": false,
+      "artifactName": "MDT-Tool-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RP MDT",
+      "uninstallDisplayName": "RP MDT",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "mdt-discord-bot",
+  "version": "1.0.0",
+  "description": "Bot Discord RP MDT - API roles & permissions",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "mysql2": "^3.11.4",
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>MDT - Connexion</title>
+    <link href="/assets/fonts/inter.css" rel="stylesheet">
+    <link href="/assets/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:#0f172a; color:white; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow-y:auto; padding:40px 20px; }
+        .bg { position:fixed; top:0; left:0; width:100%; height:100%; background:radial-gradient(circle at center,#1e293b 0%,#0f172a 70%); z-index:-1; }
+
+        .login-box { width:100%; max-width:440px; background:rgba(30,41,59,0.7); backdrop-filter:blur(10px); border-radius:20px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); animation:slideUp .6s ease-out; overflow:hidden; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+
+        .login-header { text-align:center; padding:40px 40px 0; }
+        .login-header img { width:90px; margin-bottom:15px; filter:drop-shadow(0 0 10px rgba(59,130,246,0.3)); }
+        .login-header h1 { font-size:1.8em; font-weight:800; letter-spacing:-1px; margin-bottom:4px; }
+        .login-header .subtitle { color:#94a3b8; font-size:.85em; margin-bottom:20px; }
+
+        /* Tabs */
+        .tabs { display:flex; border-bottom:1px solid #334155; }
+        .tab { flex:1; padding:14px; text-align:center; font-weight:700; font-size:.9em; color:#64748b; cursor:pointer; border-bottom:2px solid transparent; transition:.2s; }
+        .tab:hover { color:#94a3b8; }
+        .tab.active { color:#3b82f6; border-bottom-color:#3b82f6; }
+
+        /* Forms */
+        .form-body { padding:30px 40px 35px; }
+        .form-group { margin-bottom:18px; }
+        .form-group label { display:block; font-size:.8em; font-weight:600; color:#94a3b8; margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+        .form-group input { width:100%; padding:12px 14px; background:#334155; border:1px solid #475569; border-radius:10px; color:white; font-size:.95em; font-family:'Inter',sans-serif; outline:none; transition:.2s; }
+        .form-group input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
+        .form-group input::placeholder { color:#64748b; }
+
+        .btn { width:100%; padding:14px; border:none; border-radius:12px; font-weight:700; font-size:1em; cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; gap:10px; font-family:'Inter',sans-serif; }
+        .btn-primary { background:#3b82f6; color:white; }
+        .btn-primary:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 8px 15px -3px rgba(59,130,246,0.4); }
+        .btn-discord { background:#5865F2; color:white; margin-top:12px; }
+        .btn-discord:hover { background:#4752c4; transform:translateY(-1px); box-shadow:0 8px 15px -3px rgba(88,101,242,0.4); }
+        .btn-outline { background:transparent; color:#94a3b8; border:1px solid #475569; margin-top:10px; }
+        .btn-outline:hover { color:white; border-color:#64748b; }
+        .btn:disabled { opacity:.5; cursor:not-allowed; transform:none !important; }
+
+        .error-msg { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:10px 14px; border-radius:8px; font-size:.85em; margin-bottom:15px; display:none; }
+        .success-msg { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#34d399; padding:10px 14px; border-radius:8px; font-size:.85em; margin-bottom:15px; display:none; }
+
+        .form-footer { text-align:center; font-size:.75em; color:#475569; margin-top:20px; }
+
+        /* Panel de liaison Discord (apres 1ere connexion) */
+        .discord-link-panel { display:none; padding:30px 40px 35px; text-align:center; }
+        .discord-link-panel h2 { font-size:1.3em; margin-bottom:8px; }
+        .discord-link-panel p { color:#94a3b8; font-size:.9em; margin-bottom:25px; line-height:1.5; }
+        .discord-linked { display:flex; align-items:center; gap:12px; background:#334155; padding:14px 18px; border-radius:12px; margin-bottom:20px; }
+        .discord-linked img { width:40px; height:40px; border-radius:50%; }
+        .discord-linked .info { text-align:left; flex:1; }
+        .discord-linked .info .name { font-weight:700; font-size:.95em; }
+        .discord-linked .info .tag { color:#94a3b8; font-size:.8em; }
+        .discord-linked .check { color:#10b981; font-size:1.3em; }
+
+        .divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:#475569; font-size:.8em; }
+        .divider::before,.divider::after { content:''; flex:1; height:1px; background:#334155; }
+
+        .secure-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.1); color:#34d399; padding:5px 12px; border-radius:20px; font-size:.7em; font-weight:bold; border:1px solid rgba(16,185,129,0.2); }
+
+        .password-rules { font-size:.75em; color:#64748b; margin-top:4px; }
+        .field-hint { font-size:.75em; margin-top:4px; font-weight:600; transition:.2s; }
+        .field-hint.ok { color:#10b981; }
+        .field-hint.err { color:#ef4444; }
+        .field-hint.idle { color:#64748b; }
+
+        /* Toggle password */
+        .input-pw-wrap { position:relative; }
+        .input-pw-wrap input { padding-right:42px; }
+        .pw-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; font-size:1em; padding:2px; }
+        .pw-toggle:hover { color:#94a3b8; }
+
+        /* Loading spinner */
+        .spinner { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin .6s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* Toast */
+        .toast-zone { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast { padding:12px 20px; border-radius:10px; font-size:.85em; font-weight:600; animation:toastIn .3s ease-out; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+        .toast.success { background:#10b981; color:white; }
+        .toast.error { background:#ef4444; color:white; }
+        @keyframes toastIn { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+    </style>
+</head>
+<body>
+<script>(function(){var _f=window.fetch;window.fetch=function(i,init){try{var u=(typeof i==='string')?i:(i&&i.url)||'';if(/_api\.php/.test(u)){init=init||{};var t=localStorage.getItem('mdt_auth_token');if(t){var h=new Headers((init&&init.headers)||{});if(!h.has('Authorization'))h.set('Authorization','Bearer '+t);init.headers=h;}}}catch(e){}return _f.call(this,i,init);};})();</script>
+    <div class="bg"></div>
+    <div class="toast-zone" id="toastZone"></div>
+
+    <div class="login-box">
+
+        <div class="login-header">
+            <div class="secure-badge"><i class="fa-solid fa-lock"></i> ACCES SECURISE</div>
+            <br><br>
+            <img src="/mdt.png" alt="Logo">
+            <h1>MDT PORTAL</h1>
+            <p class="subtitle">Identifiez-vous pour acceder aux outils de service</p>
+            <div id="expiredNotice" style="display:none;margin-top:14px;padding:11px 14px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.45);border-radius:10px;color:#fbbf24;font-size:.86em;font-weight:600;">
+                <i class="fa-solid fa-clock-rotate-left"></i> Votre session a expiré — reconnectez-vous.
+            </div>
+        </div>
+        <script>
+        function loginNext() {
+            try {
+                var n = sessionStorage.getItem('mdt_login_next');
+                sessionStorage.removeItem('mdt_login_next');
+                if (n && n.charAt(0) === '/' && n.indexOf('//') !== 0) return n;
+            } catch (e) {}
+            return '/';
+        }
+</script>
+        <script>
+        (function () {
+            try {
+                var p = new URLSearchParams(location.search);
+                if (p.get('expired')) {
+                    var n = document.getElementById('expiredNotice'); if (n) n.style.display = 'block';
+                    var nx = p.get('next'); if (nx && nx.charAt(0) === '/') sessionStorage.setItem('mdt_login_next', nx);
+                }
+            } catch (e) {}
+        })();
+</script>
+
+        <div class="tabs" id="authTabs">
+            <div class="tab active" data-tab="login">Connexion</div>
+            <div class="tab" data-tab="register">Inscription</div>
+        </div>
+
+        <div class="form-body" id="loginForm">
+            <div class="error-msg" id="loginError"></div>
+            <div class="form-group">
+                <label>Identifiant</label>
+                <input type="text" id="loginUser" placeholder="Votre identifiant" autocomplete="username">
+                <div class="field-hint idle" id="hintLoginUser"></div>
+                <div class="password-rules" style="margin-top:5px;">
+                    C'est l'identifiant choisi à la création de votre compte (la casse et les
+                    espaces n'ont pas d'importance). Oublié ? Demandez-le à l'État-Major.
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <div class="input-pw-wrap">
+                    <input type="password" id="loginPass" placeholder="Votre mot de passe" autocomplete="current-password">
+                    <button type="button" class="pw-toggle" data-target="loginPass"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="field-hint idle" id="hintLoginPass"></div>
+            </div>
+            <button class="btn btn-primary" id="loginBtn">
+                <i class="fa-solid fa-right-to-bracket"></i> Se connecter
+            </button>
+            <p class="form-footer">Session memorisee jusqu'a deconnexion manuelle</p>
+        </div>
+
+        <div class="form-body" id="registerForm" style="display:none;">
+            <div class="error-msg" id="registerError"></div>
+            <div class="success-msg" id="registerSuccess"></div>
+            <div class="form-group">
+                <label>Identifiant</label>
+                <input type="text" id="regUser" placeholder="Choisissez un identifiant" autocomplete="username">
+                <div class="field-hint idle" id="hintUser">3 a 50 caracteres, lettres, chiffres, _ . -</div>
+            </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <div class="input-pw-wrap">
+                    <input type="password" id="regPass" placeholder="Choisissez un mot de passe" autocomplete="new-password">
+                    <button type="button" class="pw-toggle" data-target="regPass"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="field-hint idle" id="hintPass">6 caracteres minimum</div>
+            </div>
+            <div class="form-group">
+                <label>Confirmer le mot de passe</label>
+                <div class="input-pw-wrap">
+                    <input type="password" id="regPassConfirm" placeholder="Confirmez le mot de passe" autocomplete="new-password">
+                    <button type="button" class="pw-toggle" data-target="regPassConfirm"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="field-hint idle" id="hintConfirm"></div>
+            </div>
+            <button class="btn btn-primary" id="registerBtn">
+                <i class="fa-solid fa-user-plus"></i> Creer le compte
+            </button>
+        </div>
+
+        <div class="discord-link-panel" id="discordLinkPanel">
+            <h2><i class="fa-brands fa-discord" style="color:#5865F2;"></i> Liez votre Discord</h2>
+            <p>Liez votre compte Discord pour synchroniser votre pseudo, avatar et roles du serveur Limitless.</p>
+
+            <div class="discord-linked" id="discordLinkedInfo" style="display:none;">
+                <img id="discordAvatar" src="" alt="">
+                <div class="info">
+                    <div class="name" id="discordName"></div>
+                    <div class="tag" id="discordTag"></div>
+                </div>
+                <div class="check"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+
+            <button class="btn btn-discord" id="linkDiscordBtn">
+                <i class="fa-brands fa-discord"></i> Lier mon compte Discord
+            </button>
+
+            <button class="btn btn-outline" id="skipDiscordBtn">
+                Passer pour l'instant <i class="fa-solid fa-arrow-right"></i>
+            </button>
+
+            <p class="form-footer" style="margin-top:15px;">Vous pourrez lier votre Discord plus tard depuis votre profil.</p>
+        </div>
+    </div>
+
+<script>
+(function() {
+    var API_URL = 'auth_api.php';
+    var AUTH_PHP = 'auth.php';
+
+    var tabs = document.querySelectorAll('.tab');
+    var loginForm = document.getElementById('loginForm');
+    var registerForm = document.getElementById('registerForm');
+    var discordLinkPanel = document.getElementById('discordLinkPanel');
+    var authTabs = document.getElementById('authTabs');
+
+    var loginBtn = document.getElementById('loginBtn');
+    var registerBtn = document.getElementById('registerBtn');
+    var linkDiscordBtn = document.getElementById('linkDiscordBtn');
+    var skipDiscordBtn = document.getElementById('skipDiscordBtn');
+
+    var loginError = document.getElementById('loginError');
+    var registerError = document.getElementById('registerError');
+    var registerSuccess = document.getElementById('registerSuccess');
+
+    var existingToken = localStorage.getItem('mdt_auth_token');
+    if (existingToken) {
+        fetch(API_URL + '?action=validate', { headers: { 'Authorization': 'Bearer ' + existingToken } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.valid) {
+                    localStorage.setItem('mdt_user', JSON.stringify(data.user));
+                    syncLegacyToken(data.user);
+                    window.location.href = '/';
+                } else {
+                    localStorage.removeItem('mdt_auth_token');
+                    localStorage.removeItem('mdt_user');
+                    localStorage.removeItem('mdt_token');
+                    localStorage.removeItem('mdt_session');
+                }
+            })
+            .catch(function() {});
+    }
+
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('discord_linked') === '1') {
+        var discordData = null;
+        try { discordData = JSON.parse(sessionStorage.getItem('discord_link_data')); } catch(e) {}
+        if (discordData && existingToken) {
+            fetch(API_URL + '?action=link_discord', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + existingToken },
+                body: JSON.stringify(discordData)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var user = JSON.parse(localStorage.getItem('mdt_user') || '{}');
+                    user.discord_id = discordData.discord_id;
+                    user.discord_username = discordData.discord_username;
+                    user.discord_avatar = discordData.discord_avatar;
+                    user.discord_nick = discordData.discord_nick;
+                    user.discord_roles = discordData.discord_roles;
+                    localStorage.setItem('mdt_user', JSON.stringify(user));
+                    syncLegacyToken(user);
+                    sessionStorage.removeItem('discord_link_data');
+                    toast('Compte Discord lie avec succes !', 'success');
+                    setTimeout(function() { window.location.href = '/'; }, 1000);
+                } else {
+                    toast(data.error || 'Erreur lors de la liaison', 'error');
+                }
+            })
+            .catch(function() { toast('Erreur reseau', 'error'); });
+        }
+        window.history.replaceState({}, '', 'connexion');
+    }
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var target = this.getAttribute('data-tab');
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            loginForm.style.display = target === 'login' ? '' : 'none';
+            registerForm.style.display = target === 'register' ? '' : 'none';
+            discordLinkPanel.style.display = 'none';
+            hideErrors();
+        });
+    });
+
+    loginBtn.addEventListener('click', doLogin);
+    document.getElementById('loginPass').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('loginUser').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+
+    function doLogin() {
+        hideErrors();
+        var username = document.getElementById('loginUser').value.trim();
+        var password = document.getElementById('loginPass').value;
+
+        if (!username || !password) {
+            showError(loginError, 'Remplissez tous les champs');
+            return;
+        }
+
+        setLoading(loginBtn, true);
+
+        fetch(API_URL + '?action=login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        })
+        .then(function(r) {
+            if (!r.ok) return r.text().then(function(t) { try { return JSON.parse(t); } catch(e) { return { error: 'Erreur serveur (' + r.status + ')' }; } });
+            return r.json();
+        })
+        .then(function(data) {
+            setLoading(loginBtn, false);
+            if (data.error) {
+                showError(loginError, data.error);
+                toast(data.error || 'Mauvais identifiant ou mot de passe', 'error');
+                return;
+            }
+            if (data.success) {
+                localStorage.setItem('mdt_auth_token', data.token);
+                localStorage.setItem('mdt_user', JSON.stringify(data.user));
+                syncLegacyToken(data.user);
+
+                if (!data.user.discord_id) {
+                    showDiscordLinkPanel();
+                } else {
+                    toast('Connexion reussie !', 'success');
+                    setTimeout(function() { window.location.href = loginNext(); }, 600);
+                }
+            }
+        })
+        .catch(function() {
+            setLoading(loginBtn, false);
+            showError(loginError, 'Erreur reseau, reessayez');
+            toast('Erreur reseau', 'error');
+        });
+    }
+
+    registerBtn.addEventListener('click', doRegister);
+    document.getElementById('regPassConfirm').addEventListener('keydown', function(e) { if (e.key === 'Enter') doRegister(); });
+
+    function doRegister() {
+        hideErrors();
+        var username = document.getElementById('regUser').value.trim();
+        var password = document.getElementById('regPass').value;
+        var confirm = document.getElementById('regPassConfirm').value;
+
+        if (!username || !password || !confirm) {
+            showError(registerError, 'Remplissez tous les champs');
+            return;
+        }
+        if (password !== confirm) {
+            showError(registerError, 'Les mots de passe ne correspondent pas');
+            return;
+        }
+        if (password.length < 6) {
+            showError(registerError, 'Mot de passe: 6 caracteres minimum');
+            return;
+        }
+
+        setLoading(registerBtn, true);
+
+        fetch(API_URL + '?action=register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        })
+        .then(function(r) {
+            if (!r.ok) return r.text().then(function(t) { try { return JSON.parse(t); } catch(e) { return { error: 'Erreur serveur (' + r.status + ')' }; } });
+            return r.json();
+        })
+        .then(function(data) {
+            setLoading(registerBtn, false);
+            if (data.error) {
+                showError(registerError, data.error);
+                return;
+            }
+            if (data.success) {
+                localStorage.setItem('mdt_auth_token', data.token);
+                localStorage.setItem('mdt_user', JSON.stringify(data.user));
+                syncLegacyToken(data.user);
+
+                showDiscordLinkPanel();
+            }
+        })
+        .catch(function() {
+            setLoading(registerBtn, false);
+            showError(registerError, 'Erreur reseau, reessayez');
+        });
+    }
+
+    function showDiscordLinkPanel() {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'none';
+        authTabs.style.display = 'none';
+        discordLinkPanel.style.display = 'block';
+    }
+
+    linkDiscordBtn.addEventListener('click', function() {
+        window.location.href = AUTH_PHP + '?action=link';
+    });
+
+    skipDiscordBtn.addEventListener('click', function() {
+        window.location.href = '/';
+    });
+
+    function syncLegacyToken(user) {
+        var legacyToken = {
+            username: user.discord_username || user.username,
+            avatar: user.discord_avatar || null,
+            id: user.discord_id || String(user.id),
+            roles: user.discord_roles || [],
+            expires_at: Math.floor(Date.now() / 1000) + (365 * 24 * 3600)
+        };
+        localStorage.setItem('mdt_token', JSON.stringify(legacyToken));
+        localStorage.setItem('mdt_session', JSON.stringify(legacyToken));
+    }
+
+    function setHint(id, msg, state) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg;
+        el.className = 'field-hint ' + state;
+    }
+
+    document.getElementById('loginUser').addEventListener('input', function() {
+        var v = this.value.trim();
+        if (!v) { setHint('hintLoginUser', '', 'idle'); return; }
+        if (v.length < 3) setHint('hintLoginUser', 'Identifiant trop court', 'err');
+        else setHint('hintLoginUser', 'Correct', 'ok');
+    });
+    document.getElementById('loginPass').addEventListener('input', function() {
+        var v = this.value;
+        if (!v) { setHint('hintLoginPass', '', 'idle'); return; }
+        if (v.length < 6) setHint('hintLoginPass', 'Mot de passe trop court', 'err');
+        else setHint('hintLoginPass', 'Correct', 'ok');
+    });
+
+    document.getElementById('regUser').addEventListener('input', function() {
+        var v = this.value.trim();
+        if (!v) { setHint('hintUser', '3 a 50 caracteres, lettres, chiffres, _ . -', 'idle'); return; }
+        if (v.length < 3) { setHint('hintUser', 'Trop court (' + v.length + '/3 min)', 'err'); return; }
+        if (v.length > 50) { setHint('hintUser', 'Trop long (50 max)', 'err'); return; }
+        if (!/^[a-zA-Z0-9_.\-]+$/.test(v)) { setHint('hintUser', 'Caracteres interdits (lettres, chiffres, _ . - uniquement)', 'err'); return; }
+        setHint('hintUser', 'Correct', 'ok');
+    });
+    document.getElementById('regPass').addEventListener('input', function() {
+        var v = this.value;
+        if (!v) { setHint('hintPass', '6 caracteres minimum', 'idle'); return; }
+        if (v.length < 6) { setHint('hintPass', 'Trop court (' + v.length + '/6 min)', 'err'); return; }
+        setHint('hintPass', 'Correct', 'ok');
+        var conf = document.getElementById('regPassConfirm').value;
+        if (conf) { checkConfirm(conf, v); }
+    });
+    document.getElementById('regPassConfirm').addEventListener('input', function() {
+        var v = this.value;
+        var pass = document.getElementById('regPass').value;
+        checkConfirm(v, pass);
+    });
+    function checkConfirm(conf, pass) {
+        if (!conf) { setHint('hintConfirm', '', 'idle'); return; }
+        if (conf !== pass) setHint('hintConfirm', 'Les mots de passe ne correspondent pas', 'err');
+        else setHint('hintConfirm', 'Correct', 'ok');
+    }
+
+    document.querySelectorAll('.pw-toggle').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var input = document.getElementById(this.getAttribute('data-target'));
+            var icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        });
+    });
+
+    function showError(el, msg) { el.textContent = msg; el.style.display = ''; }
+    function hideErrors() {
+        loginError.style.display = 'none';
+        registerError.style.display = 'none';
+        registerSuccess.style.display = 'none';
+    }
+
+    function setLoading(btn, loading) {
+        if (loading) {
+            btn.disabled = true;
+            btn._origHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner"></span> Chargement...';
+        } else {
+            btn.disabled = false;
+            if (btn._origHTML) btn.innerHTML = btn._origHTML;
+        }
+    }
+
+    function toast(msg, type) {
+        var zone = document.getElementById('toastZone');
+        var t = document.createElement('div');
+        t.className = 'toast ' + type;
+        t.textContent = msg;
+        zone.appendChild(t);
+        setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+    }
+})();
+</script>
+<script src="/nui-bridge.js"></script>
+</body>
+</html>

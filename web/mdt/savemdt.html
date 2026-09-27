@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Limitless - MDT MDT</title>
+    <link href="/assets/fonts/inter.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --input-bg: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-da: #a855f7;
+            --accent-ra: #0ea5e9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); background-image: radial-gradient(circle at top right, #1e293b 0%, transparent 40%); color: var(--text-main); margin: 0; padding: 20px; min-height: 100vh; }
+
+        /* --- LAYOUT --- */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .header h1 { margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header .subtitle { font-size: 0.9em; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        .container { display: grid; grid-template-columns: 1.3fr 1fr; gap: 30px; max-width: 1600px; margin: 0 auto; }
+
+        /* --- CARDS & INPUTS --- */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+        .card:hover { border-color: var(--primary); }
+        h2 { font-size: 1.1em; color: var(--primary); margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.85em; color: var(--text-muted); }
+        input, select, textarea { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid transparent; color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: #2d3748; }
+        textarea { height: 120px; resize: vertical; line-height: 1.5; }
+
+        /* --- SEARCHABLE DROPDOWN --- */
+        .search-container { position: relative; width: 100%; }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--primary); border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 1000; display: none; margin-top: 5px; box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
+        .dropdown-list.show { display: block; }
+        .dropdown-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #334155; font-size: 0.9em; display: flex; align-items: center; }
+        .dropdown-item:hover { background: var(--primary); color: white; }
+        .item-badge { font-size: 0.75em; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 10px; width: 35px; text-align: center; }
+        .bdg-B { background: var(--success); color: #000; }
+        .bdg-C { background: #facc15; color: #000; }
+        .bdg-D { background: var(--warning); color: #000; }
+        .bdg-E { background: var(--danger); color: #fff; }
+
+        /* --- CHARGES LIST UI --- */
+        .charges-container { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .charge-card { background: #334155; border-radius: 8px; padding: 10px 15px; border-left: 4px solid var(--border); display: flex; flex-direction: column; gap: 5px; animation: slideDown 0.2s ease-out; }
+        .charge-card.type-B { border-left-color: var(--success); }
+        .charge-card.type-C { border-left-color: #facc15; }
+        .charge-card.type-D { border-left-color: var(--warning); }
+        .charge-card.type-E { border-left-color: var(--danger); }
+
+        .charge-header { display: flex; justify-content: space-between; align-items: center; }
+        .charge-title { font-weight: 600; font-size: 0.95em; }
+        .charge-price { color: var(--success); font-weight: bold; font-family: monospace; font-size: 1.1em; }
+        .charge-actions { display: flex; gap: 10px; align-items: center; }
+
+        .charge-options { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; margin-top: 5px; display: none; font-size: 0.85em; }
+        .charge-options.show { display: block; }
+
+        /* Compteur */
+        .tier-control { display: flex; align-items: center; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+        .tier-btn { background: var(--input-bg); border: none; color: white; padding: 5px 12px; cursor: pointer; font-weight: bold; font-size: 1.1em; transition: 0.2s; }
+        .tier-btn:hover { background: var(--primary); }
+        .tier-count { padding: 0 12px; font-weight: bold; min-width: 20px; text-align: center; }
+
+        .btn-remove { color: var(--text-muted); cursor: pointer; background: none; border: none; font-size: 1.2em; transition:0.2s; }
+        .btn-remove:hover { color: var(--danger); }
+        .btn-settings { color: var(--text-muted); cursor: pointer; background: none; border: none; font-size: 1.1em; transition:0.2s; }
+        .btn-settings:hover { color: var(--primary); }
+
+        /* --- ITEMS DYNAMIQUES (Armes, Drogues...) --- */
+        .dynamic-item-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; animation: slideDown 0.2s ease-out; }
+        .dynamic-item-row input { padding: 8px; font-size: 0.9em; }
+        .dynamic-container { margin-bottom: 15px; }
+        .add-btn-small { background: var(--input-bg); border: 1px solid var(--border); color: var(--text-muted); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: 0.2s; margin-bottom: 5px; display: inline-block; }
+        .add-btn-small:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* --- BUTTONS & UTILS --- */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition:0.2s; }
+        .btn-add { background: var(--primary); color: white; width: auto; height: 42px; }
+        .btn-add:hover { background: var(--primary-hover); transform:translateY(-1px); }
+        .copy-btn { background: rgba(255,255,255,0.1); color: var(--primary); font-size: 0.8em; padding: 6px 12px; }
+        .copy-btn:hover { background: var(--primary); color: white; }
+
+        .row { display: flex; gap: 15px; } .col { flex: 1; }
+        .input-group { display: flex; gap: 10px; align-items: flex-start; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Dynamic Lists */
+        .simple-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .simple-chip { background: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.85em; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+        /* Preview */
+        .mdt-preview { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; margin-bottom: 20px; }
+        .mdt-header { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .mdt-input { width: 100%; background: transparent; border: none; color: #cbd5e1; font-family: 'Consolas', monospace; padding: 15px; font-size:0.9em; }
+        .mdt-textarea { min-height: 400px; white-space: pre-wrap; }
+
+        .mdt-textarea-small { min-height: 120px; white-space: pre-wrap; }
+
+        #da-fields { background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-da); padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+        #da-fields h3 { color: var(--accent-da); font-size: 0.9em; text-transform: uppercase; margin-top: 0; }
+    </style>
+</head>
+<body>
+<script>(function(){var _f=window.fetch;window.fetch=function(i,init){try{var u=(typeof i==='string')?i:(i&&i.url)||'';if(/_api\.php/.test(u)){init=init||{};var t=localStorage.getItem('mdt_auth_token');if(t){var h=new Headers((init&&init.headers)||{});if(!h.has('Authorization'))h.set('Authorization','Bearer '+t);init.headers=h;}}}catch(e){}return _f.call(this,i,init);};})();</script>
+
+<div class="header">
+    <div>
+        <div class="subtitle">San Andreas State Police - Limitless</div>
+        <h1>MDT - Assistant de Rapport</h1>
+    </div>
+    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+        <div id="badge-mode" style="padding: 5px 12px; border-radius: 6px; font-weight: 800; font-size: 0.8em; background: var(--accent-ra);">MODE RA</div>
+        <a href="../index" style="padding: 8px 16px; background: var(--input-bg); border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; font-size: 0.85em; font-weight: 600; text-decoration: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='var(--primary)';this.style.color='white';this.style.borderColor='var(--primary)'" onmouseout="this.style.background='var(--input-bg)';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">&#8592; Menu</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="left-col">
+
+        <div style="background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); margin-bottom: 20px;">
+            <label style="margin:0;">SYSTEME :</label>
+            <select id="mode-force" style="width:auto; margin:0;" onchange="generate()">
+                <option value="auto">🤖 AUTO (Recommandé)</option>
+                <option value="da">🚨 FORCER D.A.</option>
+                <option value="ra">📝 FORCER R.A.</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h2>👮 Effectifs & Suspects</h2>
+            <div class="row">
+                <div class="col">
+                    <label>Agent</label>
+                    <div class="input-group">
+                        <div class="search-container">
+                            <input type="text" id="officer-input" placeholder="Rechercher..." autocomplete="off">
+                            <div class="dropdown-list" id="officer-list-dropdown"></div>
+                        </div>
+                        <button class="btn btn-add" onclick="addOfficer()">+</button>
+                    </div>
+                    <div id="officer-list" class="simple-list"></div>
+                </div>
+                <div class="col">
+                    <label>Suspect</label>
+                    <div class="input-group">
+                        <input type="text" id="suspect-input" placeholder="Nom Prénom..." onkeypress="handleEnter(event, addSuspect)">
+                        <button class="btn btn-add" onclick="addSuspect()">+</button>
+                    </div>
+                    <div id="suspect-list" class="simple-list"></div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:15px;">
+                <div class="col"><label>Date Incident</label><input type="date" id="date"></div>
+                <div class="col"><label>Heure Incident</label><input type="time" id="heure"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚖️ Infractions & Circonstances</h2>
+            <div class="input-group">
+                <div class="search-container">
+                    <input type="text" id="charge-input" placeholder="Rechercher code (ex: D10, Vitesse, Braquage...)" autocomplete="off">
+                    <div class="dropdown-list" id="charge-list-dropdown"></div>
+                </div>
+                <button class="btn btn-add" onclick="addCharge()">AJOUTER</button>
+            </div>
+
+            <div id="charges-container" class="charges-container">
+                <div style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px;">Aucune infraction sélectionnée</div>
+            </div>
+
+            <div style="text-align: right; margin-top: 15px; font-weight: bold; font-size: 1.1em; border-top: 1px solid var(--border); padding-top: 10px;">
+                TOTAL AMENDE: <span id="total-amende" style="color: var(--success);">$0</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📝 Contexte & Procédure</h2>
+
+            <div class="row">
+                <div class="col">
+                    <label>Lieu de l'arrestation</label>
+                    <input type="text" id="lieu" oninput="generate()" placeholder="Ex: Vinewood, Sandy Shores...">
+                </div>
+                <div class="col">
+                    <label>Nature de l'incident</label>
+                    <input type="text" id="nature" oninput="generate()" placeholder="Ex: Contrôle routier, Appel 911...">
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:15px;">
+                <div class="col">
+                    <label>Lecture des droits ?</label>
+                    <select id="miranda" onchange="generate()">
+                        <option value="Oui">Oui</option>
+                        <option value="Non">Non</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>Moyen d'arrestation</label>
+                    <input type="text" id="moyen" oninput="generate()" placeholder="Ex: Menottes, Taser...">
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:15px;">
+                <div class="col">
+                    <label>Demande Avocat ?</label>
+                    <select id="avocat" onchange="toggleAvocatResult(); generate();">
+                        <option value="Non">Non</option>
+                        <option value="Oui">Oui</option>
+                    </select>
+                </div>
+                <div class="col" id="avocat-result-box" style="display:none;">
+                    <label style="color:var(--primary);">Résultat</label>
+                    <select id="avocat-result" onchange="generate()">
+                        <option value="Accord">✅ Accord</option>
+                        <option value="Desaccord">❌ Désaccord</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:15px;">
+                <label>Usage force ?</label>
+                <select id="force" onchange="generate()"><option value="Non">Non</option><option value="Oui">Oui</option></select>
+            </div>
+
+            <div style="margin-top:15px;">
+                <label>Récit</label>
+                <textarea id="recit" oninput="generate()" placeholder="Faits..."></textarea>
+            </div>
+
+            <div id="da-fields">
+                <h3>📂 Complément Dossier Arrestation (DA)</h3>
+
+                <div class="row">
+                    <div class="col">
+                        <label>Description Physique</label>
+                        <input type="text" id="da-physique" oninput="generate()" placeholder="Taille, corpulence, vêtements...">
+                    </div>
+                    <div class="col">
+                        <label>Identifiant Véhicule (Suspect)</label>
+                        <input type="text" id="da-vehicule" oninput="generate()" placeholder="Marque, modèle, plaque...">
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:10px;">
+                    <div class="col">
+                        <label>Heure Lecture Miranda</label>
+                        <input type="time" id="da-miranda-heure" oninput="generate()">
+                    </div>
+                    <div class="col">
+                        <label>Date de sortie</label>
+                        <input type="text" id="da-date-sortie" oninput="generate()" placeholder="En attente / Date">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; border-top: 1px solid var(--border); padding-top:10px;">
+                    <h4 style="color:var(--warning); margin:0 0 10px 0;">📦 Saisies & Confiscations</h4>
+
+                    <div class="dynamic-container">
+                        <button class="add-btn-small" onclick="addWeapon()">+ Ajouter Arme</button>
+                        <div id="weapons-list"></div>
+                    </div>
+
+                    <div class="dynamic-container">
+                        <button class="add-btn-small" onclick="addIllegal()">+ Ajouter Drogue/Objet</button>
+                        <div id="illegals-list"></div>
+                    </div>
+
+                    <div class="dynamic-container">
+                        <button class="add-btn-small" onclick="addSeizureVehicle()">+ Ajouter Véhicule Saisi</button>
+                        <div id="seizures-list"></div>
+                    </div>
+
+                    <div style="margin-top:10px;">
+                        <label>Autres éléments récupérés</label>
+                        <input type="text" id="da-autres" oninput="generate()" placeholder="Argent sale, téléphone, radio...">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; border-top:1px solid #475569; paddingTop:10px;">
+                    <label>Grade du rédacteur</label>
+                    <input type="text" id="da-grade" oninput="generate()" placeholder="Ex: Trooper, Sergent...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-col">
+        <h2 style="color: white; border-bottom: none;">PRÉVISUALISATION</h2>
+
+        <div class="mdt-preview">
+            <div class="mdt-header">
+                <label>TITRE</label>
+                <button class="copy-btn" onclick="copyTitle(this)">COPIER</button>
+            </div>
+            <input type="text" id="output-title" class="mdt-input" readonly>
+        </div>
+
+        <div class="mdt-preview">
+            <div class="mdt-header">
+                <label>CONTENU</label>
+                <button class="copy-btn" onclick="copyContent(this, 'output-content')">COPIER TEXTE</button>
+            </div>
+            <textarea id="output-content" class="mdt-input mdt-textarea" readonly></textarea>
+        </div>
+
+        <div class="mdt-preview" style="border-color: var(--warning);">
+            <div class="mdt-header">
+                <label style="color:var(--warning)">DEMANDE AVOCAT</label>
+                <button class="copy-btn" onclick="copyContent(this, 'output-avocat')">COPIER</button>
+            </div>
+            <textarea id="output-avocat" class="mdt-input mdt-textarea-small" readonly></textarea>
+        </div>
+
+        <div class="mdt-preview" style="border-color: var(--accent-da);">
+            <div class="mdt-header">
+                <label style="color:var(--accent-da)">DEMANDE DOJ (JUGE/PROC)</label>
+                <button class="copy-btn" onclick="copyContent(this, 'output-doj')">COPIER</button>
+            </div>
+            <textarea id="output-doj" class="mdt-input mdt-textarea-small" readonly></textarea>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const DEFAULT_ROSTER = [];
+    let ROSTER = DEFAULT_ROSTER.slice();
+
+    let DB = [];
+
+    let state = { officers: [], suspects: [], charges: [] };
+    let tempCharge = null;
+
+    window.onload = async () => {
+        try {
+            const penalRes = await fetch('/penal/penal_api.php?action=list');
+            const penalData = await penalRes.json();
+            var penalArr = Array.isArray(penalData) ? penalData : ((penalData && penalData.infractions) ? penalData.infractions : []); if (penalArr.length > 0) DB = penalArr;
+        } catch(e) { console.warn('Erreur chargement code penal:', e); }
+
+        try {
+            const res = await fetch('../roster_api.php?action=list', { headers: (function(){ try { var t = localStorage.getItem('mdt_auth_token') || ''; return t ? { Authorization: 'Bearer ' + t } : {}; } catch(e) { return {}; } })() });
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) ROSTER = data;
+        } catch(e) { }
+
+        document.getElementById('date').valueAsDate = new Date();
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('heure').value = timeStr;
+        document.getElementById('da-miranda-heure').value = timeStr;
+
+        setupDropdown('officer-input', 'officer-list-dropdown', ROSTER.map(x=>({l:x, v:x})), (i)=>{ document.getElementById('officer-input').value = i.v; });
+        setupDropdown('charge-input', 'charge-list-dropdown', DB.map(x=>({l: `${x.code} - ${x.label} ($${x.price})`, v:x.code, data:x})), (i)=>{
+            document.getElementById('charge-input').value = i.l;
+            tempCharge = i.data;
+        }, true);
+        generate();
+    };
+
+    function handleEnter(e, f) { if(e.key==='Enter') f(); }
+
+    function addWeapon() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-row weapon-item';
+        div.innerHTML = `
+            <input type="text" class="w-type" placeholder="Type d'arme" style="flex:1" oninput="generate()">
+            <input type="text" class="w-serial" placeholder="Numéro de série" style="flex:1" oninput="generate()">
+            <button class="btn-remove" onclick="this.parentElement.remove(); generate()">×</button>
+        `;
+        document.getElementById('weapons-list').appendChild(div);
+    }
+
+    function addIllegal() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-row illegal-item';
+        div.innerHTML = `
+            <input type="text" class="i-type" placeholder="Type Objet/Drogue" style="flex:2" oninput="generate()">
+            <input type="text" class="i-qty" placeholder="Quantité" style="flex:1" oninput="generate()">
+            <button class="btn-remove" onclick="this.parentElement.remove(); generate()">×</button>
+        `;
+        document.getElementById('illegals-list').appendChild(div);
+    }
+
+    function addSeizureVehicle() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-row vehicle-item';
+        div.innerHTML = `
+            <input type="text" class="v-model" placeholder="Modèle" style="flex:1" oninput="generate()">
+            <input type="text" class="v-plate" placeholder="Plaque" style="width:80px" oninput="generate()">
+            <input type="text" class="v-color" placeholder="Couleur" style="width:80px" oninput="generate()">
+            <button class="btn-remove" onclick="this.parentElement.remove(); generate()">×</button>
+        `;
+        document.getElementById('seizures-list').appendChild(div);
+    }
+
+    function escH(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+        function setupDropdown(inputId, listId, data, onSelect, isCharge=false) {
+        const inp = document.getElementById(inputId);
+        const lst = document.getElementById(listId);
+        const render = (filter) => {
+            lst.innerHTML = '';
+            const res = data.filter(x => x.l.toLowerCase().includes(filter.toLowerCase()));
+            if(!res.length) return lst.classList.remove('show');
+            res.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                let html = escH(item.l);
+                if(isCharge && item.data) html = `<span class="item-badge bdg-${escH(item.data.cat)}">${escH(item.data.cat)}</span>` + html;
+                div.innerHTML = html;
+                div.onclick = () => { onSelect(item); lst.classList.remove('show'); };
+                lst.appendChild(div);
+            });
+            lst.classList.add('show');
+        };
+        inp.addEventListener('input', (e) => render(e.target.value));
+        inp.addEventListener('focus', (e) => render(e.target.value));
+        document.addEventListener('click', (e) => { if(!inp.contains(e.target) && !lst.contains(e.target)) lst.classList.remove('show'); });
+    }
+
+    function addOfficer() { const v = document.getElementById('officer-input').value; if(v && !state.officers.includes(v)) { state.officers.push(v); updateLists(); document.getElementById('officer-input').value=''; generate(); } }
+    function addSuspect() { const v = document.getElementById('suspect-input').value; if(v) { state.suspects.push(v); updateLists(); document.getElementById('suspect-input').value=''; generate(); } }
+
+    function addCharge() {
+        if(!tempCharge) return;
+        state.charges.push({ ...tempCharge, currentTier: 0, finalPrice: tempCharge.price });
+        tempCharge = null;
+        document.getElementById('charge-input').value = '';
+        renderCharges();
+        generate();
+    }
+
+    function changeTier(index, delta) {
+        const c = state.charges[index];
+        if(!c.tiers) return;
+        let newTier = c.currentTier + delta;
+        if(newTier < 0) newTier = 0;
+        if(newTier >= c.tiers.length) newTier = c.tiers.length - 1;
+        c.currentTier = newTier;
+        c.finalPrice = c.tiers[newTier];
+        renderCharges();
+        generate();
+    }
+
+    function removeCharge(index) { state.charges.splice(index, 1); renderCharges(); generate(); }
+
+    function renderCharges() {
+        const c = document.getElementById('charges-container');
+        c.innerHTML = '';
+        let total = 0;
+        if(state.charges.length === 0) c.innerHTML = '<div style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px;">Aucune infraction sélectionnée</div>';
+        state.charges.forEach((charge, idx) => {
+            total += charge.finalPrice;
+            let tierInfo = "";
+            let btnHtml = "";
+            if(charge.tiers) {
+                if(charge.currentTier > 0) tierInfo = `<span style="font-size:0.8em; color:#facc15; font-weight:bold;">⚠️ ${charge.currentTier} Circ. aggravante(s)</span>`;
+                else tierInfo = `<span style="font-size:0.8em; color:#94a3b8;">Prix de base</span>`;
+                btnHtml = `<div id="opt-${idx}" class="charge-options show"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="color:#cbd5e1;">Circonstances :</span><div class="tier-control"><button class="tier-btn" onclick="changeTier(${idx}, -1)">-</button><div class="tier-count">${charge.currentTier}</div><button class="tier-btn" onclick="changeTier(${idx}, 1)">+</button></div></div></div>`;
+            } else { btnHtml = `<div class="charge-options" style="display:none"></div>`; }
+            const div = document.createElement('div');
+            div.className = `charge-card type-${charge.cat}`;
+            div.innerHTML = `<div class="charge-header"><div class="charge-title"><span class="item-badge bdg-${charge.cat}" style="color:black">${charge.cat}</span>${charge.code} - ${charge.label}</div><div class="charge-actions"><span class="charge-price">$${charge.finalPrice.toLocaleString()}</span><button class="btn-settings" onclick="toggleOptions(${idx})" title="Options">⚙️</button><button class="btn-remove" onclick="removeCharge(${idx})">×</button></div></div><div>${tierInfo}</div>${btnHtml}`;
+            c.appendChild(div);
+        });
+        document.getElementById('total-amende').innerText = '$' + total.toLocaleString();
+    }
+
+    function toggleOptions(idx) { const el = document.getElementById(`opt-${idx}`); if(el) el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
+    function updateLists() { const render = (id, arr, delFn) => { const el = document.getElementById(id); let h = ''; arr.forEach((x, i) => { h += `<div class="simple-chip"><span>${escH(x)}</span><span style="cursor:pointer;color:#ef4444" onclick="state.${delFn}.splice(${i},1);updateLists();generate()">×</span></div>`; }); el.innerHTML = h; }; render('officer-list', state.officers, 'officers'); render('suspect-list', state.suspects, 'suspects'); }
+    function toggleAvocatResult() { const v = document.getElementById('avocat').value; document.getElementById('avocat-result-box').style.display = v === 'Oui' ? 'block' : 'none'; }
+
+    function generate() {
+        const modeForce = document.getElementById('mode-force').value;
+        const date = document.getElementById('date').value.split('-').reverse().join('/');
+        const heure = document.getElementById('heure').value.replace(':','h');
+        const lieu = document.getElementById('lieu').value || "San Andreas";
+        const nature = document.getElementById('nature').value || "Intervention Police";
+        const miranda = document.getElementById('miranda').value;
+        const moyen = document.getElementById('moyen').value || "Menottage";
+        const avocat = document.getElementById('avocat').value;
+        const avocatRes = document.getElementById('avocat-result').value;
+        const force = document.getElementById('force').value;
+        const recit = document.getElementById('recit').value || '...';
+
+        const daPhys = document.getElementById('da-physique').value || '[Taille, corpulence, vêtements]';
+        const daVeh = document.getElementById('da-vehicule').value || '[Marque, modèle, couleur, plaque]';
+        const daMirandaHeure = document.getElementById('da-miranda-heure').value.replace(':','h') || '00h00';
+        const daDateSortie = document.getElementById('da-date-sortie').value || 'En attente';
+        const daAutres = document.getElementById('da-autres').value || '';
+        const daGrade = document.getElementById('da-grade').value || 'Grade';
+
+        let weapons = [];
+        document.querySelectorAll('.weapon-item').forEach(el => {
+            let t = el.querySelector('.w-type').value;
+            let s = el.querySelector('.w-serial').value;
+            if(t) weapons.push(`- ${t} (SN: ${s || 'N/A'})`);
+        });
+        const daArmes = weapons.length ? "\n" + weapons.join("\n") : "N/A";
+
+        let illegals = [];
+        document.querySelectorAll('.illegal-item').forEach(el => {
+            let t = el.querySelector('.i-type').value;
+            let q = el.querySelector('.i-qty').value;
+            if(t) illegals.push(`- ${t} (x${q || '1'})`);
+        });
+        const daIllegals = illegals.length ? "\n" + illegals.join("\n") : "N/A";
+
+        let vehicles = [];
+        document.querySelectorAll('.vehicle-item').forEach(el => {
+            let m = el.querySelector('.v-model').value;
+            let p = el.querySelector('.v-plate').value;
+            let c = el.querySelector('.v-color').value;
+            if(m) vehicles.push(`- ${m} ${c ? '('+c+')' : ''} immatriculée (${p || 'Inconnue'})`);
+        });
+        const daVehConfisc = vehicles.length ? "\n" + vehicles.join("\n") : "N/A";
+
+        let total = 0; let maxSev = 'B'; let chargesTxt = "";
+        state.charges.forEach(c => {
+            total += c.finalPrice;
+            let detail = "";
+            if(c.currentTier > 0) detail = ` (Aggravé x${c.currentTier})`;
+            chargesTxt += `Art. ${c.code} : ${c.label}${detail}\n`;
+            if(c.cat === 'C' && maxSev === 'B') maxSev = 'C';
+            if(c.cat === 'D' && maxSev !== 'E') maxSev = 'D';
+            if(c.cat === 'E') maxSev = 'E';
+        });
+
+        let isDA = false;
+        if(maxSev === 'D' || maxSev === 'E') isDA = true;
+        if(avocat === 'Oui' && avocatRes !== 'Accord') isDA = true;
+        if(modeForce === 'da') isDA = true;
+        if(modeForce === 'ra') isDA = false;
+
+        document.getElementById('da-fields').style.display = isDA ? 'block' : 'none';
+        const badge = document.getElementById('badge-mode');
+        badge.innerText = isDA ? "MODE DA (Dossier)" : "MODE RA (Simple)";
+        badge.style.background = isDA ? "var(--accent-da)" : "var(--accent-ra)";
+
+        let suspectsStr = state.suspects.length ? state.suspects.join(" & ") : "Prénom Nom";
+        let officersStr = state.officers.length ? state.officers.join(" - ") : "00 | Nom Prénom";
+        let mainCharge = state.charges.length ? state.charges[0].label : "Infraction";
+
+        let avocatLineRA = `- Demande d'avocat : ${avocat}`;
+        if(avocat === 'Oui') avocatLineRA += `\n- Intervention de l'avocat : ${avocatRes === 'Accord' ? 'Oui (Accord)' : 'Oui (Désaccord)'}`;
+
+        let avocatLineDA = `- Le suspect a demandé à **${avocat === 'Oui' ? 'avoir' : 'ne pas avoir'}** d'avocat.`;
+        if(avocat === 'Oui') avocatLineDA += ` **${avocatRes === 'Accord' ? 'L\'avocat s\'est présenté.' : 'L\'avocat ne s\'est pas présenté / n\'était pas disponible'}**`;
+
+        document.getElementById('output-title').value = `${mainCharge} | ${suspectsStr} | ${isDA?'DA':'RA'} ${date}`;
+
+        let content = "";
+        if(!isDA) {
+            content = `> **Détails de l'Arrestation**
+
+- Trooper en Charge : ${officersStr}
+- Date et Heure : ${date} à ${heure}
+- Lieu de l'Arrestation : ${lieu}
+- Nature de l'Incident : ${nature}
+- Lecture des droits : ${miranda}
+
+> **Rapport de l'Arrestation**
+
+${recit}
+
+> **Chefs d'inculpation :**
+
+${chargesTxt}
+${avocatLineRA}
+- Usage de la force : ${force}
+- Moyen d'arrestation : ${moyen}
+- Montant de l'amende : ${total}$`;
+        } else {
+            let suspList = state.suspects.length ? state.suspects.map(x=>`- ${x}`).join('\n') : "- Prénom Nom";
+            let autresElements = daAutres ? `- ${daAutres}` : "";
+            content = `> **Dossier d'arrestation**
+
+- Date : ${date}
+- Heure : ${heure}
+- Trooper impliqué(s) : ${officersStr}
+
+**Suspect(s) :**
+
+${suspList}
+- Description physique : ${daPhys}
+- Identifiant véhicule : ${daVeh}
+
+> **Résumé de l'Incident :**
+
+${recit}
+
+> **Déroulement de l'arrestation :**
+
+- À ${heure},
+- Lecture des droits Miranda à ${daMirandaHeure}
+- Date de sortie : ${daDateSortie}
+
+> **Preuves et Confiscations :**
+
+- Arme(s) trouvé(es) : ${daArmes}
+- Drogue(s) / Objet(s) illégal(aux) trouvé(s) : ${daIllegals}
+- Véhicules : ${daVehConfisc}
+${autresElements}
+
+> **Chefs d'accusation :**
+
+${chargesTxt}
+${avocatLineDA}
+
+> **Rédigé par :**
+
+- ${officersStr.split(" - ")[0] || "00 | Nom Prénom"}
+- ${daGrade}
+- Date : ${date}`;
+        }
+        document.getElementById('output-content').value = content;
+
+        let badgeNumber = "00";
+        if(state.officers.length > 0) {
+            let firstOfficer = state.officers[0];
+            badgeNumber = firstOfficer.split('|')[0].trim();
+        }
+
+        let avocatText = `Bonsoir, <@&1371463911647481856> \n Nous avons besoin de vous au poste de Vespucci pour:\n\n`;
+        avocatText += `**Suspect(s) :** ${suspectsStr}\n\n`;
+        avocatText += `**Infractions reprochées :**\n${chargesTxt || "Aucune"}\n`;
+        avocatText += `**Cordialement, ** ${badgeNumber}`;
+
+        document.getElementById('output-avocat').value = avocatText;
+
+        let dojText = `Bonsoir, <@&1371578208125849650> <@&1371577983726387200>\n Nous avons besoin de vous au poste de Vespucci\n\n`;
+        dojText += `**Dossier concernant :** ${suspectsStr}\n`;
+        dojText += `**Infractions :**\n${chargesTxt || "Aucune..."}\n\n`;
+        dojText += `**Cordialement, ** ${badgeNumber}`;
+
+        document.getElementById('output-doj').value = dojText;
+    }
+
+    function copyTitle(b){ navigator.clipboard.writeText(document.getElementById('output-title').value).then(()=>{ b.innerText="OK"; setTimeout(()=>b.innerText="COPIER",1000); }).catch(()=>{ b.innerText="ECHEC"; setTimeout(()=>b.innerText="COPIER",1200); }); }
+    function copyContent(b, id){ navigator.clipboard.writeText(document.getElementById(id).value).then(()=>{ b.innerText="OK"; setTimeout(()=>b.innerText="COPIER",1000); }).catch(()=>{ b.innerText="ECHEC"; setTimeout(()=>b.innerText="COPIER",1200); }); }
+</script>
+<script src="/login/secure.js"></script>
+<script src="/dispatch_widget.js?v=18"></script>
+<script src="/nui-bridge.js"></script>
+<script src="/assets/chatwidget.js"></script>
+</body>
+</html>

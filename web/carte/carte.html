@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr" data-module="carte">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - Carte tactique</title>
+<link rel="stylesheet" href="/assets/app.css">
+<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
+<script>
+(function () {
+  if (/[?&]embed=1/.test(location.search)) {
+    document.documentElement.classList.add('tac-embed');
+    window.MDT_CHATWIDGET = true;
+  }
+})();
+</script>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; overflow:hidden; }
+html[data-module="carte"]{ --accent:#22d3ee; --accent-2:#67e8f9; --accent-rgb:34,211,238; }
+.app a { color:inherit; text-decoration:none; }
+
+.tac-shell { display:flex; flex-direction:column; height:100vh; }
+html.tac-embed .tac-shell { height:100vh; }
+html.tac-embed .mdt-topbar, html.tac-embed .mdt-dock, html.tac-embed .app-bg { display:none !important; }
+
+.tac-bar { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; flex:0 0 auto; }
+.tac-grp { display:inline-flex; gap:3px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px; }
+.tac-btn { border:none; background:none; color:var(--muted); font-family:inherit; font-weight:700; font-size:.82em; padding:7px 10px; border-radius:7px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:.13s; white-space:nowrap; }
+.tac-btn:hover { color:var(--text); background:rgba(var(--accent-rgb),.12); }
+.tac-btn.on { background:var(--accent); color:#062a30; }
+.tac-btn[disabled] { opacity:.4; cursor:not-allowed; }
+.tac-sep { width:1px; height:26px; background:var(--border); margin:0 2px; }
+.tac-spacer { flex:1; }
+
+.tac-swatches { display:inline-flex; gap:4px; align-items:center; }
+.tac-slider { align-items:center; gap:7px; padding:3px 9px; }
+.tac-slider label { color:var(--muted-2); font-size:.8em; display:flex; align-items:center; cursor:pointer; }
+.tac-slider input[type=range] { -webkit-appearance:none; appearance:none; width:78px; height:4px; border-radius:3px;
+  background:var(--border); outline:none; cursor:pointer; }
+.tac-slider input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px;
+  border-radius:50%; background:var(--accent); border:2px solid var(--surface); cursor:pointer; }
+.tac-slider input[type=range]::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:var(--accent);
+  border:2px solid var(--surface); cursor:pointer; }
+.tac-val { font-size:.74em; font-weight:700; color:var(--muted); min-width:30px; text-align:right; }
+html.tac-embed .tac-slider input[type=range] { width:56px; }
+.tac-sw { width:22px; height:22px; border-radius:6px; border:2px solid transparent; cursor:pointer; padding:0; transition:.12s; }
+.tac-sw.on { border-color:#fff; transform:scale(1.14); }
+
+.tac-main { flex:1; display:flex; min-height:0; }
+.tac-mapwrap { position:relative; flex:1; min-width:0; }
+#tacmap { position:absolute; inset:0; background:#0b1220; }
+#tacmap.tac-drawing { cursor:crosshair; }
+#tacmap.tac-panning { cursor:grab; }
+#tacmap.tac-movetool { cursor:move; }
+#tacmap.tac-moving { cursor:grabbing; }
+.leaflet-container { background:#0b1220; font-family:var(--font); outline:none; }
+
+.tac-badge { position:absolute; z-index:900; display:none; gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:3px; box-shadow:0 6px 20px rgba(0,0,0,.45); }
+.tac-badge button { border:none; background:none; color:var(--muted); width:28px; height:28px; border-radius:6px; cursor:pointer; font-size:.85em; display:flex; align-items:center; justify-content:center; }
+.tac-badge button:hover { background:rgba(248,113,113,.18); color:#fca5a5; }
+.tac-badge button[data-a="img"]:hover { background:rgba(var(--accent-rgb),.18); color:var(--accent-2); }
+.tac-badge-lock { width:28px; height:28px; display:flex; align-items:center; justify-content:center; color:var(--muted-2); font-size:.8em; }
+.tac-badge-who { display:flex; align-items:center; padding:0 8px; height:28px; font-size:.72em; font-weight:800;
+  color:var(--accent-2); background:rgba(var(--accent-rgb),.13); border-radius:6px; letter-spacing:.02em;
+  white-space:nowrap; cursor:default; }
+
+.tac-text-icon span { display:inline-block; white-space:nowrap; font-weight:800; font-size:15px; text-shadow:0 1px 3px #000,0 0 6px #000; transform:translate(-50%,-50%); }
+.tac-point-label span { display:inline-block; white-space:nowrap; font-weight:700; font-size:12px; color:#fff; text-shadow:0 1px 3px #000,0 0 6px #000; transform:translate(-50%,-230%); }
+
+.tac-side { width:290px; flex:0 0 290px; border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; overflow-y:auto; }
+.tac-side.hide { display:none; }
+.tac-sec { padding:12px 14px; border-bottom:1px solid var(--border); }
+.tac-sec h3 { font-size:.72em; text-transform:uppercase; letter-spacing:.06em; color:var(--muted-2); margin-bottom:9px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.tac-sec h3 button { border:none; background:none; color:var(--accent-2); cursor:pointer; font-family:inherit; font-size:1em; font-weight:700; }
+.tac-leg { display:flex; flex-direction:column; gap:6px; }
+.tac-leg-row { display:flex; align-items:center; gap:9px; }
+.tac-leg-dot { width:26px; height:26px; border-radius:50%; flex:0 0 26px; border:2px solid rgba(255,255,255,.35);
+  position:relative; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.tac-leg-dot i { font-size:.6em; color:#fff; opacity:.75; text-shadow:0 1px 2px rgba(0,0,0,.6); pointer-events:none; }
+.tac-leg-dot::after { content:''; position:absolute; right:-2px; bottom:-2px; width:11px; height:11px;
+  border-radius:50%; background:var(--surface); border:1px solid var(--border); }
+.tac-leg-row input { flex:1; min-width:0; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:6px 9px; color:var(--text); font-family:inherit; font-size:.85em; }
+.tac-leg-row input:focus { outline:none; border-color:var(--accent); }
+.tac-leg-row .rm { border:none; background:none; color:var(--muted-2); cursor:pointer; padding:4px; }
+.tac-leg-row .rm:hover { color:#fca5a5; }
+#tacNotes { width:100%; min-height:120px; resize:vertical; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:9px 11px; color:var(--text); font-family:inherit; font-size:.86em; line-height:1.55; }
+#tacNotes:focus { outline:none; border-color:var(--accent); }
+.tac-hint { color:var(--muted-2); font-size:.78em; line-height:1.6; }
+.tac-hint kbd { background:var(--surface-2); border:1px solid var(--border); border-radius:5px; padding:1px 5px; font-family:inherit; font-size:.9em; }
+
+.tac-status { display:inline-flex; align-items:center; gap:7px; font-size:.78em; color:var(--muted-2); }
+.tac-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; }
+.tac-dot.err { background:#ef4444; }
+
+.tac-lb { position:fixed; inset:0; background:rgba(2,6,23,.92); z-index:10060; display:none; align-items:center; justify-content:center; padding:28px; }
+.tac-lb.on { display:flex; }
+.tac-lb img { max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+.tac-lb-close { position:absolute; top:18px; right:22px; border:none; background:var(--surface); color:var(--text); width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1.1em; }
+
+.tac-ov { position:fixed; inset:0; background:rgba(2,6,23,.72); z-index:10040; display:none; align-items:center; justify-content:center; padding:24px; }
+.tac-ov.on { display:flex; }
+.tac-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:min(460px,100%); max-height:80vh; display:flex; flex-direction:column; box-shadow:0 24px 70px rgba(0,0,0,.55); }
+.tac-box h3 { padding:16px 18px 12px; font-size:1em; display:flex; align-items:center; gap:9px; }
+.tac-box .body { padding:0 12px 12px; overflow-y:auto; overflow-x:hidden; display:flex; flex-direction:column; gap:5px; }
+.tac-box .foot { padding:12px 16px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:8px; }
+.tac-brow { display:flex; align-items:center; gap:11px; width:100%; text-align:left; border:1px solid transparent; background:var(--surface-2); color:var(--text); font-family:inherit; font-size:.88em; font-weight:600; padding:10px 13px; border-radius:10px; cursor:pointer; }
+.tac-brow:hover { border-color:var(--accent); }
+.tac-brow.on { border-color:var(--accent); background:rgba(var(--accent-rgb),.12); }
+.tac-brow i { color:var(--accent-2); width:16px; text-align:center; }
+.tac-brow span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tac-brow em { font-style:normal; font-size:.78em; color:var(--muted-2); flex:0 1 auto; min-width:0;
+  max-width:38%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tac-brow-wrap { display:flex; gap:5px; align-items:stretch; min-width:0; }
+.tac-brow-wrap > .tac-brow:first-child { flex:1 1 auto; min-width:0; }
+.tac-brow-acc { flex:0 0 auto; padding:10px 12px; }
+
+.tac-leg-dot { transition:.12s; }
+.tac-leg-dot:hover { transform:scale(1.12); box-shadow:0 0 0 4px rgba(var(--accent-rgb),.3); }
+.tac-leg-dot:hover i { opacity:1; }
+.tac-cp { position:absolute; z-index:10045; display:none; grid-template-columns:repeat(6,24px); gap:6px;
+  background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px;
+  box-shadow:0 14px 40px rgba(0,0,0,.5); }
+.tac-cp.on { display:grid; }
+.tac-cp button { width:24px; height:24px; border-radius:7px; border:2px solid transparent; cursor:pointer; padding:0; }
+.tac-cp button:hover { transform:scale(1.12); }
+.tac-cp button.on { border-color:#fff; }
+
+#tacDenied { display:none; text-align:center; padding:70px 20px; }
+#tacDenied .lock { width:64px; height:64px; border-radius:50%; background:rgba(var(--accent-rgb),.12); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.6em; margin:0 auto 18px; }
+
+html.tac-embed .tac-bar { padding:6px 8px; gap:5px; }
+html.tac-embed .tac-btn { padding:6px 8px; font-size:.76em; }
+html.tac-embed .tac-sw { width:18px; height:18px; }
+html.tac-embed .tac-sep { display:none; }
+html.tac-embed .tac-side { width:230px; flex:0 0 230px; }
+html.tac-embed #tacBoardName { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+@media (max-width:900px) { .tac-side { display:none; } }
+</style>
+</head>
+<body class="app">
+<div class="app-bg"></div>
+
+<div class="tac-shell" id="tacShell">
+  <div class="tac-bar" id="tacBar">
+    <div class="tac-grp" id="tacScope">
+      <button class="tac-btn on" data-scope="comm" title="Visible par toutes les unités"><i class="fa-solid fa-users"></i> Commun</button>
+      <button class="tac-btn" data-scope="priv" title="Visible par toi seul"><i class="fa-solid fa-user-secret"></i> Privé</button>
+    </div>
+
+    <button class="tac-btn tac-grp" id="tacBoardBtn" title="Changer de plan"><i class="fa-solid fa-layer-group"></i> <span id="tacBoardName">Plan commun</span></button>
+
+    <div class="tac-sep"></div>
+
+    <div class="tac-grp" id="tacHist">
+      <button class="tac-btn" id="tacUndo" title="Annuler (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
+      <button class="tac-btn" id="tacRedo" title="Rétablir (Ctrl+Maj+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+
+    <div class="tac-grp" id="tacTools">
+      <button class="tac-btn on" data-tool="ink" title="Main levée"><i class="fa-solid fa-pen"></i></button>
+      <button class="tac-btn" data-tool="line" title="Ligne droite"><i class="fa-solid fa-minus"></i></button>
+      <button class="tac-btn" data-tool="arrow" title="Flèche"><i class="fa-solid fa-arrow-right-long"></i></button>
+      <button class="tac-btn" data-tool="zone" title="Zone à main levée"><i class="fa-solid fa-draw-polygon"></i></button>
+      <button class="tac-btn" data-tool="circle" title="Cercle / périmètre"><i class="fa-regular fa-circle"></i></button>
+      <button class="tac-btn" data-tool="text" title="Texte"><i class="fa-solid fa-font"></i></button>
+      <button class="tac-btn" data-tool="point" title="Point"><i class="fa-solid fa-location-dot"></i></button>
+      <button class="tac-btn" data-tool="move" title="Déplacer un tracé (texte, point, flèche…)"><i class="fa-solid fa-up-down-left-right"></i></button>
+      <button class="tac-btn" data-tool="pan" title="Déplacer la carte"><i class="fa-solid fa-hand"></i></button>
+    </div>
+
+    <div class="tac-swatches" id="tacColors"></div>
+
+    <div class="tac-grp tac-slider">
+      <label for="tacWidthR" id="tacWidthIc" title="Épaisseur du trait"><i class="fa-solid fa-pen-nib"></i></label>
+      <input type="range" id="tacWidthR" min="1" max="30" value="6">
+      <span class="tac-val" id="tacWidthV">6</span>
+    </div>
+
+    <div class="tac-grp tac-slider">
+      <label for="tacAlphaR" title="Opacité"><i class="fa-solid fa-droplet"></i></label>
+      <input type="range" id="tacAlphaR" min="10" max="100" value="100">
+      <span class="tac-val" id="tacAlphaV">100%</span>
+    </div>
+
+    <button class="tac-btn tac-grp" id="tacFluo" title="Surligneur semi-transparent (opacité 35%)"><i class="fa-solid fa-highlighter"></i> Fluo</button>
+
+    <div class="tac-spacer"></div>
+
+    <span class="tac-status" id="tacRO" style="display:none;color:#fbbf24"><i class="fa-solid fa-eye"></i> Lecture seule</span>
+    <span class="tac-status"><span class="tac-dot" id="tacDot"></span><span id="tacCount">0 tracé</span></span>
+    <div class="tac-sep"></div>
+    <button class="tac-btn tac-grp" id="tacPublish" title="Copier mon calque privé vers le plan commun"><i class="fa-solid fa-upload"></i> Publier</button>
+    <button class="tac-btn tac-grp" id="tacClear" title="Effacer"><i class="fa-solid fa-eraser"></i></button>
+    <a class="tac-btn tac-grp" href="/recherche/" title="Module Recherche : quadrillage et suivi de fouille"><i class="fa-solid fa-magnifying-glass-location"></i> Recherche</a>
+    <button class="tac-btn tac-grp" id="tacShare" title="Partager ce plan dans la messagerie"><i class="fa-solid fa-share-nodes"></i></button>
+    <button class="tac-btn tac-grp" id="tacSideBtn" title="Légende et notes"><i class="fa-solid fa-list"></i></button>
+    <button class="tac-btn tac-grp" id="tacFull" title="Plein écran"><i class="fa-solid fa-expand"></i></button>
+  </div>
+
+  <div class="tac-main">
+    <div class="tac-mapwrap"><div id="tacmap"></div></div>
+    <aside class="tac-side" id="tacSide">
+      <div class="tac-sec">
+        <h3>Légende des unités <button id="tacLegAdd" title="Ajouter une ligne"><i class="fa-solid fa-plus"></i></button></h3>
+        <div class="tac-leg" id="tacLeg"></div>
+        <p class="tac-hint" style="margin-top:9px">Clique sur le rond coloré pour changer la couleur de l'unité.</p>
+      </div>
+      <div class="tac-sec">
+        <h3>Notes de briefing</h3>
+        <textarea id="tacNotes" placeholder="Objectifs, ordre d'assaut, consignes…"></textarea>
+      </div>
+      <div class="tac-sec">
+        <h3>Aide</h3>
+        <p class="tac-hint">
+          Clic maintenu pour tracer, on relâche le trait est posé.<br>
+          Survole un tracé pour l'effacer ou lui attacher une image.<br>
+          Outil <i class="fa-solid fa-up-down-left-right"></i> : glisse un tracé pour le déplacer.<br>
+          Clic sur un tracé qui porte une image pour l'ouvrir.<br>
+          <kbd>Espace</kbd> maintenu, ou l'outil main, pour déplacer la carte.<br>
+          Clic droit sur un tracé : suppression immédiate.<br>
+          <kbd>Échap</kbd> annule le tracé en cours.<br>
+          <kbd>Ctrl</kbd>+<kbd>Z</kbd> annule, <kbd>Ctrl</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> rétablit.
+        </p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div id="tacDenied">
+  <div class="lock"><i class="fa-solid fa-lock" id="tacDeniedIcon"></i></div>
+  <h2 id="tacDeniedTitle">Accès refusé</h2>
+  <p id="tacDeniedMsg">La carte tactique est réservée aux agents ayant accès au Dispatch.</p>
+  <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+    <a class="tac-btn tac-grp" id="tacDeniedLogin" href="/login/connexion" style="display:none"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</a>
+    <a class="tac-btn tac-grp" href="/"><i class="fa-solid fa-arrow-left"></i> Retour au menu</a>
+  </div>
+</div>
+
+<div class="tac-cp" id="tacCp" style="position:fixed"></div>
+
+<div class="tac-ov" id="tacAccess">
+  <div class="tac-box">
+    <h3><i class="fa-solid fa-user-lock"></i> Accès au plan « <span id="tacAccessName"></span> »</h3>
+    <div class="body">
+      <h4 style="font-size:.74em;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);margin-bottom:7px"><i class="fa-solid fa-eye"></i> Qui peut voir ce plan</h4>
+      <p class="tac-hint" style="margin-bottom:8px">Aucun rôle = visible par toutes les unités ayant accès au Dispatch.</p>
+      <div id="tacAccessBox"></div>
+      <h4 style="font-size:.74em;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);margin:16px 0 7px"><i class="fa-solid fa-pen"></i> Qui peut dessiner dessus</h4>
+      <p class="tac-hint" style="margin-bottom:8px">Aucun rôle = tous ceux qui peuvent le voir. Toi et la Supervision gardez toujours la main.</p>
+      <div id="tacAccessEditBox"></div>
+    </div>
+    <div class="foot">
+      <button class="tac-btn tac-grp" id="tacAccessCancel">Annuler</button>
+      <button class="tac-btn tac-grp on" id="tacAccessSave"><i class="fa-solid fa-check"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="tac-ov" id="tacBoards">
+  <div class="tac-box">
+    <h3><i class="fa-solid fa-layer-group"></i> Choisir un plan</h3>
+    <div class="body" id="tacBoardsList"></div>
+    <div class="foot">
+      <button class="tac-btn tac-grp" id="tacBoardsNew"><i class="fa-solid fa-plus"></i> Nouveau plan</button>
+      <button class="tac-btn tac-grp" id="tacBoardsClose">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="tac-lb" id="tacLb"><button class="tac-lb-close" id="tacLbClose"><i class="fa-solid fa-xmark"></i></button><img id="tacLbImg" alt=""></div>
+
+<script>
+window.MDT_SHELL = {
+  module: 'carte', title: 'Carte tactique', icon: 'fa-map-location-dot', back: { href: '/', label: 'Menu' }
+};
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script src="/assets/imgpicker.js"></script>
+<script src="/assets/roleselect.js"></script>
+<script src="/assets/share.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/dock.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/vendor/leaflet/leaflet.js"></script>
+<script src="/assets/tacmap.js"></script>
+<script>
+var EMBED = /[?&]embed=1/.test(location.search);
+var API = '/carte/tacmap_api.php';
+var COLORS = ['#1E3A8A','#A3E635','#38BDF8','#EF4444','#A855F7','#F97316','#FACC15','#22D3EE','#EC4899','#F8FAFC','#0F172A'];
+var MAP = null, BOARD = null, BOARDS = [], LEGEND = [], SAVE_T = null;
+var LAST_COMMON = 'tb_common', CUR_BG = null, DISCORD_ROLES = null, IS_SUP = false, ME_DID = null;
+
+function esc(s) { if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+function authHeaders(extra) { var h = extra || {}; try { var t = localStorage.getItem('mdt_auth_token') || ''; if (t) h['Authorization'] = 'Bearer ' + t; } catch(e) {} return h; }
+function notify(msg, ok) { if (typeof toast === 'function') toast(msg, !!ok); }
+function $(id) { return document.getElementById(id); }
+
+function setDot(state, msg) {
+  var d = $('tacDot');
+  d.className = 'tac-dot' + (state === 'err' ? ' err' : '');
+  d.title = state === 'err' ? (msg || 'Erreur') : 'Synchronisé';
+  if (state === 'err' && msg) notify(msg, false);
+}
+
+function buildColors() {
+  var box = $('tacColors');
+  box.innerHTML = '';
+  COLORS.forEach(function (c, i) {
+    var b = document.createElement('button');
+    b.className = 'tac-sw' + (i === 3 ? ' on' : '');
+    b.style.background = c;
+    b.setAttribute('data-c', c);
+    b.title = c;
+    b.onclick = function () {
+      box.querySelectorAll('.tac-sw').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      if (MAP) MAP.color = c;
+    };
+    box.appendChild(b);
+  });
+}
+
+function renderLegend() {
+  var box = $('tacLeg');
+  box.innerHTML = '';
+  if (!LEGEND.length) {
+    box.innerHTML = '<p class="tac-hint">Aucune unité. Le bouton + ajoute une ligne : nomme l\'unité, et clique sur son rond pour choisir sa couleur.</p>';
+    return;
+  }
+  LEGEND.forEach(function (row, i) {
+    var d = document.createElement('div');
+    d.className = 'tac-leg-row';
+    d.innerHTML = '<span class="tac-leg-dot" title="Cliquer pour changer la couleur" style="background:' + esc(row.color) + '">'
+      + '<i class="fa-solid fa-palette"></i></span>'
+      + '<input type="text" maxlength="60" value="' + esc(row.label) + '" placeholder="Nom de l\'unité">'
+      + '<button class="rm" title="Retirer"><i class="fa-solid fa-xmark"></i></button>';
+    var dot = d.querySelector('.tac-leg-dot');
+    dot.title = 'Changer la couleur de cette unité';
+    dot.onclick = function (ev) {
+      ev.stopPropagation();
+      openColorPicker(dot, row.color, function (c) {
+        row.color = c;
+        renderLegend();
+        queueSave();
+        useColor(c);
+      });
+    };
+    d.querySelector('input').oninput = function () { row.label = this.value; queueSave(); };
+    d.querySelector('.rm').onclick = function () { LEGEND.splice(i, 1); renderLegend(); queueSave(); };
+    box.appendChild(d);
+  });
+}
+
+function useColor(c) {
+  if (MAP) MAP.color = c;
+  document.querySelectorAll('#tacColors .tac-sw').forEach(function (x) {
+    x.classList.toggle('on', x.getAttribute('data-c') === c);
+  });
+}
+
+function openColorPicker(anchor, current, cb) {
+  var cp = $('tacCp');
+  cp.innerHTML = '';
+  COLORS.forEach(function (c) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.style.background = c;
+    b.title = c;
+    if (c === current) b.className = 'on';
+    b.onclick = function (ev) { ev.stopPropagation(); cp.classList.remove('on'); cb(c); };
+    cp.appendChild(b);
+  });
+  var r = anchor.getBoundingClientRect();
+  cp.style.left = Math.min(window.innerWidth - 200, r.left) + 'px';
+  cp.style.top = (r.bottom + 6) + 'px';
+  cp.classList.add('on');
+}
+
+function nextFreeColor() {
+  var used = {};
+  LEGEND.forEach(function (r) { used[r.color] = 1; });
+  for (var i = 0; i < COLORS.length; i++) if (!used[COLORS[i]]) return COLORS[i];
+  return (MAP && MAP.color) || COLORS[3];
+}
+
+function queueSave() {
+  clearTimeout(SAVE_T);
+  SAVE_T = setTimeout(function () { SAVE_T = null; saveBoard(); }, 700);
+}
+
+function saveBoard() {
+  if (!MAP) return;
+  fetch(API + '?action=board_save', {
+    method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ scope: MAP.scope, board: MAP.boardId, legend: LEGEND, notes: $('tacNotes').value })
+  }).then(function (r) { return r.json().catch(function () { return null; }); })
+    .then(function (d) { if (!d || !d.success) setDot('err', (d && d.error) || 'Légende non enregistrée'); else setDot('ok'); })
+    .catch(function () { setDot('err', 'Réseau indisponible'); });
+}
+
+function openLightbox(url) {
+  $('tacLbImg').src = url;
+  $('tacLb').classList.add('on');
+}
+
+function pickImage(cb) {
+  if (typeof window.MDT_IMG_PICKER === 'function') { window.MDT_IMG_PICKER(cb); return; }
+  window.MDT_PROMPT('Lien de l\'image', '', { title: 'Image', icon: 'fa-image' })
+    .then(function (v) { if (v) cb(v); });
+}
+
+function loadBoards(cb) {
+  fetch(API + '?action=boards', { headers: authHeaders({}) })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      BOARDS = (d && d.boards) ? d.boards : [];
+      if (d) { IS_SUP = !!d.is_sup; ME_DID = d.me; }
+      if (cb) cb();
+    })
+    .catch(function () { if (cb) cb(); });
+}
+
+function chooseBoard() {
+  loadBoards(function () {
+    var ov = $('tacBoards'), list = $('tacBoardsList');
+    list.innerHTML = '';
+    BOARDS.forEach(function (b) {
+      var ic = b.kind === 'intervention' ? 'fa-triangle-exclamation'
+             : (b.bg_kind === 'image' ? 'fa-image' : 'fa-map');
+      var locked = b.roles && b.roles.length;
+      var canAdmin = IS_SUP || b.mine;
+      var wrap = document.createElement('div');
+      wrap.className = 'tac-brow-wrap';
+      wrap.style.cssText = 'display:flex;gap:5px;align-items:stretch;width:100%;min-width:0';
+
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'tac-brow' + (b.id === MAP.boardId ? ' on' : '');
+      row.style.cssText = 'flex:1 1 auto;width:auto;min-width:0';
+      row.innerHTML = '<i class="fa-solid ' + ic + '" style="flex:0 0 auto"></i>'
+        + '<span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left">'
+        + esc(b.label || b.id) + '</span>'
+        + (locked ? '<i class="fa-solid fa-lock" title="Accès réservé à ' + b.roles.length + ' rôle(s)" style="color:#fbbf24"></i>' : '')
+        + (b.owner_name ? '<em>' + esc(b.owner_name) + '</em>' : '');
+      row.onclick = function () { ov.classList.remove('on'); applyBoardChoice(b.id); };
+      wrap.appendChild(row);
+
+      if (canAdmin && b.id !== 'tb_common') {
+        var acc = document.createElement('button');
+        acc.type = 'button';
+        acc.className = 'tac-brow tac-brow-acc';
+        acc.style.cssText = 'flex:0 0 auto;width:auto;min-width:0;padding:10px 13px';
+        acc.title = 'Qui a le droit de voir ce plan';
+        acc.innerHTML = '<i class="fa-solid fa-user-lock"></i>';
+        acc.onclick = function (ev) { ev.stopPropagation(); openAccess(b); };
+        wrap.appendChild(acc);
+      }
+      list.appendChild(wrap);
+    });
+    ov.classList.add('on');
+  });
+}
+
+function loadDiscordRoles(cb) {
+  if (DISCORD_ROLES) { cb(DISCORD_ROLES); return; }
+  fetch('/login/permissions_api.php?action=list_roles', { headers: authHeaders({}) })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (rows) {
+      DISCORD_ROLES = (rows || []).map(function (r) {
+        return { id: String(r.role_id), name: r.name || r.role_id, color: r.color || '#99aab5' };
+      });
+      cb(DISCORD_ROLES);
+    })
+    .catch(function () { cb([]); });
+}
+
+function openAccess(board) {
+  loadDiscordRoles(function (roles) {
+    var ov = $('tacAccess');
+    $('tacAccessName').textContent = board.label || board.id;
+    var sel = (board.roles || []).map(String);
+    var selEd = (board.roles_edit || []).map(String);
+    MDT_ROLESELECT.mount($('tacAccessBox'), {
+      roles: roles, selected: sel,
+      onChange: function (ids) { sel = ids; }
+    });
+    MDT_ROLESELECT.mount($('tacAccessEditBox'), {
+      roles: roles, selected: selEd,
+      onChange: function (ids) { selEd = ids; }
+    });
+    $('tacAccessSave').onclick = function () {
+      fetch(API + '?action=board_access', {
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ board: board.id, roles: sel, roles_edit: selEd })
+      }).then(function (r) { return r.json().catch(function () { return null; }); })
+        .then(function (d) {
+          if (d && d.success) {
+            board.roles = d.roles; board.roles_edit = d.roles_edit;
+            notify('Accès enregistré — ' + (d.roles.length ? d.roles.length + ' rôle(s) en lecture' : 'ouvert à tous')
+              + (d.roles_edit.length ? ', ' + d.roles_edit.length + ' en écriture' : ''), true);
+            ov.classList.remove('on');
+            chooseBoard();
+          } else setDot('err', (d && d.error) || 'Refusé');
+        }).catch(function () { setDot('err', 'Réseau indisponible'); });
+    };
+    $('tacBoards').classList.remove('on');
+    ov.classList.add('on');
+  });
+}
+
+function applyBoardChoice(id) {
+  if (!id) return;
+  if (id === '__new__') { newBoard(); return; }
+  setScope('comm', id);
+}
+
+function newBoard() {
+  window.MDT_CONFIRM('Sur quel fond veux-tu créer ce plan ?',
+    { title: 'Nouveau plan', icon: 'fa-layer-group', okLabel: 'Carte de Los Santos', cancelLabel: 'Depuis une image' })
+    .then(function (onTiles) {
+      if (onTiles === null) return;
+      if (onTiles) { createBoard('', 'Nouveau plan'); return; }
+      newImageBoard();
+    });
+}
+
+function createBoard(url, defName) {
+  window.MDT_PROMPT('Nom du plan', defName, { title: 'Nouveau plan', icon: 'fa-layer-group' }).then(function (name) {
+    if (name === null) return;
+    fetch(API + '?action=board_create', {
+      method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ bg_url: url || '', label: name || defName })
+    }).then(function (r) { return r.json().catch(function () { return null; }); })
+      .then(function (d) {
+        if (d && d.success) {
+          notify('Plan créé — règle ses accès avec le bouton 🔒', true);
+          setScope('comm', d.board);
+        } else setDot('err', (d && d.error) || 'Création refusée');
+      }).catch(function () { setDot('err', 'Réseau indisponible'); });
+  });
+}
+
+function newImageBoard() {
+  pickImage(function (url) {
+    if (!url) return;
+    createBoard(url, 'Briefing');
+  });
+}
+
+function setReadOnly(ro) {
+  MAP.canWrite = !ro;
+  $('tacRO').style.display = ro ? '' : 'none';
+  ['tacTools', 'tacColors', 'tacWidthR', 'tacAlphaR', 'tacFluo', 'tacClear', 'tacPublish', 'tacLegAdd', 'tacHist'].forEach(function (id) {
+    var el = $(id);
+    if (!el) return;
+    el.style.opacity = ro ? '.35' : '';
+    el.style.pointerEvents = ro ? 'none' : '';
+  });
+  var nt = $('tacNotes');
+  if (nt) nt.readOnly = ro;
+}
+
+function setScope(scope, boardId) {
+  document.querySelectorAll('#tacScope .tac-btn').forEach(function (b) {
+    b.classList.toggle('on', b.getAttribute('data-scope') === scope);
+  });
+  $('tacPublish').style.display = (scope === 'priv') ? '' : 'none';
+  if (scope === 'comm') LAST_COMMON = boardId || LAST_COMMON || 'tb_common';
+  MAP.setScope(scope, scope === 'priv' ? '' : LAST_COMMON);
+}
+
+function boot() {
+  buildColors();
+
+  MAP = new TacMap($('tacmap'), {
+    api: API,
+    onStatus: function (st, msg) { setDot(st, msg); },
+    onShapes: function (n) { $('tacCount').textContent = n + ' tracé' + (n > 1 ? 's' : ''); },
+    onHistory: function (u, r) {
+      $('tacUndo').disabled = !u;
+      $('tacRedo').disabled = !r;
+    },
+    onImage: function (s) { if (s.image) openLightbox(s.image); },
+    onAttach: function (cid, s) {
+      pickImage(function (url) { if (url) { MAP.setImage(cid, url); notify('Image attachée', true); } });
+    },
+    onBoard: function (kind, a, b) {
+      if (kind === 'board') {
+        BOARD = a;
+        $('tacBoardName').textContent = a.label || 'Plan';
+        var sig = (a.bg_kind || 'tiles') + '|' + (a.bg_url || '');
+        if (sig !== CUR_BG) { CUR_BG = sig; MAP.setBackground(a.bg_kind || 'tiles', a.bg_url || ''); }
+        setReadOnly(a.can_edit === 0 || a.can_edit === false);
+        var editing = document.activeElement && document.activeElement.closest
+          && document.activeElement.closest('#tacSide');
+        if (!editing && !SAVE_T) {
+          LEGEND = Array.isArray(a.legend) ? a.legend : [];
+          $('tacNotes').value = a.notes || '';
+          renderLegend();
+        }
+        return;
+      }
+      if (kind === 'point') {
+        var place = b;
+        window.MDT_PROMPT('Libellé du point (facultatif)', '', { title: 'Point', icon: 'fa-location-dot' })
+          .then(function (label) {
+            if (label === null) return;
+            window.MDT_CONFIRM('Attacher une image à ce point ? Elle s’ouvrira au clic.',
+              { title: 'Image', icon: 'fa-image', okLabel: 'Choisir une image' })
+              .then(function (yes) {
+                if (!yes) { place(label, ''); return; }
+                pickImage(function (url) { place(label, url || ''); });
+              });
+          });
+      }
+    }
+  });
+
+  document.querySelectorAll('#tacTools .tac-btn').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('#tacTools .tac-btn').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      var t = b.getAttribute('data-tool');
+      MAP.setTool(t);
+      var isText = (t === 'text');
+      $('tacWidthIc').innerHTML = isText
+        ? '<i class="fa-solid fa-text-height"></i>'
+        : '<i class="fa-solid fa-pen-nib"></i>';
+      $('tacWidthIc').title = isText ? 'Taille du texte' : 'Épaisseur du trait';
+    };
+  });
+
+  $('tacWidthR').oninput = function () {
+    MAP.width = parseInt(this.value, 10);
+    $('tacWidthV').textContent = this.value;
+  };
+
+  $('tacAlphaR').oninput = function () {
+    MAP.alpha = parseInt(this.value, 10);
+    $('tacAlphaV').textContent = this.value + '%';
+    $('tacFluo').classList.toggle('on', MAP.alpha < 100);
+  };
+
+  $('tacFluo').onclick = function () {
+    var on = !this.classList.contains('on');
+    this.classList.toggle('on', on);
+    MAP.alpha = on ? 35 : 100;
+    $('tacAlphaR').value = MAP.alpha;
+    $('tacAlphaV').textContent = MAP.alpha + '%';
+  };
+
+  document.querySelectorAll('#tacScope .tac-btn').forEach(function (b) {
+    b.onclick = function () { setScope(b.getAttribute('data-scope')); };
+  });
+
+  $('tacUndo').onclick = function () { MAP.undo(); };
+  $('tacRedo').onclick = function () { MAP.redo(); };
+  $('tacShare').onclick = function () {
+    if (MAP.scope === 'priv') { notify('Ton calque privé ne peut pas être partagé', false); return; }
+    if (typeof window.MDT_SHARE !== 'function') { notify('Partage indisponible', false); return; }
+    window.MDT_SHARE({
+      type: 'carte', id: MAP.boardId,
+      label: (BOARD && BOARD.label) || 'Carte tactique',
+      sub: (BOARD && BOARD.bg_kind === 'image') ? 'Briefing sur image' : 'Plan sur la carte de Los Santos'
+    });
+  };
+  $('tacBoardBtn').onclick = chooseBoard;
+  $('tacSideBtn').onclick = function () { $('tacSide').classList.toggle('hide'); MAP.invalidate(); };
+  $('tacLegAdd').onclick = function () {
+    LEGEND.push({ color: nextFreeColor(), label: '' });
+    renderLegend(); queueSave();
+    var inputs = document.querySelectorAll('#tacLeg .tac-leg-row input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  };
+  document.addEventListener('click', function () { $('tacCp').classList.remove('on'); });
+  $('tacNotes').oninput = queueSave;
+
+  $('tacFull').onclick = function () {
+    var el = $('tacShell');
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (el.requestFullscreen) el.requestFullscreen();
+    setTimeout(function () { MAP.invalidate(); }, 260);
+  };
+
+  $('tacClear').onclick = function () {
+    var sup = MAP.isSup, priv = MAP.scope === 'priv';
+    var msg = priv ? 'Effacer tout ton calque privé ?'
+      : (sup ? 'Effacer TOUS les tracés de ce plan, pour toutes les unités ?' : 'Effacer tous tes tracés sur ce plan ?');
+    window.MDT_CONFIRM(msg, { title: 'Effacer', okLabel: 'Effacer', danger: true }).then(function (yes) {
+      if (!yes) return;
+      MAP.clearAll(!priv && !sup, function (ok, n) { if (ok) notify((n || 0) + ' tracé(s) effacé(s)', true); });
+    });
+  };
+
+  $('tacPublish').onclick = function () {
+    window.MDT_CONFIRM('Copier ton calque privé vers le plan commun ? Toutes les unités le verront.',
+      { title: 'Publier au dispatch', icon: 'fa-upload', okLabel: 'Publier' })
+      .then(function (yes) {
+        if (!yes) return;
+        fetch(API + '?action=promote', {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ board: LAST_COMMON || 'tb_common' })
+        }).then(function (r) { return r.json().catch(function () { return null; }); })
+          .then(function (d) {
+            if (d && d.success) { notify(d.moved + ' tracé(s) publié(s)', true); setScope('comm', 'tb_common'); }
+            else setDot('err', (d && d.error) || 'Publication refusée');
+          }).catch(function () { setDot('err', 'Réseau indisponible'); });
+      });
+  };
+
+  $('tacBoardsClose').onclick = function () { $('tacBoards').classList.remove('on'); };
+  $('tacAccessCancel').onclick = function () { $('tacAccess').classList.remove('on'); chooseBoard(); };
+  $('tacBoardsNew').onclick = function () { $('tacBoards').classList.remove('on'); newBoard(); };
+  $('tacLbClose').onclick = function () { $('tacLb').classList.remove('on'); };
+  $('tacLb').onclick = function (e) { if (e.target === this) this.classList.remove('on'); };
+
+  $('tacPublish').style.display = 'none';
+  MAP.setTool('ink');
+  MAP.color = COLORS[3];
+  MAP.width = parseInt($('tacWidthR').value, 10);
+  MAP.alpha = parseInt($('tacAlphaR').value, 10);
+
+  var q = location.search.match(/[?&]board=(tb_[a-z]_[a-z0-9]+)/i);
+  if (q) MAP.boardId = q[1];
+
+  MAP.sync();
+  MAP.startPolling(3000);
+
+  window.addEventListener('resize', function () { MAP.invalidate(); });
+  window.addEventListener('message', function (e) {
+    if (e.origin !== window.location.origin) return;
+    if (!e.data || e.data.type !== 'mdt-tac') return;
+    if (e.data.cmd === 'wake') setTimeout(function () { MAP.invalidate(); MAP.sync(); }, 60);
+  });
+}
+
+(function () {
+  var deny = function (notLogged, msg) {
+    $('tacShell').style.display = 'none';
+    $('tacDenied').style.display = 'block';
+    if (notLogged) {
+      $('tacDeniedIcon').className = 'fa-solid fa-right-to-bracket';
+      $('tacDeniedTitle').textContent = 'Connexion requise';
+      $('tacDeniedMsg').textContent = msg || 'Tu n\'es pas connecté sur ce serveur. Connecte-toi pour ouvrir la carte tactique.';
+      $('tacDeniedLogin').style.display = '';
+      $('tacDeniedLogin').href = '/login/connexion?next=' + encodeURIComponent(location.pathname + location.search);
+    }
+  };
+
+  var tok = '';
+  try { tok = localStorage.getItem('mdt_auth_token') || ''; } catch (e) {}
+  if (!tok) { deny(true); return; }
+  fetch(API + '?action=state&scope=comm', { headers: authHeaders({}) })
+    .then(function (r) {
+      if (r.status === 401) throw new Error('unauth');
+      if (r.status === 403) throw new Error('denied');
+      return r.json();
+    })
+    .then(function () { boot(); })
+    .catch(function (e) {
+      var m = e && e.message;
+      if (m === 'denied') deny(false);
+      else if (m === 'unauth') deny(true, 'Ta session a expiré sur ce serveur. Reconnecte-toi pour ouvrir la carte tactique.');
+      else boot();
+    });
+})();
+</script>
+</body>
+</html>

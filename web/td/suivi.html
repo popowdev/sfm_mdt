@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - Suivi Cadet</title>
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+html[data-module="suivi"]{ --accent:#8b5cf6; --accent-2:#a78bfa; --accent-rgb:139,92,246; }
+.app a { color:inherit; text-decoration:none; }
+.wrap { max-width:1180px; margin:0 auto; padding:24px 20px 90px; }
+.sec-head h1 { font-size:1.5em; display:flex; align-items:center; gap:11px; flex-wrap:wrap; }
+.sec-head h1 .ic { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.05em; flex:0 0 auto; background:rgba(var(--accent-rgb),.15); color:var(--accent-2); }
+.sec-head .sub { color:var(--muted); font-size:.9em; margin-top:5px; max-width:640px; }
+
+.sv-layout { display:grid; grid-template-columns:310px 1fr; gap:18px; align-items:start; margin-top:22px; }
+@media (max-width:820px){ .sv-layout { grid-template-columns:1fr; } }
+.sv-list { background:var(--surface); border:1px solid var(--border); border-radius:15px; padding:12px; position:sticky; top:16px; }
+@media (max-width:820px){ .sv-list { position:static; } }
+.sv-search { display:flex; align-items:center; gap:9px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:9px 12px; margin-bottom:10px; }
+.sv-search i { color:var(--muted-2); font-size:.9em; }
+.sv-search input { flex:1; background:none; border:none; color:var(--text); font-family:inherit; font-size:.88em; outline:none; }
+.sv-fiches { display:flex; flex-direction:column; gap:8px; max-height:70vh; overflow-y:auto; }
+.fiche-card { text-align:left; background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:11px 13px; cursor:pointer; font-family:inherit; color:var(--text); transition:border-color .15s, transform .1s; }
+.fiche-card:hover { border-color:var(--accent); }
+.fiche-card.on { border-color:var(--accent); background:rgba(var(--accent-rgb),.10); }
+.fc-top { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.fc-name { flex:1; min-width:0; font-weight:700; font-size:.9em; color:var(--text-strong); overflow-wrap:anywhere; }
+.fc-lock { color:var(--muted-2); font-size:.8em; flex:0 0 auto; }
+.fc-bar { height:6px; background:var(--bg); border-radius:999px; overflow:hidden; }
+.fc-fill { height:100%; border-radius:999px; transition:width .3s; }
+.fc-meta { display:flex; justify-content:space-between; font-size:.72em; color:var(--muted); margin-top:6px; font-weight:600; }
+
+.sv-detail { min-height:300px; }
+.sv-empty { border:1px dashed var(--border); border-radius:15px; padding:60px 24px; text-align:center; color:var(--muted-2); }
+.sv-empty i { font-size:2.2em; display:block; margin-bottom:14px; color:var(--muted-2); opacity:.7; }
+.sv-muted { color:var(--muted-2); font-size:.85em; padding:14px 6px; text-align:center; }
+
+.fiche-head { background:var(--surface); border:1px solid var(--border); border-radius:15px; overflow:hidden; }
+.fh-top { padding:16px 18px; background:linear-gradient(90deg, rgba(var(--accent-rgb),.16), transparent); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.fh-av { width:46px; height:46px; border-radius:12px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; flex:0 0 auto; }
+.fh-id { flex:1; min-width:160px; }
+.fh-name { font-size:1.08em; font-weight:800; color:var(--text-strong); overflow-wrap:anywhere; }
+.fh-sub { font-size:.8em; color:var(--muted); margin-top:3px; overflow-wrap:anywhere; }
+.fh-badge { font-size:.72em; font-weight:700; padding:5px 11px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; }
+.fh-prog { padding:14px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.fh-prog .pbar-wrap { flex:1; min-width:180px; }
+.fh-prog .plabels { display:flex; justify-content:space-between; font-size:.78em; margin-bottom:6px; }
+.fh-prog .pbar { height:9px; background:var(--surface-2); border-radius:999px; overflow:hidden; }
+.fh-prog .pfill { height:100%; border-radius:999px; transition:width .3s; }
+.fh-verdict { font-size:.74em; color:var(--muted); text-align:right; }
+
+.crit-list { display:flex; flex-direction:column; gap:12px; margin-top:14px; }
+.crit-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:14px 16px; overflow:hidden; }
+.crit-card.ok { border-color:rgba(16,185,129,.35); }
+.crit-head { display:flex; align-items:center; gap:11px; flex-wrap:wrap; }
+.crit-name { flex:1; min-width:0; font-weight:700; font-size:.94em; color:var(--text-strong); overflow-wrap:anywhere; }
+.valstate { font-size:.72em; font-weight:700; padding:4px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; flex:0 0 auto; }
+.valstate.done { background:rgba(16,185,129,.16); color:#34d399; }
+.valstate.todo { background:rgba(148,163,184,.14); color:var(--muted); }
+.val-btn { border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-family:inherit; font-size:.74em; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; transition:.15s; }
+.val-btn:hover { border-color:#10b981; }
+.val-btn.on { background:#10b981; border-color:#10b981; color:#fff; }
+
+.rmk-toggle { border:none; background:none; color:var(--accent-2); font-family:inherit; font-size:.76em; font-weight:700; cursor:pointer; padding:8px 4px 4px; display:inline-flex; align-items:center; gap:7px; }
+.rmk { display:flex; gap:9px; padding:9px 11px; background:var(--surface-2); border-radius:10px; margin-top:7px; }
+.rmk-ic { width:27px; height:27px; border-radius:8px; background:rgba(var(--accent-rgb),.15); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:.68em; font-weight:800; flex:0 0 auto; }
+.rmk-b { flex:1; min-width:0; }
+.rmk-t { font-size:.85em; line-height:1.5; color:var(--text); overflow-wrap:anywhere; word-break:break-word; white-space:pre-wrap; }
+.rmk-m { font-size:.7em; color:var(--muted-2); margin-top:3px; overflow-wrap:anywhere; }
+.cmt-row { display:flex; gap:9px; margin-top:10px; align-items:flex-end; }
+.cmt-input { flex:1; min-width:0; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:10px; padding:9px 12px; font-size:.85em; font-family:inherit; resize:none; overflow:hidden; line-height:1.45; max-height:200px; }
+.cmt-input:focus { outline:none; border-color:var(--accent); }
+.cmt-send { border:none; background:var(--accent); color:#fff; border-radius:10px; padding:0 14px; height:38px; font-size:.8em; font-weight:700; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; }
+.cmt-send:hover { background:var(--accent-2); }
+.locked-note { font-size:.76em; color:var(--muted-2); margin-top:9px; font-style:italic; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <h1><span class="ic"><i class="fa-solid fa-user-graduate"></i></span> Suivi Cadet</h1>
+        <div class="sub">Commente chaque point d'évaluation des cadets. La validation des points est réservée à la Training Division.</div>
+      </div>
+    </div>
+    <div class="sv-layout">
+      <aside class="sv-list">
+        <div class="sv-search"><i class="fa-solid fa-magnifying-glass"></i><input id="fSearch" placeholder="Rechercher un cadet…" autocomplete="off"></div>
+        <div id="fList" class="sv-fiches"></div>
+      </aside>
+      <main id="fDetail" class="sv-detail">
+        <div class="sv-empty"><i class="fa-solid fa-hand-pointer"></i>Choisis un cadet à gauche pour voir sa fiche.</div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<script>
+window.MDT_SHELL = {
+  module: 'suivi', title: 'Suivi Cadet', icon: 'fa-user-graduate', back: { href: '/', label: 'Menu' }, nav: []
+};
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/skeleton.js"></script>
+<script src="/assets/select.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/modules.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/dock.js"></script>
+<script src="/assets/autocomplete.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script>
+(function(){
+  var API = '/td/td_api.php';
+  function tok(){ try { return localStorage.getItem('mdt_auth_token') || ''; } catch(e){ return ''; } }
+  function aGet(action){ return fetch(API + '?action=' + action, { headers: { Authorization: 'Bearer ' + tok() } }).then(function(r){ return r.json(); }); }
+  function aPost(action, body){ return fetch(API + '?action=' + action, { method:'POST', headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify(body) }).then(function(r){ return r.json(); }); }
+  function esc(s){ var d = document.createElement('div'); d.textContent = (s==null?'':String(s)); return d.innerHTML; }
+  function initials(s){ s = String(s||'').replace(/^\d+\s*\|\s*/, '').trim(); var p = s.split(/\s+/); return ((p[0]||'').charAt(0) + (p[1]||'').charAt(0)).toUpperCase() || '?'; }
+  function toast(m, ok){ if (window.MDT_TOAST) MDT_TOAST[ok===false?'err':'ok'](m); }
+
+  var FICHES = [], CUR = null, CURF = null, expanded = {};
+
+  function pctColor(p){ return p>=90 ? '#34d399' : p>=50 ? '#f59e0b' : '#f87171'; }
+
+  function loadFiches(){
+    var host = document.getElementById('fList');
+    if (window.MDT_SKEL) MDT_SKEL.show(host, 'list-rows', { rows:5 });
+    aGet('fiches_list').then(function(d){ FICHES = (d && d.fiches) || []; renderList(); })
+      .catch(function(){ host.innerHTML = '<div class="sv-muted">Erreur de chargement</div>'; });
+  }
+  function renderList(){
+    var q = (document.getElementById('fSearch').value || '').toLowerCase().trim();
+    var host = document.getElementById('fList');
+    var arr = FICHES.filter(function(f){ return !q || (String(f.cadet||'').toLowerCase().indexOf(q) >= 0) || (String(f.referent||'').toLowerCase().indexOf(q) >= 0); });
+    if (!arr.length){ host.innerHTML = '<div class="sv-muted">Aucun cadet</div>'; return; }
+    host.innerHTML = arr.map(function(f){
+      var pct = f.total ? Math.round(f.validated / f.total * 100) : 0;
+      var col = f.pass ? '#34d399' : pctColor(pct);
+      return '<button class="fiche-card' + (f.id===CUR?' on':'') + '" data-open="' + esc(f.id) + '">' +
+        '<div class="fc-top"><span class="fc-name">' + esc(f.cadet || '—') + '</span>' + (f.locked ? '<i class="fa-solid fa-lock fc-lock" title="Verrouillée"></i>' : '') + '</div>' +
+        '<div class="fc-bar"><div class="fc-fill" style="width:' + pct + '%;background:' + col + '"></div></div>' +
+        '<div class="fc-meta"><span>' + f.validated + '/' + f.total + ' validés</span><span style="color:' + col + '">' + (f.pass ? 'Validable' : pct + '%') + '</span></div>' +
+        '</button>';
+    }).join('');
+  }
+
+  function openFiche(id){
+    CUR = id; renderList();
+    var host = document.getElementById('fDetail');
+    if (window.MDT_SKEL) MDT_SKEL.show(host, 'detail-panel');
+    aGet('fiche_get&id=' + encodeURIComponent(id)).then(function(f){
+      if (!f || f.error){ host.innerHTML = '<div class="sv-empty"><i class="fa-solid fa-triangle-exclamation"></i>' + esc((f && f.error) || 'Fiche introuvable') + '</div>'; return; }
+      CURF = f; renderDetail();
+    });
+  }
+
+  function rmkHtml(r){
+    return '<div class="rmk"><div class="rmk-ic">' + esc(initials(r.auteur)) + '</div>' +
+      '<div class="rmk-b"><div class="rmk-t">' + esc(r.text) + '</div><div class="rmk-m">' + esc(r.auteur || 'Anonyme') + ' · ' + esc(r.date || '') + '</div></div></div>';
+  }
+
+  function renderDetail(){
+    var f = CURF; if (!f) return;
+    var host = document.getElementById('fDetail');
+    var v = f.verdict || { total:0, validated:0, minimum:0, pass:false };
+    var pct = v.total ? Math.round(v.validated / v.total * 100) : 0;
+    var col = v.pass ? '#34d399' : pctColor(pct);
+    var canEdit = !!f.can_edit;
+
+    var badges = '';
+    badges += '<span class="fh-badge" style="background:' + (f.ppa ? 'rgba(16,185,129,.16)' : 'rgba(148,163,184,.14)') + ';color:' + (f.ppa ? '#34d399' : 'var(--muted)') + '"><i class="fa-solid fa-' + (f.ppa ? 'check' : 'xmark') + '"></i> PPA ' + (f.ppa ? 'OK' : 'manquant') + '</span>';
+    if (f.locked) badges += '<span class="fh-badge" style="background:rgba(148,163,184,.14);color:var(--muted)"><i class="fa-solid fa-lock"></i> Verrouillée</span>';
+
+    var sub = 'Référent : <b style="color:var(--text)">' + esc(f.referent || '—') + '</b>' + (f.date_arrivee ? ' · Arrivée le ' + esc(f.date_arrivee) : '');
+    var header = '<div class="fiche-head"><div class="fh-top">' +
+      '<div class="fh-av">' + esc(initials(f.cadet)) + '</div>' +
+      '<div class="fh-id"><div class="fh-name">' + esc(f.cadet || '—') + '</div><div class="fh-sub">' + sub + '</div></div>' +
+      badges + '</div>' +
+      '<div class="fh-prog"><div class="pbar-wrap"><div class="plabels"><span style="color:var(--muted)">Progression des validations</span><span style="font-weight:700;color:' + col + '">' + v.validated + ' / ' + v.total + ' · ' + pct + '%</span></div>' +
+      '<div class="pbar"><div class="pfill" style="width:' + pct + '%;background:' + col + '"></div></div></div>' +
+      '<div class="fh-verdict">Min. requis : <b style="color:var(--text)">' + v.minimum + '/' + v.total + '</b> + PPA<br><span style="color:' + col + ';font-weight:700">' + (v.pass ? 'Validable ✓' : 'Pas encore validable') + '</span></div></div></div>';
+
+    var crit = f.criteria || [], notes = f.notations || {};
+    var cards = crit.map(function(c){
+      var n = notes[c.id] || { validee:false, evaluateur:'', remarques:[] };
+      var rmks = n.remarques || [];
+      var state = n.validee
+        ? '<span class="valstate done"><i class="fa-solid fa-circle-check"></i> Validé' + (n.evaluateur ? ' · ' + esc(n.evaluateur) : '') + '</span>'
+        : '<span class="valstate todo"><i class="fa-regular fa-circle"></i> Non validé</span>';
+      var ctrl = state;
+      if (canEdit) ctrl = state + '<button class="val-btn' + (n.validee ? ' on' : '') + '" data-val="' + esc(c.id) + '" data-cur="' + (n.validee ? '1' : '0') + '"><i class="fa-solid fa-check"></i> ' + (n.validee ? 'Retirer' : 'Valider') + '</button>';
+
+      var thread = '';
+      if (rmks.length){
+        var isExp = !!expanded[c.id];
+        var collapsed = rmks.length > 3 && !isExp;
+        if (collapsed){
+          thread += '<button class="rmk-toggle" data-exp="' + esc(c.id) + '"><i class="fa-solid fa-chevron-down"></i> Afficher les ' + rmks.length + ' commentaires</button>';
+          thread += rmks.slice(-2).map(rmkHtml).join('');
+        } else {
+          thread += rmks.map(rmkHtml).join('');
+          if (rmks.length > 3) thread += '<button class="rmk-toggle" data-exp="' + esc(c.id) + '"><i class="fa-solid fa-chevron-up"></i> Réduire</button>';
+        }
+      }
+
+      var add = f.locked
+        ? '<div class="locked-note">Fiche verrouillée — commentaires fermés.</div>'
+        : '<div class="cmt-row"><textarea class="cmt-input" rows="1" data-cid="' + esc(c.id) + '" placeholder="Ajouter un commentaire sur ce point…"></textarea><button class="cmt-send" data-send="' + esc(c.id) + '"><i class="fa-solid fa-paper-plane"></i> Commenter</button></div>';
+
+      return '<div class="crit-card' + (n.validee ? ' ok' : '') + '"><div class="crit-head"><span class="crit-name">' + esc(c.nom) + '</span>' + ctrl + '</div>' + thread + add + '</div>';
+    }).join('');
+
+    host.innerHTML = header + '<div class="crit-list">' + cards + '</div>';
+    Array.prototype.forEach.call(host.querySelectorAll('.cmt-input'), function(t){ autoGrow(t); });
+  }
+
+  function autoGrow(t){ t.style.height = 'auto'; t.style.height = Math.min(200, t.scrollHeight) + 'px'; }
+
+  function sendComment(cid){
+    var t = document.querySelector('.cmt-input[data-cid="' + cid + '"]'); if (!t) return;
+    var text = (t.value || '').trim(); if (!text){ t.focus(); return; }
+    t.disabled = true;
+    aPost('fiche_notation_remark', { id: CUR, critere_id: cid, text: text }).then(function(d){
+      if (d && d.success){ expanded[cid] = true; openFiche(CUR); }
+      else { t.disabled = false; toast((d && d.error) || 'Envoi impossible', false); }
+    }).catch(function(){ t.disabled = false; toast('Erreur réseau', false); });
+  }
+  function toggleValidate(cid, cur){
+    aPost('fiche_notation_set', { id: CUR, critere_id: cid, validee: cur !== '1' }).then(function(d){
+      if (d && d.success){ openFiche(CUR); loadFiches(); }
+      else toast((d && d.error) || 'Action refusée', false);
+    }).catch(function(){ toast('Erreur réseau', false); });
+  }
+
+  document.addEventListener('click', function(e){
+    var o = e.target.closest('[data-open]'); if (o){ openFiche(o.getAttribute('data-open')); return; }
+    var ex = e.target.closest('[data-exp]'); if (ex){ var id = ex.getAttribute('data-exp'); expanded[id] = !expanded[id]; renderDetail(); return; }
+    var vb = e.target.closest('[data-val]'); if (vb){ toggleValidate(vb.getAttribute('data-val'), vb.getAttribute('data-cur')); return; }
+    var sb = e.target.closest('[data-send]'); if (sb){ sendComment(sb.getAttribute('data-send')); return; }
+  });
+  document.addEventListener('input', function(e){ if (e.target.classList && e.target.classList.contains('cmt-input')) autoGrow(e.target); });
+  document.addEventListener('keydown', function(e){
+    if (e.target.classList && e.target.classList.contains('cmt-input') && (e.key === 'Enter' || e.keyCode === 13) && !e.shiftKey){ e.preventDefault(); sendComment(e.target.getAttribute('data-cid')); }
+  });
+  var srch = document.getElementById('fSearch'); if (srch) srch.addEventListener('input', renderList);
+
+  loadFiches();
+})();
+</script>
+</body>
+</html>

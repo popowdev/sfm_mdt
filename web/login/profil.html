@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>MDT - Mon Profil</title>
+    <link href="/assets/fonts/inter.css" rel="stylesheet">
+    <link href="/assets/fontawesome/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:#0f172a; color:#e2e8f0; min-height:100vh; }
+        .bg { position:fixed; inset:0; background:radial-gradient(circle at center,#1e293b 0%,#0f172a 70%); z-index:-1; }
+
+        .page { max-width:560px; margin:0 auto; padding:80px 20px 40px; }
+        .page h1 { font-size:1.6em; font-weight:800; margin-bottom:30px; display:flex; align-items:center; gap:10px; }
+        .page h1 i { color:#06b6d4; }
+
+        .card { background:#1e293b; border:1px solid #334155; border-radius:14px; padding:24px; margin-bottom:20px; }
+        .card-title { font-size:.8em; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-bottom:16px; }
+
+        /* Profile card */
+        .profile-row { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+        .profile-avatar { width:64px; height:64px; border-radius:50%; border:3px solid #475569; object-fit:cover; }
+        .profile-avatar-placeholder { width:64px; height:64px; border-radius:50%; background:#475569; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:1.5em; font-weight:800; border:3px solid #475569; }
+        .profile-info { flex:1; }
+        .profile-name { font-weight:800; font-size:1.15em; color:white; }
+        .profile-sub { font-size:.82em; color:#94a3b8; margin-top:2px; }
+
+        .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .info-item { }
+        .info-label { font-size:.7em; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+        .info-value { font-size:.88em; color:#e2e8f0; font-weight:600; }
+        .info-value.muted { color:#64748b; font-style:italic; font-weight:400; }
+
+        /* Discord section */
+        .discord-status { display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:10px; margin-bottom:16px; }
+        .discord-status.linked { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); }
+        .discord-status.not-linked { background:rgba(249,115,22,0.08); border:1px solid rgba(249,115,22,0.2); }
+        .discord-status i { font-size:1.3em; }
+        .discord-status .ds-text { flex:1; }
+        .discord-status .ds-title { font-weight:700; font-size:.85em; }
+        .discord-status .ds-sub { font-size:.75em; color:#94a3b8; }
+        .discord-status.linked i { color:#10b981; }
+        .discord-status.linked .ds-title { color:#34d399; }
+        .discord-status.not-linked i { color:#f59e0b; }
+        .discord-status.not-linked .ds-title { color:#fbbf24; }
+
+        .btn { padding:10px 20px; border:none; border-radius:10px; font-weight:700; font-size:.85em; cursor:pointer; transition:.2s; font-family:'Inter',sans-serif; display:inline-flex; align-items:center; gap:8px; }
+        .btn-discord { background:#5865F2; color:white; }
+        .btn-discord:hover { background:#4752c4; transform:translateY(-1px); }
+        .btn-outline { background:transparent; color:#94a3b8; border:1px solid #475569; }
+        .btn-outline:hover { color:white; border-color:#64748b; }
+        .btn-danger { background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.2); }
+        .btn-danger:hover { background:rgba(239,68,68,0.2); color:#fca5a5; }
+        .btn-group { display:flex; gap:10px; flex-wrap:wrap; }
+
+        /* Toast */
+        .toast-zone { position:fixed; top:60px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:6px; }
+        .toast { padding:10px 18px; border-radius:8px; font-size:.82em; font-weight:600; animation:toastIn .25s ease-out; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+        .toast.success { background:#10b981; color:white; }
+        .toast.error { background:#ef4444; color:white; }
+        @keyframes toastIn { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+
+        /* Confirm overlay */
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center; }
+        .overlay.show { display:flex; }
+        .confirm-box { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:25px; text-align:center; max-width:360px; width:90%; }
+        .confirm-box p { margin-bottom:20px; font-size:.92em; line-height:1.5; }
+        .confirm-box .actions { display:flex; gap:10px; }
+        .confirm-box .actions button { flex:1; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; border:none; font-size:.85em; }
+        .confirm-box .btn-yes { background:#ef4444; color:white; }
+        .confirm-box .btn-no { background:#334155; color:#94a3b8; }
+    </style>
+</head>
+<body>
+<script>(function(){var _f=window.fetch;window.fetch=function(i,init){try{var u=(typeof i==='string')?i:(i&&i.url)||'';if(/_api\.php/.test(u)){init=init||{};var t=localStorage.getItem('mdt_auth_token');if(t){var h=new Headers((init&&init.headers)||{});if(!h.has('Authorization'))h.set('Authorization','Bearer '+t);init.headers=h;}}}catch(e){}return _f.call(this,i,init);};})();</script>
+    <div class="bg"></div>
+    <div class="toast-zone" id="toastZone"></div>
+
+    <div class="page">
+        <h1><i class="fa-solid fa-user-gear"></i> Mon Profil</h1>
+
+        <div class="card">
+            <div class="card-title">Compte MDT</div>
+            <div class="profile-row">
+                <div id="avatarSlot"></div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">-</div>
+                    <div class="profile-sub" id="profileSub">-</div>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Identifiant</div>
+                    <div class="info-value" id="infoUsername">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Membre depuis</div>
+                    <div class="info-value" id="infoCreated">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Discord ID</div>
+                    <div class="info-value" id="infoDiscordId">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Pseudo serveur</div>
+                    <div class="info-value" id="infoDiscordNick">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-id-card" style="margin-right:6px;color:#10b981;"></i> Informations RP</div>
+            <p style="font-size:.8em;color:#64748b;margin-bottom:14px;">Ces informations sont pre-remplies automatiquement dans le dispatch et les modules.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+                <div>
+                    <label style="font-size:.75em;font-weight:700;color:#64748b;display:block;margin-bottom:4px;"><i class="fa-solid fa-phone" style="margin-right:4px;color:#3b82f6;"></i>Telephone RP</label>
+                    <input type="text" id="inputTelephone" placeholder="555-0000" style="width:100%;padding:10px 14px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:white;font-size:.9em;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="font-size:.75em;font-weight:700;color:#64748b;display:block;margin-bottom:4px;"><i class="fa-solid fa-building-columns" style="margin-right:4px;color:#f59e0b;"></i>Compte bancaire RP</label>
+                    <input type="text" id="inputCompteBancaire" placeholder="Ex: SA-12345678" style="width:100%;padding:10px 14px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:white;font-size:.9em;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+            <button class="btn" style="background:#10b981;color:white;width:100%;" onclick="saveInfosRP()"><i class="fa-solid fa-check" style="margin-right:6px;"></i> Sauvegarder</button>
+            <div id="telSaveStatus" style="font-size:.75em;color:#10b981;margin-top:6px;display:none;"><i class="fa-solid fa-circle-check"></i> Enregistre</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Liaison Discord</div>
+            <div id="discordStatusSlot"></div>
+            <div class="btn-group" id="discordActions"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Actions</div>
+            <div class="btn-group">
+                <button class="btn btn-danger" onclick="confirmLogout()"><i class="fa-solid fa-right-from-bracket"></i> Deconnexion</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlayConfirm">
+        <div class="confirm-box">
+            <p id="confirmMsg">Confirmer ?</p>
+            <div class="actions">
+                <button class="btn-no" onclick="document.getElementById('overlayConfirm').classList.remove('show')">Annuler</button>
+                <button class="btn-yes" id="confirmYes">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() {
+    var API = '/login/auth_api.php';
+    var token = localStorage.getItem('mdt_auth_token');
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('mdt_user')); } catch(e) {}
+
+    if (!user) {
+        if (token) {
+            fetch(API + '?action=me', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.user) { user = data.user; localStorage.setItem('mdt_user', JSON.stringify(user)); render(); }
+                });
+        }
+    } else {
+        if (token) {
+            fetch(API + '?action=me', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.user) { user = data.user; localStorage.setItem('mdt_user', JSON.stringify(user)); render(); }
+                }).catch(function() {});
+        }
+        render();
+    }
+
+    function render() {
+        if (!user) return;
+
+        var displayName = user.discord_nick || user.discord_username || user.username || 'Utilisateur';
+
+        var avatarSlot = document.getElementById('avatarSlot');
+        if (user.discord_avatar) {
+            avatarSlot.innerHTML = '<img class="profile-avatar" src="' + esc(user.discord_avatar) + '" alt="" onerror="this.outerHTML=\'<div class=profile-avatar-placeholder>' + esc(displayName.charAt(0).toUpperCase()) + '</div>\'">';
+        } else {
+            avatarSlot.innerHTML = '<div class="profile-avatar-placeholder">' + esc(displayName.charAt(0).toUpperCase()) + '</div>';
+        }
+
+        document.getElementById('profileName').textContent = displayName;
+        document.getElementById('profileSub').textContent = user.discord_username ? '@' + user.discord_username : user.username;
+        document.getElementById('infoUsername').textContent = user.username || '-';
+        document.getElementById('infoDiscordId').textContent = user.discord_id || '-';
+        document.getElementById('infoDiscordId').className = 'info-value' + (user.discord_id ? '' : ' muted');
+        document.getElementById('infoDiscordNick').textContent = user.discord_nick || '-';
+        document.getElementById('infoDiscordNick').className = 'info-value' + (user.discord_nick ? '' : ' muted');
+
+        if (user.created_at) {
+            var d = new Date(user.created_at);
+            document.getElementById('infoCreated').textContent = d.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+        }
+
+        document.getElementById('inputTelephone').value = user.telephone || '';
+        document.getElementById('inputCompteBancaire').value = user.compte_bancaire || '';
+
+        var statusSlot = document.getElementById('discordStatusSlot');
+        var actionsSlot = document.getElementById('discordActions');
+
+        if (user.discord_id) {
+            statusSlot.innerHTML = '<div class="discord-status linked"><i class="fa-solid fa-circle-check"></i><div class="ds-text"><div class="ds-title">Compte Discord lie</div><div class="ds-sub">' + esc(user.discord_username || user.discord_id) + '</div></div></div>';
+            actionsSlot.innerHTML =
+                '<button class="btn btn-discord" id="btnRefreshRoles" onclick="refreshDiscordRoles()" title="Resync rapide des roles sans repasser par OAuth"><i class="fa-solid fa-arrows-rotate"></i> Rafraichir mes roles</button>' +
+                '<button class="btn btn-outline" onclick="relinkDiscord()" title="Refaire le lien OAuth complet"><i class="fa-brands fa-discord"></i> Relier (OAuth)</button>' +
+                '<button class="btn btn-outline" onclick="confirmUnlink()"><i class="fa-solid fa-link-slash"></i> Delier</button>';
+        } else {
+            statusSlot.innerHTML = '<div class="discord-status not-linked"><i class="fa-solid fa-triangle-exclamation"></i><div class="ds-text"><div class="ds-title">Discord non lie</div><div class="ds-sub">Liez votre Discord pour acceder a toutes les fonctionnalites</div></div></div>';
+            actionsSlot.innerHTML = '<button class="btn btn-discord" onclick="linkDiscord()"><i class="fa-brands fa-discord"></i> Lier mon compte Discord</button>';
+        }
+    }
+
+    window.refreshDiscordRoles = function() {
+        var btn = document.getElementById('btnRefreshRoles');
+        if (!btn) return;
+        var oldHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...';
+
+        fetch(API + '?action=refresh_discord_roles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+        .then(function(res) {
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+            if (!res.ok) {
+                toast((res.data && res.data.error ? res.data.error : 'Erreur') + ' (HTTP ' + res.status + ')', 'error');
+                return;
+            }
+            var d = res.data;
+            if (d.discord_roles) user.discord_roles = d.discord_roles;
+            if (d.discord_nick) user.discord_nick = d.discord_nick;
+            if (d.discord_username) user.discord_username = d.discord_username;
+            if (d.discord_avatar) user.discord_avatar = d.discord_avatar;
+            try { localStorage.setItem('mdt_user', JSON.stringify(user)); } catch(e) {}
+
+            if (d.changes) {
+                var parts = [];
+                if (d.added && d.added.length) parts.push('+' + d.added.length + ' role(s)');
+                if (d.removed && d.removed.length) parts.push('-' + d.removed.length + ' role(s)');
+                toast('Roles a jour : ' + parts.join(', ') + ' (' + d.roles_count + ' au total)', 'success');
+            } else {
+                toast('Roles deja a jour (' + d.roles_count + ' role(s))', 'success');
+            }
+            render();
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+            toast('Erreur reseau', 'error');
+        });
+    };
+
+    window.linkDiscord = function() {
+        window.location.href = '/login/auth.php?action=link';
+    };
+
+    window.relinkDiscord = function() {
+        window.location.href = '/login/auth.php?action=link';
+    };
+
+    window.confirmUnlink = function() {
+        confirm2('Voulez-vous vraiment delier votre compte Discord ? Vous perdrez l\'acces aux fonctionnalites basees sur les roles.', function() {
+            fetch(API + '?action=unlink_discord', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ token: token })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    user.discord_id = null;
+                    user.discord_username = null;
+                    user.discord_avatar = null;
+                    user.discord_nick = null;
+                    user.discord_roles = null;
+                    localStorage.setItem('mdt_user', JSON.stringify(user));
+                    toast('Discord delie', 'success');
+                    render();
+                } else {
+                    toast(data.error || 'Erreur', 'error');
+                }
+            })
+            .catch(function() { toast('Erreur reseau', 'error'); });
+        });
+    };
+
+    window.confirmLogout = function() {
+        confirm2('Voulez-vous vraiment vous deconnecter ?', function() {
+            if (typeof window.MDT_LOGOUT === 'function') {
+                window.MDT_LOGOUT();
+            } else {
+                fetch(API + '?action=logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                }).catch(function() {});
+                localStorage.clear();
+                window.location.href = '/login/connexion';
+            }
+        });
+    };
+
+    function confirm2(msg, onYes) {
+        document.getElementById('confirmMsg').textContent = msg;
+        var yesBtn = document.getElementById('confirmYes');
+        var newBtn = yesBtn.cloneNode(true);
+        yesBtn.parentNode.replaceChild(newBtn, yesBtn);
+        newBtn.id = 'confirmYes';
+        newBtn.addEventListener('click', function() { document.getElementById('overlayConfirm').classList.remove('show'); onYes(); });
+        document.getElementById('overlayConfirm').classList.add('show');
+    }
+
+    function toast(msg, type) {
+        var zone = document.getElementById('toastZone');
+        var t = document.createElement('div');
+        t.className = 'toast ' + (type || 'success');
+        t.textContent = msg;
+        zone.appendChild(t);
+        setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+    }
+
+    function esc(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('discord_linked') === '1') {
+        var discordData = null;
+        try { discordData = JSON.parse(sessionStorage.getItem('discord_link_data')); } catch(e) {}
+        if (!discordData) {
+            toast('Donnees Discord introuvables, reessaie la liaison', 'error');
+            history.replaceState({}, '', window.location.pathname);
+        } else if (!token) {
+            toast('Reconnecte-toi pour finaliser la liaison Discord', 'error');
+        } else {
+            fetch(API + '?action=link_discord', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(discordData)
+            })
+            .then(function(r) { return r.json().then(function(d) { return { status: r.status, data: d }; }); })
+            .then(function(res) {
+                var data = res.data;
+                if (data && data.success) {
+                    user.discord_id = discordData.discord_id;
+                    user.discord_username = discordData.discord_username;
+                    user.discord_avatar = discordData.discord_avatar;
+                    user.discord_nick = discordData.discord_nick;
+                    user.discord_roles = discordData.discord_roles;
+                    localStorage.setItem('mdt_user', JSON.stringify(user));
+                    sessionStorage.removeItem('discord_link_data');
+                    toast('Compte Discord lie avec succes !', 'success');
+                    history.replaceState({}, '', window.location.pathname);
+                    render();
+                } else {
+                    var msg = (data && data.error) ? data.error : ('Erreur HTTP ' + res.status);
+                    toast(msg, 'error');
+                    console.error('[link_discord]', res.status, data);
+                }
+            })
+            .catch(function(err) {
+                toast('Erreur reseau pendant la liaison Discord', 'error');
+                console.error('[link_discord]', err);
+            });
+        }
+        window.history.replaceState({}, '', '/login/profil');
+    }
+
+    window.saveInfosRP = function() {
+        var tel = document.getElementById('inputTelephone').value.trim();
+        var cb = document.getElementById('inputCompteBancaire').value.trim();
+        var token = localStorage.getItem('mdt_auth_token');
+        if (!token) { toast('Non connecte', 'error'); return; }
+
+        fetch('/login/auth_api.php?action=update_telephone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ telephone: tel || null, compte_bancaire: cb || null })
+        }).then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var u = JSON.parse(localStorage.getItem('mdt_user') || '{}');
+                u.telephone = tel || null;
+                u.compte_bancaire = cb || null;
+                localStorage.setItem('mdt_user', JSON.stringify(u));
+
+                var status = document.getElementById('telSaveStatus');
+                status.style.display = '';
+                setTimeout(function() { status.style.display = 'none'; }, 2000);
+                toast('Informations RP enregistrees', 'success');
+            } else { toast(data.error || 'Erreur', 'error'); }
+        }).catch(function() { toast('Erreur reseau', 'error'); });
+    };
+})();
+</script>
+<script src="/login/secure.js"></script>
+<script src="/dispatch_widget.js?v=18"></script>
+<script src="/nui-bridge.js"></script>
+</body>
+</html>

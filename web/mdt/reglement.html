@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDT - Hub Règlements</title>
+    <script src="/assets/vendor/tailwind.min.js"></script>
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+    <style>
+        /* Effet de verre léger pour le côté moderne */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        body {
+            background-color: #0f172a; /* Bleu nuit très sombre */
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <nav class="bg-slate-900 border-b border-slate-700 h-16 flex items-center px-6 shadow-lg">
+        <div class="flex items-center gap-3">
+
+            <img src="../mdt.png" alt="Logo MDT" class="h-10 w-auto" onerror="this.style.display='none'; document.getElementById('fallback-icon').style.display='block'">
+            <i id="fallback-icon" class="fa-solid fa-shield-halved text-2xl text-blue-500 hidden"></i>
+            <span class="text-xl font-bold tracking-wider text-white">MDT <span class="text-blue-500">LIMITLESS</span></span>
+        </div>
+        <div class="ml-auto">
+            <a href="../index" class="text-slate-400 hover:text-white transition text-sm flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Retour au Dashboard
+            </a>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto px-4 py-12">
+
+        <div class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Centre des Règlements</h1>
+            <p class="text-slate-400">Sélectionnez une catégorie pour consulter les procédures en vigueur.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+
+            <a href="https://docs.google.com/document/d/1BA1utV_g7Tw5yd-s4xx0AwuPrPVrm8sYAOEyrtjP2oY/edit?tab=t.0" class="group relative block h-64">
+                <div class="glass-panel h-full rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 group-hover:bg-slate-800/80 group-hover:scale-[1.02] group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                    <div class="h-24 w-24 bg-slate-700/50 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-600/20 transition-colors">
+
+                        <img src="../mdt.png" class="h-16 w-16 object-contain opacity-80 group-hover:opacity-100 transition" alt="MDT">
+                    </div>
+                    <h3 class="text-xl font-bold text-white group-hover:text-blue-400 transition">Règlement MDT</h3>
+                    <p class="text-sm text-slate-500 mt-2 text-center group-hover:text-slate-300">Procédures générales et code de conduite.</p>
+                </div>
+            </a>
+
+            <a href="reglement/k9" class="group relative block h-64">
+                <div class="glass-panel h-full rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 group-hover:bg-slate-800/80 group-hover:scale-[1.02] group-hover:shadow-[0_0_20px_rgba(234,179,8,0.3)] border-t-4 border-t-transparent hover:border-t-yellow-500">
+                    <div class="h-24 w-24 bg-slate-700/50 rounded-full flex items-center justify-center mb-4 group-hover:bg-yellow-600/20 transition-colors">
+                         <img src="../k9.png" class="h-16 w-16 object-contain opacity-80 group-hover:opacity-100 transition" alt="K9 Unit" onerror="this.style.display='none'; document.getElementById('k9-fallback-icon').classList.remove('hidden')">
+                        <i id="k9-fallback-icon" class="fa-solid fa-dog text-4xl text-slate-400 group-hover:text-yellow-500 transition hidden"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white group-hover:text-yellow-500 transition">Unité K9</h3>
+                    <p class="text-sm text-slate-500 mt-2 text-center group-hover:text-slate-300">Règlement et procédures de l'unité canine.</p>
+                </div>
+            </a>
+
+            <div class="group relative block h-64 opacity-50 cursor-not-allowed">
+                <div class="glass-panel h-full rounded-2xl p-6 flex flex-col items-center justify-center border-dashed border-2 border-slate-700">
+                    <div class="h-24 w-24 bg-slate-800/30 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-shield-cat text-4xl text-slate-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-500">Bientôt disponible</h3>
+                    <p class="text-sm text-slate-600 mt-2 text-center">Section en cours de rédaction.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-slate-900/50 py-6 text-center border-t border-slate-800">
+        <p class="text-slate-500 text-xs">© 2026 San Andreas State Police Tool.</p>
+    </footer>
+
+<script src="/login/secure.js"></script>
+<script src="/dispatch_widget.js?v=18"></script>
+<script src="/nui-bridge.js"></script>
+<script src="/assets/chatwidget.js"></script>
+</body>
+</html>

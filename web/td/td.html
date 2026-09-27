@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - Training Division</title>
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+html[data-module="td"]{ --accent:#10b981; --accent-2:#34d399; --accent-rgb:16,185,129; }
+.app a { color:inherit; text-decoration:none; }
+.wrap { max-width:1100px; margin:0 auto; padding:24px 20px 70px; }
+.app .btn { padding:10px 16px; border:none; border-radius:10px; font-weight:700; font-size:.88em; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:8px; transition:.15s; }
+.app .btn-primary { background:var(--accent); color:#052e1c; }
+.app .btn-primary:hover { background:var(--accent-2); }
+.app .btn-ghost { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+.app .btn-ghost:hover { border-color:var(--accent); }
+.sec-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+.sec-head h1 { font-size:1.5em; display:flex; align-items:center; gap:11px; flex-wrap:wrap; min-width:0; }
+.sec-head h1 .ic { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.05em; flex:0 0 auto; background:rgba(var(--accent-rgb),.15); color:var(--accent-2); }
+.sec-head .sub { color:var(--muted); font-size:.9em; margin-top:4px; }
+.section-title { font-size:.82em; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-2); font-weight:700; margin:26px 0 12px; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:15px 17px; }
+.stat-card .sv { font-size:1.9em; font-weight:800; line-height:1; }
+.stat-card .sl { color:var(--muted); font-size:.8em; margin-top:6px; }
+.stat-card.accent .sv { color:var(--accent-2); }
+.stat-card.good .sv { color:#34d399; }
+.stat-card.warn .sv { color:#f59e0b; }
+.stat-card.bad .sv { color:#ef4444; }
+.tile-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:13px; }
+.tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 17px; display:flex; gap:13px; align-items:flex-start; transition:.15s; }
+.tile.live { cursor:pointer; }
+.tile.live:hover { border-color:var(--accent); transform:translateY(-2px); }
+.tile.soon { opacity:.62; }
+.tile .t-ic { width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.1em; flex:0 0 auto; background:rgba(var(--accent-rgb),.13); color:var(--accent-2); }
+.tile .t-b { min-width:0; }
+.tile .t-title { font-weight:700; font-size:.98em; display:flex; align-items:center; gap:8px; }
+.tile .t-desc { color:var(--muted); font-size:.82em; margin-top:3px; line-height:1.35; }
+.badge-soon { font-size:.64em; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--surface-2); color:var(--muted-2); border:1px solid var(--border); border-radius:999px; padding:2px 8px; }
+#denied, #view-fatal, #view-error { display:none; text-align:center; padding:60px 20px; }
+#denied .lock, #view-fatal .lock { width:64px; height:64px; border-radius:50%; background:rgba(var(--accent-rgb),.12); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.6em; margin:0 auto 18px; }
+#view-error .ecode { font-size:3em; font-weight:800; color:var(--accent-2); }
+#denied h2, #view-fatal h2, #view-error h2 { margin:6px 0 8px; }
+#denied p, #view-fatal p, #view-error p { color:var(--muted); margin-bottom:18px; }
+.view { display:none; } .view.on { display:block; }
+.crumb-back { display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-size:.85em; margin-bottom:14px; }
+.crumb-back:hover { color:var(--accent-2); }
+.tb { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.ep-list { display:flex; flex-direction:column; gap:10px; }
+.ep-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:13px 16px; display:flex; align-items:center; gap:14px; }
+.ep-ord { color:var(--muted-2); font-weight:800; font-size:1.05em; min-width:26px; text-align:center; flex:0 0 auto; }
+.ep-info { flex:1; min-width:0; }
+.ep-info .en { font-weight:700; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.ep-info .es { font-size:.8em; color:var(--muted); margin-top:3px; }
+.ep-badge { font-size:.66em; font-weight:700; text-transform:uppercase; letter-spacing:.03em; border-radius:999px; padding:2px 9px; }
+.ep-badge.notation { background:rgba(59,130,246,.18); color:#60a5fa; }
+.ep-badge.temps { background:rgba(245,158,11,.18); color:#fbbf24; }
+.ep-badge.simple { background:rgba(148,163,184,.18); color:#94a3b8; }
+.ep-act { display:flex; gap:5px; flex:0 0 auto; }
+.ep-act button { background:var(--surface-2); border:1px solid var(--border); color:var(--muted); width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:.8em; }
+.ep-act button:hover { color:var(--text); border-color:var(--accent); }
+.ep-act button.del:hover { color:#ef4444; border-color:#ef4444; }
+.ep-act button:disabled { opacity:.32; cursor:default; }
+.ov { display:none; position:fixed; inset:0; background:rgba(2,6,23,.7); z-index:8000; align-items:flex-start; justify-content:center; padding:44px 20px; overflow-y:auto; }
+.ov.open { display:flex; }
+.modal-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:520px; padding:22px 24px; }
+.modal-box h2 { font-size:1.15em; margin-bottom:16px; }
+.field { margin-bottom:14px; }
+.field label { display:block; font-size:.78em; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted-2); margin-bottom:6px; }
+.field input, .field select { width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:11px 13px; color:var(--text); font-family:inherit; font-size:.95em; }
+.field input:focus, .field select:focus { outline:none; border-color:var(--accent); }
+.modal-foot { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+/* Recrutement */
+.sess-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:13px; }
+.sess-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:15px 17px; cursor:pointer; transition:.15s; position:relative; }
+.sess-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.sess-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.sess-promo { font-weight:700; font-size:1.02em; }
+.sess-meta { color:var(--muted); font-size:.82em; margin-top:4px; }
+.sess-del { background:transparent; border:none; color:var(--muted-2); cursor:pointer; font-size:.85em; padding:2px 5px; border-radius:6px; flex:0 0 auto; }
+.sess-del:hover { color:#ef4444; }
+.lock-tag { display:inline-flex; align-items:center; gap:5px; background:rgba(245,158,11,.14); color:#fbbf24; padding:2px 9px; border-radius:999px; font-size:.66em; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+.sess-card .lock-tag { position:absolute; top:11px; right:12px; }
+.v-chips { display:flex; gap:6px; margin-top:11px; flex-wrap:wrap; }
+.v-chip { font-size:.74em; font-weight:700; border-radius:7px; padding:2px 9px; min-width:26px; text-align:center; }
+.v-chip.oui { background:rgba(16,185,129,.16); color:#34d399; }
+.v-chip.mais { background:rgba(59,130,246,.16); color:#60a5fa; }
+.v-chip.rep { background:rgba(245,158,11,.16); color:#fbbf24; }
+.v-chip.non { background:rgba(239,68,68,.16); color:#f87171; }
+.v-chip.pend { background:var(--surface-2); color:var(--muted-2); }
+.sess-form { display:grid; grid-template-columns:2fr 1fr; gap:12px; }
+@media(max-width:560px){ .sess-form { grid-template-columns:1fr; } }
+.add-rec { display:flex; gap:9px; margin-bottom:14px; flex-wrap:wrap; }
+.add-rec input { flex:1 1 140px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; color:var(--text); font-family:inherit; font-size:.92em; }
+.add-rec input:focus { outline:none; border-color:var(--accent); }
+.rec-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; margin-bottom:10px; overflow:hidden; }
+.rec-head { display:flex; align-items:center; gap:13px; padding:12px 15px; cursor:pointer; }
+.rec-head:hover { background:var(--surface-2); }
+.rec-num { color:var(--muted-2); font-weight:800; min-width:24px; text-align:center; flex:0 0 auto; }
+.rec-id { flex:1; min-width:0; }
+.rec-id .rn { font-weight:700; }
+.rec-id .rs { font-size:.78em; color:var(--muted); margin-top:1px; }
+.rec-verdicts { display:flex; gap:4px; flex:0 0 auto; flex-wrap:wrap; }
+.vb { background:var(--surface-2); border:1px solid var(--border); color:var(--muted); border-radius:7px; padding:5px 9px; font-size:.72em; font-weight:700; cursor:pointer; font-family:inherit; }
+.vb:hover:not(:disabled) { color:var(--text); border-color:var(--accent); }
+.vb:disabled { cursor:default; opacity:.7; }
+.rec-chev { color:var(--muted-2); transition:.2s; flex:0 0 auto; }
+.rec-card.open .rec-chev { transform:rotate(180deg); }
+.rec-body { display:none; padding:0 15px 14px; }
+.rec-card.open .rec-body { display:block; }
+.rec-table { width:100%; border-collapse:collapse; }
+.rec-table th { text-align:left; font-size:.72em; text-transform:uppercase; letter-spacing:.04em; color:var(--muted-2); font-weight:700; padding:8px 8px; border-bottom:1px solid var(--border); }
+.rec-table td { padding:8px 8px; border-bottom:1px solid var(--border); vertical-align:top; }
+.rec-table .ep-nm { font-weight:600; font-size:.9em; }
+.rec-table tr.ep-grp td { background:var(--surface-2); font-weight:700; font-size:.76em; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); padding:7px 9px; border-bottom:1px solid var(--border); }
+.rec-table tr.ep-grp .fl-dot { width:9px; height:9px; display:inline-block; vertical-align:middle; margin-right:7px; border-radius:50%; }
+.cell-in { width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:7px; padding:7px 9px; color:var(--text); font-family:inherit; font-size:.88em; }
+.cell-in:focus { outline:none; border-color:var(--accent); }
+.cell-ta { width:100%; min-height:38px; background:var(--surface-2); border:1px solid var(--border); border-radius:7px; padding:7px 9px; color:var(--text); font-family:inherit; font-size:.85em; resize:vertical; line-height:1.4; }
+.cell-ta:focus { outline:none; border-color:var(--accent); }
+/* Fiches E5 */
+.toolbar-s { position:relative; margin-bottom:16px; }
+.toolbar-s i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--muted-2); font-size:.9em; }
+.toolbar-s input { width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 13px 11px 36px; color:var(--text); font-family:inherit; font-size:.92em; }
+.toolbar-s input:focus { outline:none; border-color:var(--accent); }
+.fiche-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:13px; }
+.fiche-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:15px 17px; cursor:pointer; transition:.15s; position:relative; }
+.fiche-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.fiche-card .lock-tag { position:absolute; top:11px; right:12px; }
+.fc-cadet { font-weight:700; font-size:1.02em; overflow-wrap:anywhere; }
+.fc-meta { color:var(--muted); font-size:.82em; margin-top:4px; }
+.fc-foot { display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+.fc-prog { color:var(--muted-2); font-size:.82em; font-weight:700; }
+.v-badge { font-size:.72em; font-weight:800; border-radius:999px; padding:3px 10px; text-transform:uppercase; letter-spacing:.02em; }
+.v-badge.ok { background:rgba(16,185,129,.16); color:#34d399; }
+.v-badge.no { background:rgba(239,68,68,.14); color:#f87171; }
+.fiche-meta { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
+.fiche-meta input:disabled { opacity:.7; }
+.ppa-chk { display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:.9em; cursor:pointer; padding-top:8px; }
+.ppa-chk input { width:18px; height:18px; accent-color:var(--accent); }
+.verdict-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-radius:13px; padding:13px 17px; margin-bottom:8px; border:1px solid var(--border); }
+.verdict-bar.ok { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.35); }
+.verdict-bar.no { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.28); }
+.vb-badge { font-weight:800; font-size:.9em; }
+.verdict-bar.ok .vb-badge { color:#34d399; } .verdict-bar.no .vb-badge { color:#f87171; }
+.vb-num { color:var(--muted); font-size:.88em; margin-left:8px; }
+.vb-right { color:var(--muted-2); font-size:.82em; }
+.crit-list { display:flex; flex-direction:column; gap:8px; }
+.crit-card { background:var(--surface); border:1px solid var(--border); border-radius:11px; overflow:hidden; }
+.crit-head { display:flex; align-items:center; gap:12px; padding:11px 14px; cursor:pointer; }
+.crit-head:hover { background:var(--surface-2); }
+.crit-tog { flex:0 0 auto; width:30px; height:30px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--muted-2); cursor:pointer; font-size:.8em; }
+.crit-tog.on { background:#10b981; border-color:#10b981; color:#052e1c; }
+.crit-tog:disabled { cursor:default; opacity:.75; }
+.crit-nom { flex:1; min-width:0; font-weight:600; font-size:.92em; overflow-wrap:anywhere; }
+.crit-eval { font-size:.74em; color:#34d399; background:rgba(16,185,129,.12); border-radius:999px; padding:2px 9px; flex:0 0 auto; }
+.crit-rc { font-size:.78em; color:var(--muted-2); flex:0 0 auto; }
+.crit-chev { color:var(--muted-2); transition:.2s; flex:0 0 auto; }
+.crit-card.open .crit-chev { transform:rotate(180deg); }
+.crit-body { display:none; padding:2px 14px 13px; border-top:1px solid var(--border); }
+.crit-card.open .crit-body { display:block; }
+.rmk { padding:8px 0; border-bottom:1px solid var(--border); }
+.rmk-t { font-size:.88em; overflow-wrap:anywhere; }
+.rmk-m { font-size:.74em; color:var(--muted-2); margin-top:3px; }
+.rmk-empty { color:var(--muted-2); font-size:.82em; padding:8px 0; }
+.rmk-add { display:flex; gap:8px; margin-top:10px; }
+.rmk-add input { flex:1; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:8px 11px; color:var(--text); font-family:inherit; font-size:.86em; }
+.rmk-add input:focus { outline:none; border-color:var(--accent); }
+.note-add { display:flex; gap:9px; align-items:flex-start; margin-bottom:14px; }
+.note-add textarea { flex:1; min-height:52px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; color:var(--text); font-family:inherit; font-size:.9em; resize:vertical; line-height:1.4; }
+.note-add textarea:focus { outline:none; border-color:var(--accent); }
+.journal { display:flex; flex-direction:column; gap:8px; }
+.jnl { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; }
+.jnl-t { font-size:.9em; overflow-wrap:anywhere; white-space:pre-wrap; }
+.jnl-m { font-size:.75em; color:var(--muted-2); margin-top:5px; display:flex; align-items:center; gap:8px; }
+.jnl-x { background:transparent; border:none; color:var(--muted-2); cursor:pointer; font-size:.9em; margin-left:auto; }
+.jnl-x:hover { color:#ef4444; }
+.ref-group { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 17px; margin-bottom:12px; }
+.ref-head { font-weight:700; display:flex; align-items:center; gap:9px; margin-bottom:11px; }
+.ref-head i { color:var(--accent-2); }
+.ref-count { font-size:.76em; color:var(--muted-2); font-weight:600; background:var(--surface-2); border-radius:999px; padding:2px 9px; }
+.ref-cadets { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:9px; }
+.ref-cadet { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:9px 12px; transition:.15s; }
+.ref-cadet:hover { border-color:var(--accent); }
+.rc-nom { font-size:.88em; font-weight:600; overflow-wrap:anywhere; min-width:0; }
+/* ============ First Lincoln — constructeur ============ */
+.btn-sm { padding:7px 12px; font-size:.8em; }
+.btn-danger { background:rgba(239,68,68,.14); color:#f87171; }
+.btn-danger:hover { background:rgba(239,68,68,.24); }
+.fl-hub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:15px; }
+.fl-type-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; transition:.15s; position:relative; }
+.fl-type-card.clickable { cursor:pointer; }
+.fl-type-card.clickable:hover { border-color:var(--accent); transform:translateY(-2px); }
+.fl-type-card.draft { opacity:.82; }
+.fl-cover { height:112px; background:linear-gradient(135deg,rgba(var(--accent-rgb),.22),rgba(var(--accent-rgb),.05)); position:relative; display:flex; align-items:center; justify-content:center; color:var(--accent-2); font-size:2.1em; }
+.fl-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+.fl-cover .fl-state { position:absolute; top:10px; right:11px; font-size:.64em; font-weight:800; text-transform:uppercase; letter-spacing:.05em; border-radius:999px; padding:3px 10px; backdrop-filter:blur(4px); }
+.fl-state.pub { background:rgba(16,185,129,.9); color:#052e1c; }
+.fl-state.dft { background:rgba(148,163,184,.85); color:#0b1220; }
+.fl-card-b { padding:14px 16px 16px; display:flex; flex-direction:column; flex:1; }
+.fl-card-b .fl-name { font-weight:800; font-size:1.05em; display:flex; align-items:center; gap:8px; }
+.fl-card-b .fl-desc { color:var(--muted); font-size:.82em; margin-top:5px; line-height:1.4; flex:1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.fl-metrics { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+.fl-metric { font-size:.72em; font-weight:700; background:var(--surface-2); border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:3px 9px; }
+.fl-metric b { color:var(--text); }
+.fl-card-foot { display:flex; gap:7px; margin-top:13px; }
+.fl-card-foot .btn { flex:0 0 auto; }
+.fl-card-foot .grow { flex:1; }
+.sit-badge { font-size:.66em; font-weight:800; text-transform:uppercase; letter-spacing:.03em; border-radius:999px; padding:2px 9px; }
+.sit-badge.always { background:rgba(16,185,129,.16); color:#34d399; }
+.sit-badge.conditional { background:rgba(245,158,11,.16); color:#fbbf24; }
+.sit-badge.never { background:rgba(148,163,184,.18); color:#94a3b8; }
+/* builder header */
+.flb-head { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:16px; }
+.flb-cover { height:120px; background:linear-gradient(135deg,rgba(var(--accent-rgb),.22),rgba(var(--accent-rgb),.05)); position:relative; }
+.flb-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+.flb-head-b { padding:15px 18px 17px; }
+.flb-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.flb-title-row h1 { font-size:1.35em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+.flb-title-row h1 span.nm { overflow-wrap:anywhere; }
+.flb-desc { color:var(--muted); font-size:.88em; margin-top:7px; line-height:1.45; max-width:640px; }
+.flb-actions { display:flex; gap:8px; flex-wrap:wrap; flex:0 0 auto; }
+/* totals bar */
+.flb-totals { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.flb-tot { flex:1 1 130px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 15px; }
+.flb-tot .tv { font-size:1.5em; font-weight:800; line-height:1; }
+.flb-tot .tl { color:var(--muted); font-size:.76em; margin-top:5px; }
+.flb-tot.prat .tv { color:var(--accent-2); } .flb-tot.quest .tv { color:#60a5fa; } .flb-tot.seuil .tv { color:#fbbf24; }
+/* tabs */
+.flb-tabs { display:flex; gap:5px; border-bottom:1px solid var(--border); margin-bottom:18px; overflow-x:auto; }
+.flb-tab { padding:10px 16px; font-weight:700; font-size:.88em; color:var(--muted); cursor:pointer; border:none; background:none; font-family:inherit; border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; display:flex; align-items:center; gap:8px; }
+.flb-tab:hover { color:var(--text); }
+.flb-tab.on { color:var(--accent-2); border-bottom-color:var(--accent); }
+/* sections */
+.fl-sec-list, .fl-crit-list, .fl-cat-list, .fl-q-list { display:flex; flex-direction:column; }
+.fl-sec { background:var(--surface); border:1px solid var(--border); border-radius:14px; margin-bottom:12px; overflow:hidden; }
+.fl-sec.dragging, .fl-crit.dragging, .fl-cat.dragging, .fl-q.dragging { opacity:.4; }
+.fl-sec-head { display:flex; align-items:center; gap:11px; padding:12px 14px; border-left:4px solid var(--accent); }
+.fl-drag { cursor:grab; color:var(--muted-2); flex:0 0 auto; width:22px; text-align:center; }
+.fl-drag:active { cursor:grabbing; }
+.fl-sec-ic { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1em; flex:0 0 auto; background:rgba(var(--accent-rgb),.14); color:var(--accent-2); overflow:hidden; }
+.fl-sec-ic img { width:100%; height:100%; object-fit:cover; }
+.fl-sec-t { flex:1; min-width:0; }
+.fl-sec-t .sn { font-weight:700; overflow-wrap:anywhere; }
+.fl-sec-t .sm { font-size:.76em; color:var(--muted-2); margin-top:2px; }
+.fl-sec-pts { font-size:.78em; font-weight:800; color:var(--accent-2); background:rgba(var(--accent-rgb),.12); border-radius:999px; padding:3px 11px; flex:0 0 auto; }
+.fl-mini { background:var(--surface-2); border:1px solid var(--border); color:var(--muted); width:31px; height:31px; border-radius:8px; cursor:pointer; font-size:.78em; flex:0 0 auto; }
+.fl-mini:hover { color:var(--text); border-color:var(--accent); }
+.fl-mini.del:hover { color:#ef4444; border-color:#ef4444; }
+.fl-sec-body { padding:6px 14px 13px 40px; }
+.fl-crit { display:flex; align-items:center; gap:10px; padding:9px 11px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; margin-bottom:7px; }
+.fl-crit-th { width:34px; height:34px; border-radius:8px; background:var(--surface); border:1px solid var(--border); flex:0 0 auto; display:flex; align-items:center; justify-content:center; color:var(--muted-2); overflow:hidden; }
+.fl-crit-th img { width:100%; height:100%; object-fit:cover; }
+.fl-crit-t { flex:1; min-width:0; }
+.fl-crit-t .cn { font-size:.9em; font-weight:600; overflow-wrap:anywhere; }
+.fl-crit-t .cd { font-size:.75em; color:var(--muted-2); margin-top:2px; overflow-wrap:anywhere; }
+.fl-elim { font-size:.64em; font-weight:800; text-transform:uppercase; letter-spacing:.03em; background:rgba(239,68,68,.16); color:#f87171; border-radius:999px; padding:2px 8px; flex:0 0 auto; }
+.fl-crit-pts { font-size:.8em; font-weight:800; color:var(--text); flex:0 0 auto; min-width:44px; text-align:right; }
+.fl-crit-pts .st { display:block; font-size:.72em; font-weight:600; color:var(--muted-2); }
+.fl-add { display:inline-flex; align-items:center; gap:8px; background:transparent; border:1px dashed var(--border); color:var(--muted); border-radius:10px; padding:9px 14px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.84em; transition:.15s; }
+.fl-add:hover { border-color:var(--accent); color:var(--accent-2); }
+.fl-add.block { display:flex; justify-content:center; width:100%; margin-top:4px; }
+.fl-add.crit { margin-top:2px; padding:7px 12px; font-size:.8em; }
+/* categories / questions */
+.fl-cat { background:var(--surface); border:1px solid var(--border); border-radius:14px; margin-bottom:12px; overflow:hidden; }
+.fl-cat-head { display:flex; align-items:center; gap:11px; padding:12px 14px; }
+.fl-dot { width:13px; height:13px; border-radius:50%; flex:0 0 auto; background:var(--accent); }
+.fl-cat-t { flex:1; min-width:0; font-weight:700; overflow-wrap:anywhere; }
+.fl-cat-c { font-size:.76em; color:var(--muted-2); background:var(--surface-2); border-radius:999px; padding:2px 9px; flex:0 0 auto; }
+.fl-cat-body { padding:4px 14px 13px 40px; }
+.fl-q { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; margin-bottom:7px; }
+.fl-q-th { width:34px; height:34px; border-radius:8px; background:var(--surface); border:1px solid var(--border); flex:0 0 auto; display:flex; align-items:center; justify-content:center; color:var(--muted-2); overflow:hidden; margin-top:1px; }
+.fl-q-th img { width:100%; height:100%; object-fit:cover; }
+.fl-q-t { flex:1; min-width:0; }
+.fl-q-t .qq { font-size:.9em; font-weight:600; overflow-wrap:anywhere; }
+.fl-q-t .qr { font-size:.76em; color:#34d399; margin-top:2px; overflow-wrap:anywhere; }
+.fl-q-pts { font-size:.72em; font-weight:800; border-radius:999px; padding:3px 9px; flex:0 0 auto; background:rgba(59,130,246,.16); color:#60a5fa; }
+.fl-q-pts.bonus { background:rgba(245,158,11,.18); color:#fbbf24; }
+.fl-q-acts, .fl-crit-acts { display:flex; gap:5px; flex:0 0 auto; }
+/* image field (modal) */
+.fl-img-field { display:flex; align-items:center; gap:13px; }
+.fl-img-prev { width:74px; height:74px; border-radius:11px; background:var(--surface-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--muted-2); font-size:1.3em; overflow:hidden; flex:0 0 auto; }
+.fl-img-prev img { width:100%; height:100%; object-fit:cover; }
+.fl-img-btns { display:flex; flex-direction:column; gap:7px; }
+.fl-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:520px){ .fl-row2 { grid-template-columns:1fr; } }
+.fl-chk { display:inline-flex; align-items:center; gap:9px; font-weight:600; font-size:.9em; cursor:pointer; }
+.fl-chk input { width:18px; height:18px; accent-color:var(--accent); }
+.color-in { width:100%; height:42px; padding:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; cursor:pointer; }
+.fl-empty { text-align:center; padding:40px 20px; color:var(--muted); background:var(--surface); border:1px dashed var(--border); border-radius:14px; }
+.fl-empty .ei { font-size:2em; margin-bottom:10px; color:var(--muted-2); }
+/* ============ First Lincoln — passations ============ */
+.fl-seg { display:inline-flex; gap:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:4px; margin-bottom:18px; }
+.fl-seg-b { display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:8px; font-weight:700; font-size:.86em; color:var(--muted); transition:.15s; }
+.fl-seg-b:hover { color:var(--text); }
+.fl-seg-b.on { background:var(--accent); color:#052e1c; }
+.fle-filters { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.fle-fsel { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:0 13px; color:var(--text); font-family:inherit; font-size:.9em; flex:0 0 auto; }
+.fle-fsel:focus { outline:none; border-color:var(--accent); }
+.fle-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:13px; }
+.fle-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:15px 17px; cursor:pointer; transition:.15s; }
+.fle-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.fle-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.fle-agent { font-weight:700; font-size:1.02em; overflow-wrap:anywhere; min-width:0; }
+.fle-card-meta { color:var(--muted); font-size:.82em; margin-top:5px; overflow-wrap:anywhere; }
+.fle-card-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; }
+.fle-score { font-size:.82em; font-weight:800; color:var(--muted); }
+.fle-score.ok { color:#34d399; } .fle-score.no { color:#f87171; }
+.fle-live { font-size:.7em; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted-2); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:2px 9px; }
+.fle-vb { font-size:.7em; font-weight:800; text-transform:uppercase; letter-spacing:.02em; border-radius:999px; padding:3px 10px; flex:0 0 auto; }
+.fle-vb.ok { background:rgba(16,185,129,.16); color:#34d399; } .fle-vb.no { background:rgba(239,68,68,.14); color:#f87171; }
+.fle-vb.elim { background:rgba(239,68,68,.2); color:#fca5a5; } .fle-vb.wait { background:var(--surface-2); color:var(--muted-2); }
+.fle-savestate { font-size:.86em; color:var(--muted-2); margin-left:6px; }
+/* hero verdict */
+.fle-hero { border:1px solid var(--border); border-radius:16px; padding:17px 20px; margin-bottom:18px; background:var(--surface); }
+.fle-hero.ok { background:rgba(16,185,129,.09); border-color:rgba(16,185,129,.32); }
+.fle-hero.no { background:rgba(239,68,68,.07); border-color:rgba(239,68,68,.26); }
+.fle-hero.elim { background:rgba(239,68,68,.11); border-color:rgba(239,68,68,.4); }
+.fle-hero-main { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+.fle-hero-score { font-size:2.1em; font-weight:800; line-height:1; }
+.fle-hero.ok .fle-hero-score { color:#34d399; } .fle-hero.no .fle-hero-score, .fle-hero.elim .fle-hero-score { color:#f87171; }
+.fle-hero-score span { font-size:.5em; font-weight:700; color:var(--muted-2); }
+.fle-hero-sub { font-weight:700; font-size:.92em; }
+.fle-hero-break { display:flex; gap:16px; flex-wrap:wrap; color:var(--muted); font-size:.82em; margin-top:8px; }
+.fle-bar { height:7px; background:var(--surface-2); border-radius:999px; margin-top:11px; overflow:hidden; }
+.fle-bar-f { height:100%; background:var(--accent); border-radius:999px; transition:width .25s; }
+.fle-hero.no .fle-bar-f, .fle-hero.elim .fle-bar-f { background:#ef4444; }
+/* pratique */
+.fle-sec { background:var(--surface); border:1px solid var(--border); border-radius:14px; margin-bottom:12px; overflow:hidden; }
+.fle-sec-head { display:flex; align-items:center; gap:11px; padding:11px 14px; border-left:4px solid var(--accent); background:var(--surface-2); }
+.fle-sec-ic { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:.95em; flex:0 0 auto; background:rgba(var(--accent-rgb),.14); color:var(--accent-2); overflow:hidden; }
+.fle-sec-ic img { width:100%; height:100%; object-fit:cover; }
+.fle-sec-t { flex:1; min-width:0; font-weight:700; overflow-wrap:anywhere; }
+.fle-sec-pts { font-size:.8em; font-weight:800; color:var(--accent-2); background:rgba(var(--accent-rgb),.12); border-radius:999px; padding:3px 11px; flex:0 0 auto; }
+.fle-sec-body { padding:8px 14px 12px; }
+.fle-crit { display:flex; align-items:center; gap:11px; padding:9px 0; border-bottom:1px solid var(--border); }
+.fle-crit:last-child { border-bottom:none; }
+.fle-crit-th { width:36px; height:36px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); flex:0 0 auto; display:flex; align-items:center; justify-content:center; color:var(--muted-2); overflow:hidden; }
+.fle-crit-th img { width:100%; height:100%; object-fit:cover; }
+.fle-crit-t { flex:1; min-width:0; }
+.fle-crit-n { font-size:.92em; font-weight:600; overflow-wrap:anywhere; }
+.fle-crit-d { font-size:.76em; color:var(--muted-2); margin-top:2px; overflow-wrap:anywhere; }
+.fle-crit-sc { display:flex; align-items:center; gap:7px; flex:0 0 auto; flex-wrap:wrap; justify-content:flex-end; }
+.sc-seg { display:inline-flex; gap:3px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:3px; }
+.sc-b { min-width:30px; height:30px; border:none; background:transparent; color:var(--muted); border-radius:6px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82em; padding:0 6px; transition:.12s; }
+.sc-b:hover:not(:disabled) { color:var(--text); background:var(--surface); }
+.sc-b.on { background:var(--accent); color:#052e1c; }
+.sc-b:disabled { cursor:default; opacity:.55; }
+.sc-numwrap { display:inline-flex; align-items:center; gap:6px; color:var(--muted-2); font-size:.82em; }
+.sc-num { width:70px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:7px 9px; color:var(--text); font-family:inherit; font-size:.9em; }
+.sc-num:focus { outline:none; border-color:var(--accent); }
+.fle-elimtog { width:32px; height:30px; border:1px solid var(--border); background:var(--surface-2); color:var(--muted-2); border-radius:8px; cursor:pointer; font-size:.8em; flex:0 0 auto; }
+.fle-elimtog:hover:not(:disabled) { color:#f87171; border-color:#ef4444; }
+.fle-elimtog.on { background:rgba(239,68,68,.9); color:#fff; border-color:#ef4444; }
+.fle-elimtog:disabled { cursor:default; opacity:.55; }
+/* questionnaire */
+.fle-cat { background:var(--surface); border:1px solid var(--border); border-radius:14px; margin-bottom:12px; overflow:hidden; }
+.fle-cat-head { display:flex; align-items:center; gap:11px; padding:11px 14px; background:var(--surface-2); }
+.fle-cat-t { flex:1; min-width:0; font-weight:700; overflow-wrap:anywhere; }
+.fle-cat-body { padding:8px 14px 12px; }
+.fle-q { display:flex; align-items:flex-start; gap:11px; padding:10px 11px; border:1px solid var(--border); border-radius:10px; margin-bottom:7px; cursor:pointer; transition:.12s; background:var(--surface-2); }
+.fle-q:last-child { margin-bottom:0; }
+.fle-q:hover { border-color:var(--accent); }
+.fle-q.on { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.4); }
+.fle-q-chk { color:var(--muted-2); font-size:1.15em; flex:0 0 auto; margin-top:1px; }
+.fle-q.on .fle-q-chk { color:#34d399; }
+.fle-q-th { width:38px; height:38px; border-radius:8px; background:var(--surface); border:1px solid var(--border); flex:0 0 auto; overflow:hidden; }
+.fle-q-th img { width:100%; height:100%; object-fit:cover; }
+.fle-q-t { flex:1; min-width:0; }
+.fle-q-q { font-size:.9em; font-weight:600; overflow-wrap:anywhere; }
+.fle-q-r { font-size:.78em; color:#34d399; margin-top:3px; overflow-wrap:anywhere; }
+.fle-q-pts { font-size:.72em; font-weight:800; border-radius:999px; padding:3px 9px; flex:0 0 auto; background:rgba(59,130,246,.16); color:#60a5fa; align-self:center; }
+.fle-q-pts.bonus { background:rgba(245,158,11,.18); color:#fbbf24; }
+</style>
+</head>
+<body class="app">
+<div class="app-bg"></div>
+<div class="wrap">
+  <div id="denied"><div class="lock"><i class="fa-solid fa-lock"></i></div><h2>Accès à la Training Division refusé</h2><p>Ta session n'est pas valide ou a expiré. Reconnecte-toi depuis le menu.</p><a class="btn btn-ghost" href="/"><i class="fa-solid fa-arrow-left"></i> Retour au menu</a></div>
+  <div id="view-fatal"><div class="lock"><i class="fa-solid fa-plug-circle-xmark"></i></div><h2>Module indisponible</h2><p>Impossible de charger la Training Division. Le serveur ne répond pas, ou ta session a expiré.</p><button class="btn btn-primary" onclick="window.location.reload()"><i class="fa-solid fa-rotate-right"></i> Réessayer</button></div>
+  <div id="view-error"><div class="ecode" id="err-code">404</div><h2 id="err-title">Page introuvable</h2><p id="err-msg"></p><a class="btn btn-ghost" href="/td/"><i class="fa-solid fa-house"></i> Tableau de bord</a></div>
+  <div id="view-home" class="view"></div>
+  <div id="view-epreuves" class="view"></div>
+  <div id="view-recrutement" class="view"></div>
+  <div id="view-session" class="view"></div>
+  <div id="view-fiches" class="view"></div>
+  <div id="view-fiche" class="view"></div>
+  <div id="view-notations" class="view"></div>
+  <div id="view-referents" class="view"></div>
+  <div id="view-fl" class="view"></div>
+  <div id="view-flbaremes" class="view"></div>
+  <div id="view-fleval" class="view"></div>
+  <div id="view-flbuilder" class="view"></div>
+</div>
+<div id="ov" class="ov"><div class="modal-box" id="modal-box"></div></div>
+
+<script>
+window.MDT_SHELL = {
+  module: 'td', title: 'Training Division', icon: 'fa-graduation-cap', back: { href: '/', label: 'Menu' },
+  nav: [
+    { key:'home', label:'Tableau de bord', icon:'fa-gauge', href:'/td/' }
+  ]
+};
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/skeleton.js"></script>
+<script src="/assets/select.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/modules.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/router.js"></script>
+<script src="/assets/dock.js"></script>
+<script src="/assets/autocomplete.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script>
+var API = '/td/td_api.php';
+function authHeaders(extra) { var h = extra || {}; try { var t = localStorage.getItem('mdt_auth_token') || ''; if (t) h['Authorization'] = 'Bearer ' + t; } catch(e) {} return h; }
+function toast(msg, ok) { if (window.MDT_TOAST) { ok ? MDT_TOAST.ok(msg) : MDT_TOAST.err(msg); } }
+function esc(s) { if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+function can(p) { return !!PERMS[p]; }
+
+var PERMS = {}, ME = {}, STATS = {};
+
+var SUBMODULES = [
+  { key:'epreuves',   label:'Épreuves',        icon:'fa-list-check',        desc:'Configuration des épreuves de formation',        href:'/td/epreuves',      live:true },
+  { key:'recrutement',label:'Recrutement',     icon:'fa-user-plus',         desc:'Sessions d\'évaluation des recrues',              href:'/td/recrutement',   live:true },
+  { key:'fiches',     label:'Fiches cadets',   icon:'fa-id-card',           desc:'Suivi individuel, notations, journal',           href:'/td/fiches',        live:true },
+  { key:'notations',  label:'Barème',          icon:'fa-star',              desc:'Critères de notation des cadets',                href:'/td/notations',     live:true },
+  { key:'referents',  label:'Référents',       icon:'fa-user-graduate',     desc:'Cadets regroupés par référent',                  href:'/td/referents',     live:true },
+  { key:'documentation', label:'Documentation', icon:'fa-book',           desc:'Fiches pédagogiques de la division',             href:'/documents/training-division', live:true, extern:true },
+  { key:'fl',         label:'First Lincoln',   icon:'fa-clipboard-list',    desc:'Examens sur mesure : barèmes + passations notées',href:'/td/first-lincoln', live:true, inst:true }
+];
+
+function boot() {
+  fetch(API + '?action=bootstrap', { headers: authHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d || d.error) { if (d && d.code === 'E-SEC-401') document.getElementById('denied').style.display = 'block'; else showFatal(); return; }
+      if (!d.access) { document.getElementById('denied').style.display = 'block'; return; }
+      PERMS = d.perms || {}; ME = d.me || {}; STATS = d.stats || {};
+      startRouter();
+    })
+    .catch(function(e){ if (window.console && console.error) console.error('[TD] boot', e); showFatal(); });
+}
+function showFatal() { document.getElementById('view-fatal').style.display = 'block'; }
+function reloadBootstrap(cb) {
+  fetch(API + '?action=bootstrap', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.access) { PERMS = d.perms || PERMS; STATS = d.stats || STATS; if (cb) cb(); else MDT_ROUTER.refresh(); } })
+    .catch(function(){ toast('Rechargement impossible', false); });
+}
+function viewShow(id) {
+  ['denied','view-fatal','view-error'].forEach(function(x){ document.getElementById(x).style.display = 'none'; });
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('on', v.id === id); });
+  window.scrollTo(0, 0);
+}
+function showError(code, title, msg) {
+  document.getElementById('err-code').textContent = code;
+  document.getElementById('err-title').textContent = title;
+  document.getElementById('err-msg').textContent = msg || '';
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); });
+  ['denied','view-fatal'].forEach(function(x){ document.getElementById(x).style.display = 'none'; });
+  document.getElementById('view-error').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function statCard(cls, val, label) {
+  return '<div class="stat-card ' + cls + '"><div class="sv">' + val + '</div><div class="sl">' + esc(label) + '</div></div>';
+}
+function showHome() {
+  var s = STATS || {}, fl = s.first_lincoln || {};
+  var h = '<div class="sec-head"><div><h1><span class="ic"><i class="fa-solid fa-graduation-cap"></i></span> Training Division</h1>'
+    + '<div class="sub">' + (ME.name ? 'Bonjour, ' + esc(ME.name) + '. ' : '') + 'Vue d\'ensemble de la formation.</div></div></div>';
+
+  h += '<div class="section-title">En un coup d\'œil</div>';
+  h += '<div class="stat-grid">'
+    + statCard('accent', s.fiches || 0, 'Fiches cadets')
+    + statCard('', s.sessions || 0, 'Sessions de recrutement')
+    + statCard('', s.epreuves || 0, 'Épreuves')
+    + statCard('good', fl.reussi || 0, 'First Lincoln réussis')
+    + statCard('warn', fl.en_cours || 0, 'First Lincoln en cours')
+    + '</div>';
+
+  h += '<div class="section-title">First Lincoln</div>';
+  h += '<div class="stat-grid">'
+    + statCard('accent', fl.total || 0, 'Passations totales')
+    + statCard('good', fl.reussi || 0, 'Réussis')
+    + statCard('bad', fl.echoue || 0, 'Échecs')
+    + statCard('warn', fl.en_cours || 0, 'En cours')
+    + statCard('bad', fl.faute_elim || 0, 'Fautes éliminatoires')
+    + statCard('', s.fl_types || 0, 'Barèmes actifs')
+    + '</div>';
+
+  h += '<div class="section-title">Modules</div>';
+  h += '<div class="tile-grid">' + SUBMODULES.map(function(m){
+    if (m.inst && !can('td_instructor')) return '';
+    var live = m.live && can('access');
+    var attrs = live ? ('class="tile live" onclick="' + (m.extern ? ("window.location.href='" + m.href + "'") : ("MDT_ROUTER.go('" + m.href + "')")) + '"') : 'class="tile soon"';
+    return '<div ' + attrs + '><span class="t-ic"><i class="fa-solid ' + m.icon + '"></i></span>'
+      + '<div class="t-b"><div class="t-title">' + esc(m.label) + (live ? '' : ' <span class="badge-soon">à venir</span>') + '</div>'
+      + '<div class="t-desc">' + esc(m.desc) + '</div></div></div>';
+  }).join('') + '</div>';
+
+  document.getElementById('view-home').innerHTML = h;
+  viewShow('view-home');
+}
+
+function startRouter() {
+  MDT_ROUTER.define({
+    base: '/td',
+    can: can,
+    routes: [
+      { path:'/', view:'home' },
+      { path:'/epreuves', view:'epreuves' },
+      { path:'/recrutement', view:'recrutement' },
+      { path:'/recrutement/session/:id', view:'session' },
+      { path:'/fiches', view:'fiches' },
+      { path:'/fiches/:id', view:'fiche' },
+      { path:'/notations', view:'notations' },
+      { path:'/referents', view:'referents' },
+      { path:'/first-lincoln', view:'fl' },
+      { path:'/first-lincoln/baremes', view:'flbaremes' },
+      { path:'/first-lincoln/eval/:id', view:'fleval' },
+      { path:'/first-lincoln/type/:id', view:'flbuilder' }
+    ],
+    onRoute: onRoute,
+    onNotFound: function(){ showError('404', 'Page introuvable', 'Cette page n\'existe pas encore dans la Training Division V2.'); }
+  }).start();
+}
+var CURRENT_VIEWNAME = null;
+function onRoute(m) {
+  var view = m.route.view, p = m.params || {};
+  CURRENT_VIEWNAME = view;
+  if (view === 'home') return showHome();
+  if (view === 'epreuves') return showEpreuves();
+  if (view === 'recrutement') return showRecrutement();
+  if (view === 'session') return showSession(p.id);
+  if (view === 'fiches') return showFiches();
+  if (view === 'fiche') return showFiche(p.id);
+  if (view === 'notations') return showNotations();
+  if (view === 'referents') return showReferents();
+  if (view === 'fl') return showFLEvals();
+  if (view === 'flbaremes') return showFLBaremes();
+  if (view === 'fleval') return showFLEval(p.id);
+  if (view === 'flbuilder') return showFLBuilder(p.id);
+}
+
+function openModal(html) { document.getElementById('modal-box').innerHTML = html; document.getElementById('ov').classList.add('open'); }
+function closeModal() { document.getElementById('ov').classList.remove('open'); }
+var EPREUVES = [], EP_CATS = [];
+var EP_TYPES = { simple: { label:'Simple', desc:'Validée / non validée' }, notation: { label:'Notation', desc:'Note sur un maximum' }, temps: { label:'Temps', desc:'Chronométrée' } };
+function showEpreuves() {
+  var host = document.getElementById('view-epreuves'), adm = can('td_manage');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><div style="min-width:0"><h1 style="font-size:1.35em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-list-check" style="color:var(--accent-2)"></i> Épreuves</h1>'
+    + '<div style="color:var(--muted);font-size:.88em;margin-top:5px">Construis les épreuves du recrutement : catégories, consignes, images.</div></div>'
+    + (adm ? '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="openEpCat(null)"><i class="fa-solid fa-folder-plus"></i> Catégorie</button><button class="btn btn-primary" onclick="openEpreuve(null)"><i class="fa-solid fa-plus"></i> Nouvelle épreuve</button></div>' : '') + '</div>'
+    + '<div id="ep-host">' + loadingHTML() + '</div>';
+  viewShow('view-epreuves');
+  MDT_SKEL.show('#ep-host', 'list-rows');
+  loadEpreuves();
+}
+function loadEpreuves(cb) {
+  var done = 0, res = {};
+  function got() { done++; if (done < 2) return; EP_CATS = (res.cats && res.cats.categories) ? res.cats.categories : []; EPREUVES = (res.eps && res.eps.epreuves) ? res.eps.epreuves : []; epCanonicalize(); if (cb) cb(); else renderEpreuves(); }
+  fetch(API + '?action=epreuve_cats_list', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(d){ res.cats = d; got(); }).catch(function(){ res.cats = {}; got(); });
+  fetch(API + '?action=epreuves_list', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(d){ res.eps = d; got(); }).catch(function(){ res.eps = {}; got(); });
+}
+function epCanonicalize() {
+  var valid = {}; EP_CATS.forEach(function(c){ valid[c.id] = true; });
+  var flat = [];
+  EP_CATS.forEach(function(c){ EPREUVES.forEach(function(e){ if (e.cat_id === c.id) flat.push(e); }); });
+  EPREUVES.forEach(function(e){ if (!e.cat_id || !valid[e.cat_id]) flat.push(e); });
+  EPREUVES = flat;
+}
+function epTypeSub(e) { return e.type === 'notation' ? ('Note sur ' + esc(e.noteMax || '?')) : (e.type === 'temps' ? ('Temps visé : ' + esc(e.tempsVise || '—')) : 'Validation simple'); }
+function renderEpreuves() {
+  var host = document.getElementById('ep-host'); if (!host) return; var adm = can('td_manage');
+  var valid = {}; EP_CATS.forEach(function(c){ valid[c.id] = true; });
+  if (!EPREUVES.length && !EP_CATS.length) { host.innerHTML = '<div class="fl-empty"><div class="ei"><i class="fa-regular fa-clipboard"></i></div>Aucune épreuve.' + (adm ? ' Crée une catégorie puis des épreuves.' : '') + '</div>'; return; }
+  var unc = EPREUVES.filter(function(e){ return !e.cat_id || !valid[e.cat_id]; });
+  var h = '<div id="ep-catlist">' + EP_CATS.map(function(c){ return epSectionCard(c, EPREUVES.filter(function(e){ return e.cat_id === c.id; }), adm); }).join('') + '</div>';
+  if (unc.length || !EP_CATS.length) h += epSectionCard(null, unc, adm);
+  if (adm) h += '<button class="fl-add block" onclick="openEpreuve(null)"><i class="fa-solid fa-plus"></i> Ajouter une épreuve</button>';
+  host.innerHTML = h;
+  if (adm) epWireDnd();
+}
+function epSectionCard(c, eps, adm) {
+  var catId = c ? c.id : '';
+  var ic = c ? '<span class="fl-sec-ic"' + (c.color ? ' style="background:' + hexA(c.color,.16) + ';color:' + esc(c.color) + '"' : '') + '><i class="fa-solid ' + (c.icon ? esc(c.icon) : 'fa-folder') + '"></i></span>' : '<span class="fl-sec-ic"><i class="fa-solid fa-inbox"></i></span>';
+  var head = '<div class="fl-sec-head"' + (c && c.color ? ' style="border-left-color:' + esc(c.color) + '"' : '') + '>'
+    + (adm && c ? '<span class="fl-drag" title="Glisser"><i class="fa-solid fa-grip-vertical"></i></span>' : '')
+    + ic + '<div class="fl-sec-t"><div class="sn">' + (c ? esc(c.label) : 'Sans catégorie') + '</div><div class="sm">' + eps.length + ' épreuve' + (eps.length > 1 ? 's' : '') + '</div></div>'
+    + (adm && c ? '<div class="fl-crit-acts"><button class="fl-mini" title="Éditer" onclick="openEpCat(\'' + c.id + '\')"><i class="fa-solid fa-pen"></i></button><button class="fl-mini del" title="Supprimer" onclick="delEpCat(\'' + c.id + '\')"><i class="fa-solid fa-trash"></i></button></div>' : '') + '</div>';
+  var list = '<div class="fl-crit-list" id="ep-list-' + (c ? esc(c.id) : 'none') + '">' + eps.map(function(e){ return epCard(e, adm); }).join('') + '</div>';
+  var add = adm ? '<button class="fl-add crit" onclick="openEpreuve(null,\'' + esc(catId) + '\')"><i class="fa-solid fa-plus"></i> Ajouter une épreuve</button>' : '';
+  return '<div class="fl-sec"' + (c ? ' data-id="' + esc(c.id) + '"' + (adm ? ' draggable="true"' : '') : '') + '>' + head + '<div class="fl-sec-body">' + list + add + '</div></div>';
+}
+function epCard(e, adm) {
+  var th = e.image_url ? '<img src="' + esc(e.image_url) + '" alt="">' : '<i class="fa-regular fa-image" style="opacity:.4"></i>';
+  var badge = EP_TYPES[e.type] ? EP_TYPES[e.type].label : 'Simple';
+  var desc = e.description ? '<div class="cd">' + esc(e.description) + '</div>' : '';
+  var acts = adm ? '<div class="fl-crit-acts"><button class="fl-mini" title="Éditer" onclick="openEpreuve(\'' + e.id + '\')"><i class="fa-solid fa-pen"></i></button><button class="fl-mini del" title="Supprimer" onclick="deleteEpreuve(\'' + e.id + '\')"><i class="fa-solid fa-trash"></i></button></div>' : '';
+  return '<div class="fl-crit" data-id="' + esc(e.id) + '"' + (adm ? ' draggable="true"' : '') + '>'
+    + (adm ? '<span class="fl-drag"><i class="fa-solid fa-grip-vertical"></i></span>' : '')
+    + '<span class="fl-crit-th">' + th + '</span>'
+    + '<div class="fl-crit-t"><div class="cn">' + esc(e.nom) + ' <span class="ep-badge ' + e.type + '">' + esc(badge) + '</span></div><div class="cd" style="color:var(--muted-2)">' + epTypeSub(e) + '</div>' + desc + '</div>' + acts + '</div>';
+}
+function epWireDnd() {
+  if (!can('td_manage')) return;
+  flMakeSortable(document.getElementById('ep-catlist'), 'epcat', function(cont){ epCatDrop(cont); });
+  EP_CATS.forEach(function(c){ flMakeSortable(document.getElementById('ep-list-' + c.id), 'epr:' + c.id, (function(cid){ return function(cont){ epEprDrop(cid, cont); }; })(c.id)); });
+  var none = document.getElementById('ep-list-none'); if (none) flMakeSortable(none, 'epr:none', function(cont){ epEprDrop('', cont); });
+}
+function epPersist() { flPost('epreuve_reorder', { order: EPREUVES.map(function(e){ return e.id; }) }, null); }
+function epEprDrop(catId, container) {
+  var ids = flChildrenWithId(container).map(function(el){ return el.getAttribute('data-id'); });
+  var byId = {}; EPREUVES.forEach(function(e){ byId[e.id] = e; });
+  var sub = [], subIds = {}; ids.forEach(function(id){ if (byId[id]) { sub.push(byId[id]); subIds[id] = true; } });
+  var others = EPREUVES.filter(function(e){ return !subIds[e.id]; });
+  EPREUVES = others.concat(sub);
+  epCanonicalize(); renderEpreuves(); epPersist();
+}
+function epCatDrop(container) {
+  var ids = flChildrenWithId(container).map(function(el){ return el.getAttribute('data-id'); });
+  var byId = {}; EP_CATS.forEach(function(c){ byId[c.id] = c; });
+  var nc = []; ids.forEach(function(id){ if (byId[id]) nc.push(byId[id]); });
+  EP_CATS = nc;
+  epCanonicalize(); renderEpreuves();
+  flPost('epreuve_cat_reorder', { order: ids }, null); epPersist();
+}
+function epTypeFields(type, e) {
+  e = e || {};
+  var noteRow = '<div class="field" id="ep-note-row" style="display:' + (type === 'notation' ? 'block' : 'none') + '"><label>Note maximum</label><input type="number" min="0" id="ep-notemax" value="' + esc(e.noteMax || '') + '" placeholder="Ex : 20"></div>';
+  var tempsRow = '<div class="field" id="ep-temps-row" style="display:' + (type === 'temps' ? 'block' : 'none') + '"><label>Temps visé</label><input type="text" id="ep-tempsvise" value="' + esc(e.tempsVise || '') + '" placeholder="Ex : 3:30"></div>';
+  return noteRow + tempsRow;
+}
+var epEditId = null;
+function openEpreuve(id, presetCat) {
+  if (!can('td_manage')) return;
+  epEditId = id || null;
+  var e = id ? (EPREUVES.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  FLB_IMG = e.image_url || '';
+  var type = e.type || 'simple';
+  var typeOpts = Object.keys(EP_TYPES).map(function(k){ return '<option value="' + k + '"' + (type === k ? ' selected' : '') + '>' + esc(EP_TYPES[k].label) + ' — ' + esc(EP_TYPES[k].desc) + '</option>'; }).join('');
+  var curCat = id ? (e.cat_id || '') : (presetCat !== undefined ? presetCat : '');
+  var catOpts = '<option value="">Sans catégorie</option>' + EP_CATS.map(function(c){ return '<option value="' + esc(c.id) + '"' + (curCat === c.id ? ' selected' : '') + '>' + esc(c.label) + '</option>'; }).join('');
+  var h = '<h2>' + (id ? 'Modifier l\'épreuve' : 'Nouvelle épreuve') + '</h2>'
+    + '<div class="field"><label>Nom de l\'épreuve</label><input type="text" id="ep-nom" value="' + esc(e.nom || '') + '" placeholder="Ex : Connaissance du véhicule"></div>'
+    + '<div class="field"><label>Catégorie</label><select id="ep-cat">' + catOpts + '</select></div>'
+    + '<div class="field"><label>Consigne / description (optionnel)</label><textarea id="ep-desc" class="cell-ta" style="min-height:50px" placeholder="Ce que l\'évaluateur vérifie…">' + esc(e.description || '') + '</textarea></div>'
+    + '<div class="field"><label>Type</label><select id="ep-type" onchange="epTypeChange()">' + typeOpts + '</select></div>'
+    + '<div id="ep-type-fields">' + epTypeFields(type, e) + '</div>'
+    + flImgField('Image (optionnel)')
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveEpreuve()">Enregistrer</button></div>';
+  openModal(h);
+  document.getElementById('ep-nom').focus();
+}
+function epTypeChange() {
+  var t = document.getElementById('ep-type').value;
+  document.getElementById('ep-note-row').style.display = (t === 'notation') ? 'block' : 'none';
+  document.getElementById('ep-temps-row').style.display = (t === 'temps') ? 'block' : 'none';
+}
+function saveEpreuve() {
+  var nom = document.getElementById('ep-nom').value.trim();
+  if (!nom) { toast('Nom requis', false); return; }
+  var type = document.getElementById('ep-type').value;
+  var p = { nom: nom, type: type, description: (document.getElementById('ep-desc').value || '').trim(), cat_id: document.getElementById('ep-cat').value, image_url: FLB_IMG };
+  if (type === 'notation') { var nm = document.getElementById('ep-notemax'); p.noteMax = nm ? nm.value : ''; }
+  if (type === 'temps') { var tv = document.getElementById('ep-tempsvise'); p.tempsVise = tv ? tv.value.trim() : ''; }
+  if (epEditId) p.id = epEditId;
+  fetch(API + '?action=epreuve_save', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(p) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (!x.ok || !x.d || !x.d.success) { toast((x.d && x.d.error) || 'Refusé', false); return; } toast('Enregistré', true); closeModal(); loadEpreuves(); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+async function deleteEpreuve(id) {
+  if (!await MDT_CONFIRM('Supprimer cette épreuve ?')) return;
+  fetch(API + '?action=epreuve_delete', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ id: id }) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.success) { toast('Supprimée', true); loadEpreuves(); } else toast((d && d.error) || 'Erreur', false); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+var epCatEditId = null;
+function openEpCat(id) {
+  if (!can('td_manage')) return;
+  epCatEditId = id || null;
+  var c = id ? (EP_CATS.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  openModal('<h2>' + (id ? 'Modifier la catégorie' : 'Nouvelle catégorie') + '</h2>'
+    + '<div class="field"><label>Nom de la catégorie</label><input type="text" id="epc-label" value="' + esc(c.label || '') + '" placeholder="Ex : Conduite & maîtrise"></div>'
+    + '<div class="fl-row2"><div class="field"><label>Icône (Font Awesome)</label><input type="text" id="epc-icon" value="' + esc(c.icon || '') + '" placeholder="fa-car"></div>'
+    + '<div class="field"><label>Couleur</label><input type="color" class="color-in" id="epc-color" value="' + esc(c.color || '#10b981') + '"></div></div>'
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveEpCat()">Enregistrer</button></div>');
+  document.getElementById('epc-label').focus();
+}
+function saveEpCat() {
+  var label = document.getElementById('epc-label').value.trim(); if (!label) { toast('Nom requis', false); return; }
+  var p = { label: label, icon: document.getElementById('epc-icon').value.trim(), color: document.getElementById('epc-color').value };
+  if (epCatEditId) p.id = epCatEditId;
+  flPost('epreuve_cat_save', p, function(){ toast('Enregistré', true); closeModal(); loadEpreuves(); });
+}
+async function delEpCat(id) { if (!await MDT_CONFIRM('Supprimer cette catégorie ? Ses épreuves repasseront « sans catégorie ».')) return; flPost('epreuve_cat_delete', { id: id }, function(){ toast('Catégorie supprimée', true); loadEpreuves(); }); }
+
+function fmtDate(s) { if (!s) return ''; var d = new Date(String(s).replace(' ', 'T')); if (isNaN(d.getTime())) return String(s); return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }); }
+var REC_VERDICTS = [ { v:'OUI', label:'OUI', color:'#10b981' }, { v:'OUI MAIS...', label:'OUI MAIS', color:'#3b82f6' }, { v:'NON PEUT REPASSER', label:'REPASSER', color:'#f59e0b' }, { v:'NON', label:'NON', color:'#ef4444' } ];
+function verdictColor(v) { for (var i = 0; i < REC_VERDICTS.length; i++) if (REC_VERDICTS[i].v === v) return REC_VERDICTS[i].color; return 'var(--border)'; }
+var REC = { epreuves: [], cats: [], session: null };
+var SESS_LIST = [];
+function recDeleteAt(i) { var s = SESS_LIST[i]; if (s) deleteSession(s.id, s.promo || ''); }
+
+function showRecrutement() {
+  var host = document.getElementById('view-recrutement');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><h1 style="font-size:1.35em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-user-plus" style="color:var(--accent-2)"></i> Recrutement</h1>'
+    + '<button class="btn btn-primary" onclick="MDT_ROUTER.go(\'/td/recrutement/session/new\')"><i class="fa-solid fa-plus"></i> Nouvelle session</button></div>'
+    + '<div id="rec-host"><div class="empty-state" style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Chargement…</div></div>';
+  viewShow('view-recrutement');
+  MDT_SKEL.show('#rec-host', 'cards');
+  fetch(API + '?action=sessions_list', { headers: authHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ var h = document.getElementById('rec-host'); if (!h) return; if (!d || !d.success) { h.innerHTML = '<div class="empty-state">Chargement impossible.</div>'; return; } renderSessionsList(d.sessions || []); })
+    .catch(function(){ var h = document.getElementById('rec-host'); if (h) h.innerHTML = '<div class="empty-state">Erreur réseau.</div>'; });
+}
+function renderSessionsList(sessions) {
+  var host = document.getElementById('rec-host'); if (!host) return;
+  if (!sessions.length) { host.innerHTML = '<div class="empty-state" style="text-align:center;padding:44px;color:var(--muted)"><div style="font-size:1.6em;margin-bottom:10px"><i class="fa-regular fa-folder-open"></i></div>Aucune session. Clique « Nouvelle session ».</div>'; return; }
+  var manage = can('td_manage');
+  SESS_LIST = sessions;
+  host.innerHTML = '<div class="sess-grid">' + sessions.map(function(s, i){
+    var v = s.verdicts || {};
+    var chips = '<span class="v-chip oui" title="Acceptées">' + (v.OUI || 0) + '</span><span class="v-chip mais" title="Oui mais">' + (v.MAIS || 0) + '</span><span class="v-chip rep" title="Peut repasser">' + (v.REP || 0) + '</span><span class="v-chip non" title="Refusées">' + (v.NON || 0) + '</span>' + (v.pending ? '<span class="v-chip pend" title="En attente">' + v.pending + '</span>' : '');
+    var del = (s.mine || manage) ? '<button class="sess-del" title="Supprimer" onclick="event.stopPropagation();recDeleteAt(' + i + ')"><i class="fa-solid fa-trash"></i></button>' : '';
+    return '<div class="sess-card" onclick="MDT_ROUTER.go(\'/td/recrutement/session/' + encodeURIComponent(s.id) + '\')">'
+      + (s.locked ? '<span class="lock-tag"><i class="fa-solid fa-lock"></i> Terminée</span>' : '')
+      + '<div class="sess-top"><div class="sess-promo">' + esc(s.promo || 'Sans nom') + '</div>' + del + '</div>'
+      + '<div class="sess-meta">' + esc(fmtDate(s.date)) + ' · ' + s.nb_recrues + ' recrue' + (s.nb_recrues > 1 ? 's' : '') + (s.owner_name ? (' · ' + esc(s.owner_name)) : '') + '</div>'
+      + '<div class="v-chips">' + chips + '</div></div>';
+  }).join('') + '</div>';
+}
+function showSession(id) {
+  var host = document.getElementById('view-session');
+  host.innerHTML = '<div class="empty-state" style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Chargement…</div>';
+  viewShow('view-session');
+  fetch(API + '?action=epreuve_cats_list', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(cd){ REC.cats = (cd && cd.categories) ? cd.categories : []; }).catch(function(){ REC.cats = []; }).then(function(){
+  fetch(API + '?action=epreuves_list', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(ed){
+    REC.epreuves = (ed && ed.epreuves) ? ed.epreuves : [];
+    if (id === 'new') {
+      if (!REC.epreuves.length) { host.innerHTML = '<a class="crumb-back" href="/td/recrutement"><i class="fa-solid fa-arrow-left"></i> Sessions</a><div class="empty-state" style="padding:34px;color:var(--muted)">Configure d\'abord des épreuves (onglet <a href="/td/epreuves" style="color:var(--accent-2)">Épreuves</a>) avant de créer une session.</div>'; return; }
+      REC.session = { id: 'sess_' + Date.now(), promo:'', date: new Date().toISOString().slice(0, 10), locked:false, recrues:[], _rev:0, can_edit:true, _isNew:true };
+      renderSession(); return;
+    }
+    fetch(API + '?action=session_get&id=' + encodeURIComponent(id), { headers: authHeaders() })
+      .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+      .then(function(x){ if (!x.ok || !x.d || x.d.error) { showError('404', 'Session introuvable', 'Cette session n\'existe pas ou a été supprimée.'); return; } REC.session = x.d; if (!REC.session.recrues) REC.session.recrues = []; renderSession(); })
+      .catch(function(){ showFatal(); });
+  }).catch(function(){ showFatal(); });
+  });
+}
+function recStats(s) { var st = { total:s.recrues.length, OUI:0, NON:0, pending:0 }; s.recrues.forEach(function(r){ if (r.verdict === 'OUI') st.OUI++; else if (r.verdict === 'NON') st.NON++; else if (!r.verdict) st.pending++; }); return st; }
+function renderSession() {
+  var s = REC.session, host = document.getElementById('view-session');
+  var ro = s.locked || !s.can_edit;
+  var st = recStats(s);
+  var h = '<a class="crumb-back" href="/td/recrutement"><i class="fa-solid fa-arrow-left"></i> Sessions</a>';
+  h += '<div class="tb"><h1 style="font-size:1.3em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-user-plus" style="color:var(--accent-2)"></i> ' + (s._isNew ? 'Nouvelle session' : 'Session') + (s.locked ? ' <span class="lock-tag"><i class="fa-solid fa-lock"></i> Terminée</span>' : '') + '</h1>';
+  if (s.can_edit) h += '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (s.locked ? '<button class="btn btn-ghost" onclick="toggleLock(false)"><i class="fa-solid fa-lock-open"></i> Rouvrir</button>' : '<button class="btn btn-ghost" onclick="toggleLock(true)"><i class="fa-solid fa-lock"></i> Terminer</button>') + '<button class="btn btn-primary" onclick="saveSession()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button></div>';
+  else h += '<span style="color:var(--muted);font-size:.85em">Lecture seule' + (s.owner_name ? (' — ' + esc(s.owner_name)) : '') + '</span>';
+  h += '</div>';
+  h += '<div class="sess-form"><div class="field"><label>Nom de la promo</label><input type="text" id="s-promo" value="' + esc(s.promo || '') + '"' + (ro ? ' disabled' : '') + ' oninput="REC.session.promo=this.value"></div><div class="field"><label>Date</label><input type="date" id="s-date" value="' + esc(s.date || '') + '"' + (ro ? ' disabled' : '') + ' oninput="REC.session.date=this.value"></div></div>';
+  h += '<div class="stat-grid" style="margin:16px 0">' + statCard('accent', st.total, 'Recrues') + statCard('good', st.OUI, 'Acceptées') + statCard('bad', st.NON, 'Refusées') + statCard('warn', st.pending, 'En attente') + '</div>';
+  if (!ro) h += '<div class="add-rec"><input type="text" id="r-nom" placeholder="Nom" onkeydown="if(event.key===\'Enter\')addRecrue()"><input type="text" id="r-prenom" placeholder="Prénom" onkeydown="if(event.key===\'Enter\')addRecrue()"><button class="btn btn-ghost" onclick="addRecrue()"><i class="fa-solid fa-user-plus"></i> Ajouter</button></div>';
+  h += '<div id="rec-list"></div>';
+  host.innerHTML = h; viewShow('view-session');
+  renderRecrues();
+}
+function epRowHTML(ep, rec, ri, ro) {
+  var res = (rec.resultats && rec.resultats[ep.id]) || {};
+  var field;
+  if (ep.type === 'notation') field = '<input class="cell-in" type="text" value="' + esc(res.note || '') + '" placeholder="Note' + (ep.noteMax ? (' /' + esc(ep.noteMax)) : '') + '"' + (ro ? ' disabled' : '') + ' oninput="setRes(' + ri + ',\'' + esc(ep.id) + '\',\'note\',this.value)">';
+  else if (ep.type === 'temps') field = '<input class="cell-in" type="text" value="' + esc(res.temps || '') + '" placeholder="' + (ep.tempsVise ? ('Obj ' + esc(ep.tempsVise)) : 'mm:ss') + '"' + (ro ? ' disabled' : '') + ' oninput="setRes(' + ri + ',\'' + esc(ep.id) + '\',\'temps\',this.value)">';
+  else field = '<span style="color:var(--muted-2)">—</span>';
+  var badge = ep.type === 'notation' ? 'Note' : ep.type === 'temps' ? 'Temps' : 'Simple';
+  var epThumb = ep.image_url ? '<img src="' + esc(ep.image_url) + '" alt="" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex:0 0 auto">' : '';
+  var epConsigne = ep.description ? '<div style="font-size:.76em;color:var(--muted-2);margin-top:3px;overflow-wrap:anywhere">' + esc(ep.description) + '</div>' : '';
+  var epCell = '<div style="display:flex;align-items:flex-start;gap:9px">' + epThumb + '<div style="min-width:0"><div><span class="ep-nm">' + esc(ep.nom) + '</span> <span class="ep-badge ' + ep.type + '">' + badge + '</span></div>' + epConsigne + '</div></div>';
+  return '<tr><td>' + epCell + '</td><td>' + field + '</td><td><textarea class="cell-ta" placeholder="Remarque…"' + (ro ? ' disabled' : '') + ' oninput="setRes(' + ri + ',\'' + esc(ep.id) + '\',\'remarque\',this.value)">' + esc(res.remarque || '') + '</textarea></td></tr>';
+}
+function epGrpRow(color, label) { return '<tr class="ep-grp"><td colspan="3"><span class="fl-dot" style="background:' + color + '"></span> ' + esc(label) + '</td></tr>'; }
+function epGroupedRows(rec, ri, ro) {
+  var cats = REC.cats || [], valid = {}; cats.forEach(function(c){ valid[c.id] = true; });
+  var byCat = {}; REC.epreuves.forEach(function(ep){ var k = (ep.cat_id && valid[ep.cat_id]) ? ep.cat_id : ''; (byCat[k] = byCat[k] || []).push(ep); });
+  var out = '';
+  cats.forEach(function(c){
+    var eps = byCat[c.id]; if (!eps || !eps.length) return;
+    out += epGrpRow(c.color ? esc(c.color) : 'var(--accent)', c.label);
+    out += eps.map(function(ep){ return epRowHTML(ep, rec, ri, ro); }).join('');
+  });
+  var unc = byCat[''];
+  if (unc && unc.length) {
+    if (cats.length) out += epGrpRow('var(--muted-2)', 'Sans catégorie');
+    out += unc.map(function(ep){ return epRowHTML(ep, rec, ri, ro); }).join('');
+  }
+  return out;
+}
+function renderRecrues() {
+  var s = REC.session, ro = s.locked || !s.can_edit, box = document.getElementById('rec-list'); if (!box) return;
+  if (!s.recrues.length) { box.innerHTML = '<div class="empty-state" style="text-align:center;padding:34px;color:var(--muted)">Aucune recrue.' + (ro ? '' : ' Ajoute-en avec le formulaire ci-dessus.') + '</div>'; return; }
+  box.innerHTML = s.recrues.map(function(rec, ri){
+    var filled = 0; REC.epreuves.forEach(function(ep){ var r = (rec.resultats && rec.resultats[ep.id]) || {}; if (r.note || r.temps || r.remarque) filled++; });
+    var vBtns = REC_VERDICTS.map(function(vd){ var on = rec.verdict === vd.v; return '<button class="vb' + (on ? ' on' : '') + '"' + (on ? (' style="background:' + vd.color + ';color:#0b1220;border-color:' + vd.color + '"') : '') + (ro ? ' disabled' : '') + ' onclick="event.stopPropagation();setVerdict(' + ri + ',\'' + vd.v + '\')">' + vd.label + '</button>'; }).join('');
+    var rows = epGroupedRows(rec, ri, ro);
+    var rm = ro ? '' : '<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" style="color:#ef4444" onclick="removeRecrue(' + ri + ')"><i class="fa-solid fa-user-minus"></i> Retirer</button></div>';
+    return '<div class="rec-card" style="border-left:4px solid ' + verdictColor(rec.verdict) + '">'
+      + '<div class="rec-head" onclick="this.parentNode.classList.toggle(\'open\')"><span class="rec-num">' + rec.numero + '</span><div class="rec-id"><div class="rn">' + esc(rec.prenom) + ' ' + esc(rec.nom) + '</div><div class="rs">' + filled + '/' + REC.epreuves.length + ' épreuves</div></div><div class="rec-verdicts">' + vBtns + '</div><i class="fa-solid fa-chevron-down rec-chev"></i></div>'
+      + '<div class="rec-body"><div style="overflow-x:auto"><table class="rec-table"><thead><tr><th>Épreuve</th><th style="width:150px">Résultat</th><th>Remarque</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + rm + '</div></div>';
+  }).join('');
+}
+function setRes(ri, epId, field, val) { var rec = REC.session.recrues[ri]; if (!rec) return; if (!rec.resultats || typeof rec.resultats !== 'object' || Array.isArray(rec.resultats)) rec.resultats = {}; if (!rec.resultats[epId]) rec.resultats[epId] = {}; rec.resultats[epId][field] = val; }
+function updateSessStats() { var st = recStats(REC.session); var sv = document.querySelectorAll('#view-session .stat-grid .stat-card .sv'); if (sv.length >= 4) { sv[0].textContent = st.total; sv[1].textContent = st.OUI; sv[2].textContent = st.NON; sv[3].textContent = st.pending; } }
+function setVerdict(ri, v) {
+  var rec = REC.session.recrues[ri]; if (!rec) return;
+  rec.verdict = (rec.verdict === v) ? '' : v;
+  var card = document.querySelectorAll('#rec-list .rec-card')[ri];
+  if (card) {
+    card.style.borderLeftColor = verdictColor(rec.verdict);
+    var btns = card.querySelectorAll('.rec-verdicts .vb');
+    REC_VERDICTS.forEach(function(vd, bi){ var b = btns[bi]; if (!b) return; if (rec.verdict === vd.v) { b.classList.add('on'); b.style.background = vd.color; b.style.color = '#0b1220'; b.style.borderColor = vd.color; } else { b.classList.remove('on'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; } });
+  }
+  updateSessStats();
+}
+function addRecrue() {
+  var nomEl = document.getElementById('r-nom'), preEl = document.getElementById('r-prenom');
+  var n = (nomEl.value || '').trim(), p = (preEl.value || '').trim();
+  if (!n && !p) { toast('Nom ou prénom requis', false); return; }
+  if (REC.session.recrues.length >= 150) { toast('Maximum 150 recrues', false); return; }
+  REC.session.recrues.push({ numero: REC.session.recrues.length + 1, nom: n, prenom: p, resultats: {}, verdict: '' });
+  nomEl.value = ''; preEl.value = ''; renderRecrues(); updateSessStats(); nomEl.focus();
+}
+async function removeRecrue(ri) {
+  if (!await MDT_CONFIRM('Retirer cette recrue ?')) return;
+  REC.session.recrues.splice(ri, 1);
+  REC.session.recrues.forEach(function(r, i){ r.numero = i + 1; });
+  renderRecrues(); updateSessStats();
+}
+function toggleLock(lock) { REC.session.locked = !!lock; saveSession(); }
+function saveSession() {
+  var s = REC.session;
+  if (!s.promo || !s.promo.trim()) { toast('Nom de la promo requis', false); return; }
+  var payload = { id: s.id, promo: s.promo, date: s.date, locked: !!s.locked, recrues: s.recrues, _rev: s._rev || 0 };
+  fetch(API + '?action=session_save', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(payload) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, status:r.status, d:d }; }); })
+    .then(function(x){
+      if (x.status === 409) { toast('Conflit : la session a été modifiée ailleurs. Recharge la page.', false); return; }
+      if (!x.ok || !x.d || !x.d.success) { toast((x.d && x.d.error) || 'Refusé', false); return; }
+      s._rev = x.d._rev; toast('Enregistré', true);
+      if (s._isNew) { s._isNew = false; MDT_ROUTER.replace('/td/recrutement/session/' + encodeURIComponent(s.id)); return; }
+      renderSession();
+    })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+async function deleteSession(id, promo) {
+  if (!await MDT_CONFIRM('Supprimer la session « ' + (promo || '') + ' » ? C\'est définitif.')) return;
+  fetch(API + '?action=session_delete', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ id: id }) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (x.ok && x.d && x.d.success) { toast('Supprimée', true); if (CURRENT_VIEWNAME === 'session') MDT_ROUTER.go('/td/recrutement'); else showRecrutement(); } else toast((x.d && x.d.error) || 'Refusé', false); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+
+function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+var ROSTER = [];
+function loadRoster(cb) {
+  if (ROSTER.length) { if (cb) cb(); return; }
+  fetch(API + '?action=roster_list', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(d){ ROSTER = (d && d.roster) ? d.roster : []; if (cb) cb(); }).catch(function(){ if (cb) cb(); });
+}
+function rosterAC(input) { if (window.MDT_AUTOCOMPLETE && input) MDT_AUTOCOMPLETE.attach(input, { source: function(){ return ROSTER; } }); }
+function loadingHTML() { return '<div class="empty-state" style="text-align:center;padding:40px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Chargement…</div>'; }
+
+var FICHES = [];
+function showFiches() {
+  var host = document.getElementById('view-fiches');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><h1 style="font-size:1.35em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-id-card" style="color:var(--accent-2)"></i> Fiches cadets</h1>'
+    + (can('td_instructor') ? '<button class="btn btn-primary" onclick="openNewFiche()"><i class="fa-solid fa-plus"></i> Nouvelle fiche</button>' : '') + '</div>'
+    + '<div class="toolbar-s"><i class="fa-solid fa-magnifying-glass"></i><input id="fq" placeholder="Rechercher un cadet ou référent…" oninput="renderFichesList()"></div>'
+    + '<div id="fiches-host">' + loadingHTML() + '</div>';
+  viewShow('view-fiches');
+  MDT_SKEL.show('#fiches-host', 'cards');
+  fetch(API + '?action=fiches_list', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ var h = document.getElementById('fiches-host'); if (!h) return; if (!d || !d.success) { h.innerHTML = '<div class="empty-state">Chargement impossible.</div>'; return; } FICHES = d.fiches || []; renderFichesList(); })
+    .catch(function(){ var h = document.getElementById('fiches-host'); if (h) h.innerHTML = '<div class="empty-state">Erreur réseau.</div>'; });
+}
+function renderFichesList() {
+  var host = document.getElementById('fiches-host'); if (!host) return;
+  var q = norm((document.getElementById('fq') || {}).value || '');
+  var list = FICHES.filter(function(f){ return !q || norm((f.cadet || '') + ' ' + (f.referent || '')).indexOf(q) >= 0; });
+  if (!list.length) { host.innerHTML = '<div class="empty-state" style="text-align:center;padding:40px;color:var(--muted)">Aucune fiche.</div>'; return; }
+  host.innerHTML = '<div class="fiche-grid">' + list.map(function(f){
+    return '<div class="fiche-card" onclick="MDT_ROUTER.go(\'/td/fiches/' + encodeURIComponent(f.id) + '\')">'
+      + (f.locked ? '<span class="lock-tag"><i class="fa-solid fa-lock"></i> Verrouillée</span>' : '')
+      + '<div class="fc-cadet">' + esc(f.cadet || '—') + '</div>'
+      + '<div class="fc-meta"><i class="fa-solid fa-user-graduate" style="opacity:.6"></i> ' + esc(f.referent || '—') + (f.date_arrivee ? (' · ' + esc(fmtDate(f.date_arrivee))) : '') + '</div>'
+      + '<div class="fc-foot"><span class="v-badge ' + (f.pass ? 'ok' : 'no') + '">' + (f.pass ? 'Validé' : 'Non validé') + '</span><span class="fc-prog">' + f.validated + '/' + f.total + '</span></div></div>';
+  }).join('') + '</div>';
+}
+function openNewFiche() {
+  if (!can('td_instructor')) return;
+  var h = '<h2>Nouvelle fiche cadet</h2>'
+    + '<div class="field"><label>Cadet</label><input type="text" id="nf-cadet" autocomplete="off" placeholder="Matricule | Nom"></div>'
+    + '<div class="field"><label>Référent</label><input type="text" id="nf-ref" autocomplete="off" placeholder="Matricule | Nom"></div>'
+    + '<div class="field"><label>Date d\'arrivée</label><input type="date" id="nf-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>'
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="createFiche()">Créer</button></div>';
+  openModal(h);
+  loadRoster(function(){ rosterAC(document.getElementById('nf-cadet')); rosterAC(document.getElementById('nf-ref')); });
+  document.getElementById('nf-cadet').focus();
+}
+function createFiche() {
+  var cadet = (document.getElementById('nf-cadet').value || '').trim(); if (!cadet) { toast('Nom du cadet requis', false); return; }
+  fetch(API + '?action=fiche_create', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ cadet: cadet, referent: (document.getElementById('nf-ref').value || '').trim(), date_arrivee: document.getElementById('nf-date').value }) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (x.ok && x.d && x.d.success) { closeModal(); toast('Fiche créée', true); MDT_ROUTER.go('/td/fiches/' + encodeURIComponent(x.d.id)); } else toast((x.d && x.d.error) || 'Refusé', false); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+
+var FICHE = null;
+function showFiche(id) {
+  var host = document.getElementById('view-fiche'); host.innerHTML = loadingHTML(); viewShow('view-fiche');
+  loadRoster(function(){
+    fetch(API + '?action=fiche_get&id=' + encodeURIComponent(id), { headers: authHeaders() })
+      .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+      .then(function(x){ if (!x.ok || !x.d || x.d.error) { showError('404', 'Fiche introuvable', 'Cette fiche n\'existe pas ou a été supprimée.'); return; } FICHE = x.d; renderFiche(); })
+      .catch(function(){ showFatal(); });
+  });
+}
+function reloadFiche() {
+  fetch(API + '?action=fiche_get&id=' + encodeURIComponent(FICHE.id), { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ if (d && !d.error) { FICHE = d; renderFiche(); } }).catch(function(){ toast('Rechargement impossible', false); });
+}
+function ficheMutate(action, payload) {
+  fetch(API + '?action=' + action, { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(payload) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, status:r.status, d:d }; }); })
+    .then(function(x){ if (x.status === 409) { toast((x.d && x.d.error) || 'Fiche verrouillée / modifiée ailleurs', false); reloadFiche(); return; } if (!x.ok || !x.d || !x.d.success) { toast((x.d && x.d.error) || 'Refusé', false); return; } reloadFiche(); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+function renderFiche() {
+  var f = FICHE, host = document.getElementById('view-fiche'), ro = !f.can_edit, v = f.verdict || {};
+  var h = '<a class="crumb-back" href="/td/fiches"><i class="fa-solid fa-arrow-left"></i> Fiches</a>';
+  h += '<div class="tb"><h1 style="font-size:1.3em;display:flex;align-items:center;gap:10px;min-width:0"><i class="fa-solid fa-id-card" style="color:var(--accent-2)"></i> <span style="overflow-wrap:anywhere">' + esc(f.cadet || 'Fiche') + '</span>' + (f.locked ? ' <span class="lock-tag"><i class="fa-solid fa-lock"></i> Verrouillée</span>' : '') + '</h1><div style="display:flex;gap:8px;flex-wrap:wrap">'
+    + (f.can_lock ? (f.locked ? '<button class="btn btn-ghost" onclick="ficheMutate(\'fiche_lock\',{id:\'' + esc(f.id) + '\',locked:false})"><i class="fa-solid fa-lock-open"></i> Rouvrir</button>' : '<button class="btn btn-ghost" onclick="lockFiche()"><i class="fa-solid fa-lock"></i> Verrouiller</button>') : '')
+    + (f.can_delete ? '<button class="btn btn-ghost" style="color:#ef4444" onclick="delFiche()" title="Supprimer"><i class="fa-solid fa-trash"></i></button>' : '') + '</div></div>';
+  h += '<div class="fiche-meta"><div class="field"><label>Cadet</label><input id="fm-cadet" value="' + esc(f.cadet || '') + '"' + (ro ? ' disabled' : '') + ' autocomplete="off" onchange="saveMeta()"></div>'
+    + '<div class="field"><label>Référent</label><input id="fm-ref" value="' + esc(f.referent || '') + '"' + (ro ? ' disabled' : '') + ' autocomplete="off" onchange="saveMeta()"></div>'
+    + '<div class="field"><label>Date d\'arrivée</label><input type="date" id="fm-date" value="' + esc(f.date_arrivee || '') + '"' + (ro ? ' disabled' : '') + ' onchange="saveMeta()"></div>'
+    + '<div class="field"><label>PPA</label><label class="ppa-chk"><input type="checkbox" id="fm-ppa"' + (f.ppa ? ' checked' : '') + (ro ? ' disabled' : '') + ' onchange="saveMeta()"> PPA validé</label></div></div>';
+  h += '<div class="verdict-bar ' + (v.pass ? 'ok' : 'no') + '"><div><span class="vb-badge">' + (v.pass ? 'VALIDÉ' : 'NON VALIDÉ') + '</span> <span class="vb-num">' + (v.validated || 0) + '/' + (v.total || 0) + ' critères</span></div><div class="vb-right">minimum ' + (v.minimum || 0) + ' · ' + (v.ppa ? 'PPA ✓' : 'PPA ✗') + '</div></div>';
+  h += '<div class="section-title">Grille de notation</div><div class="crit-list">';
+  h += (f.criteria || []).map(function(cr){
+    var n = (f.notations && f.notations[cr.id]) || {};
+    var validee = !!n.validee, remarks = (n.remarques && n.remarques.length) ? n.remarques : [];
+    var tog = '<button class="crit-tog ' + (validee ? 'on' : '') + '"' + (ro ? ' disabled' : '') + ' onclick="event.stopPropagation();toggleNotation(\'' + esc(cr.id) + '\',' + (!validee) + ')" title="' + (validee ? 'Validé' : 'Non validé') + '"><i class="fa-solid ' + (validee ? 'fa-check' : 'fa-xmark') + '"></i></button>';
+    var evalb = (validee && n.evaluateur) ? '<span class="crit-eval">' + esc(n.evaluateur) + '</span>' : '';
+    var head = '<div class="crit-head" onclick="this.parentNode.classList.toggle(\'open\')">' + tog + '<span class="crit-nom">' + esc(cr.nom) + '</span>' + evalb + '<span class="crit-rc"><i class="fa-regular fa-comment"></i> ' + remarks.length + '</span><i class="fa-solid fa-chevron-down crit-chev"></i></div>';
+    var body = '<div class="crit-body">' + (remarks.length ? remarks.map(function(rm){ return '<div class="rmk"><div class="rmk-t">' + esc(rm.text) + '</div><div class="rmk-m">' + esc(rm.auteur || '') + ' · ' + esc(rm.date || '') + '</div></div>'; }).join('') : '<div class="rmk-empty">Aucune remarque.</div>')
+      + (ro ? '' : '<div class="rmk-add"><input type="text" id="rmk-' + esc(cr.id) + '" placeholder="Ajouter une remarque…" onkeydown="if(event.key===\'Enter\')addRemark(\'' + esc(cr.id) + '\')"><button class="btn btn-ghost btn-sm" onclick="addRemark(\'' + esc(cr.id) + '\')">Ajouter</button></div>') + '</div>';
+    return '<div class="crit-card">' + head + body + '</div>';
+  }).join('') + '</div>';
+  h += '<div class="section-title">Journal de suivi</div>';
+  if (!ro) h += '<div class="note-add"><textarea id="note-txt" placeholder="Ajouter une note au journal…"></textarea><button class="btn btn-primary btn-sm" onclick="addNote()"><i class="fa-solid fa-plus"></i> Ajouter</button></div>';
+  h += '<div class="journal">' + ((f.notes_suivi && f.notes_suivi.length) ? f.notes_suivi.slice().reverse().map(function(nt, ri){ var realIdx = f.notes_suivi.length - 1 - ri; return '<div class="jnl"><div class="jnl-t">' + esc(nt.text) + '</div><div class="jnl-m">' + esc(nt.auteur || '') + ' · ' + esc(nt.date || '') + (ro ? '' : ' <button class="jnl-x" onclick="delNote(' + realIdx + ')" title="Supprimer"><i class="fa-solid fa-xmark"></i></button>') + '</div></div>'; }).join('') : '<div class="rmk-empty">Journal vide.</div>') + '</div>';
+  host.innerHTML = h; viewShow('view-fiche');
+  rosterAC(document.getElementById('fm-cadet')); rosterAC(document.getElementById('fm-ref'));
+}
+function saveMeta() { var f = FICHE; ficheMutate('fiche_meta', { id:f.id, cadet:document.getElementById('fm-cadet').value, referent:document.getElementById('fm-ref').value, date_arrivee:document.getElementById('fm-date').value, ppa:document.getElementById('fm-ppa').checked }); }
+function toggleNotation(cid, validee) { ficheMutate('fiche_notation_set', { id:FICHE.id, critere_id:cid, validee:validee }); }
+function addRemark(cid) { var el = document.getElementById('rmk-' + cid); var t = (el.value || '').trim(); if (!t) { toast('Remarque vide', false); return; } ficheMutate('fiche_notation_remark', { id:FICHE.id, critere_id:cid, text:t }); }
+function addNote() { var el = document.getElementById('note-txt'); var t = (el.value || '').trim(); if (!t) { toast('Note vide', false); return; } ficheMutate('fiche_note_add', { id:FICHE.id, text:t }); }
+async function delNote(idx) { if (!await MDT_CONFIRM('Supprimer cette note du journal ?')) return; ficheMutate('fiche_note_delete', { id:FICHE.id, index:idx }); }
+async function lockFiche() { if (!await MDT_CONFIRM('Verrouiller cette fiche ? Elle passera en lecture seule et le barème sera figé.')) return; ficheMutate('fiche_lock', { id:FICHE.id, locked:true }); }
+async function delFiche() {
+  if (!await MDT_CONFIRM('Supprimer définitivement la fiche de « ' + (FICHE.cadet || '') + ' » ?')) return;
+  fetch(API + '?action=fiche_delete', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ id:FICHE.id }) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (x.ok && x.d && x.d.success) { toast('Fiche supprimée', true); MDT_ROUTER.go('/td/fiches'); } else toast((x.d && x.d.error) || 'Refusé', false); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+
+var CRITS = [];
+function showNotations() {
+  var host = document.getElementById('view-notations');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><h1 style="font-size:1.35em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-star" style="color:var(--accent-2)"></i> Barème de notation</h1>'
+    + (can('td_manage') ? '<button class="btn btn-primary" onclick="openCritere(null)"><i class="fa-solid fa-plus"></i> Nouveau critère</button>' : '') + '</div>'
+    + '<p style="color:var(--muted);font-size:.84em;margin-bottom:14px">Ces critères s\'appliquent à toutes les fiches. Verrouiller une fiche fige le barème qu\'elle utilise (une fiche finalisée ne change plus).</p>'
+    + '<div id="crit-host">' + loadingHTML() + '</div>';
+  viewShow('view-notations');
+  MDT_SKEL.show('#crit-host', 'list-rows');
+  fetch(API + '?action=criteria_list', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ CRITS = (d && d.criteres) ? d.criteres : []; renderCriteria(); }).catch(function(){ var h = document.getElementById('crit-host'); if (h) h.innerHTML = '<div class="empty-state">Erreur réseau.</div>'; });
+}
+function renderCriteria() {
+  var host = document.getElementById('crit-host'); if (!host) return; var manage = can('td_manage');
+  if (!CRITS.length) { host.innerHTML = '<div class="empty-state" style="text-align:center;padding:40px;color:var(--muted)">Aucun critère.</div>'; return; }
+  host.innerHTML = '<div class="ep-list">' + CRITS.map(function(cr, i){
+    var act = manage ? '<div class="ep-act"><button title="Monter" onclick="moveCritere(' + i + ',-1)"' + (i === 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-up"></i></button><button title="Descendre" onclick="moveCritere(' + i + ',1)"' + (i === CRITS.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-down"></i></button><button title="Modifier" onclick="openCritere(\'' + esc(cr.id) + '\')"><i class="fa-solid fa-pen"></i></button><button class="del" title="Retirer" onclick="delCritere(\'' + esc(cr.id) + '\')"><i class="fa-solid fa-trash"></i></button></div>' : '';
+    return '<div class="ep-card"><span class="ep-ord">' + (i + 1) + '</span><div class="ep-info"><div class="en">' + esc(cr.nom) + '</div></div>' + act + '</div>';
+  }).join('') + '</div>';
+}
+var critEditId = null;
+function openCritere(id) {
+  if (!can('td_manage')) return;
+  critEditId = id || null;
+  var cr = id ? (CRITS.filter(function(x){ return x.id === id; })[0] || {}) : {};
+  openModal('<h2>' + (id ? 'Modifier le critère' : 'Nouveau critère') + '</h2><div class="field"><label>Intitulé</label><input type="text" id="cr-nom" value="' + esc(cr.nom || '') + '" placeholder="Ex : Connaissance du code pénal"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveCritere()">Enregistrer</button></div>');
+  document.getElementById('cr-nom').focus();
+}
+function saveCritere() {
+  var nom = document.getElementById('cr-nom').value.trim(); if (!nom) { toast('Intitulé requis', false); return; }
+  var p = { nom: nom }; if (critEditId) p.id = critEditId;
+  fetch(API + '?action=critere_save', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(p) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (!x.ok || !x.d || !x.d.success) { toast((x.d && x.d.error) || 'Refusé', false); return; } toast('Enregistré', true); closeModal(); showNotations(); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+async function delCritere(id) {
+  if (!await MDT_CONFIRM('Retirer ce critère du barème ? (les fiches finalisées gardent leur historique)')) return;
+  fetch(API + '?action=critere_delete', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ id:id }) })
+    .then(function(r){ return r.json(); }).then(function(d){ if (d && d.success) { toast('Retiré', true); showNotations(); } else toast((d && d.error) || 'Erreur', false); }).catch(function(){ toast('Erreur réseau', false); });
+}
+function moveCritere(i, dir) {
+  var j = i + dir; if (j < 0 || j >= CRITS.length) return;
+  var arr = CRITS.slice(); var t = arr[i]; arr[i] = arr[j]; arr[j] = t; CRITS = arr; renderCriteria();
+  fetch(API + '?action=criteres_reorder', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ order: arr.map(function(c){ return c.id; }) }) })
+    .then(function(r){ return r.json(); }).then(function(d){ if (!d || !d.success) { toast('Réordre refusé', false); showNotations(); } }).catch(function(){ toast('Erreur réseau', false); showNotations(); });
+}
+
+function showReferents() {
+  var host = document.getElementById('view-referents');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><h1 style="font-size:1.35em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-user-graduate" style="color:var(--accent-2)"></i> Référents</h1></div>'
+    + '<div id="ref-host">' + loadingHTML() + '</div>';
+  viewShow('view-referents');
+  MDT_SKEL.show('#ref-host', 'cards');
+  fetch(API + '?action=referents_list', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ renderReferents((d && d.referents) || []); }).catch(function(){ var h = document.getElementById('ref-host'); if (h) h.innerHTML = '<div class="empty-state">Erreur réseau.</div>'; });
+}
+function renderReferents(refs) {
+  var host = document.getElementById('ref-host'); if (!host) return;
+  if (!refs.length) { host.innerHTML = '<div class="empty-state" style="text-align:center;padding:40px;color:var(--muted)">Aucune fiche.</div>'; return; }
+  host.innerHTML = refs.map(function(g){
+    return '<div class="ref-group"><div class="ref-head"><i class="fa-solid fa-user-graduate"></i> ' + esc(g.referent) + ' <span class="ref-count">' + g.cadets.length + ' cadet' + (g.cadets.length > 1 ? 's' : '') + '</span></div><div class="ref-cadets">'
+      + g.cadets.map(function(c){ return '<a class="ref-cadet" href="/td/fiches/' + encodeURIComponent(c.id) + '"><span class="rc-nom">' + esc(c.cadet || '—') + (c.locked ? ' <i class="fa-solid fa-lock" style="opacity:.5;font-size:.85em"></i>' : '') + '</span><span class="v-badge ' + (c.pass ? 'ok' : 'no') + '">' + (c.pass ? 'Validé' : (c.validated + '/' + c.total)) + '</span></a>'; }).join('')
+      + '</div></div>';
+  }).join('');
+}
+
+var FL_TYPES = [], FLB = { id:null, ref:null, tab:'pratique' }, FLB_IMG = '', FL_EDIT = null, FL_DRAG = null;
+var FL_SIT = { always:'Toujours notée', conditional:'Si DA échouée', never:'Questionnaire seul' };
+
+function flPost(action, payload, ok) {
+  fetch(API + '?action=' + action, { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(payload) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (!x.ok || !x.d || !x.d.success) { toast((x.d && x.d.error) || 'Refusé', false); return; } if (ok) ok(x.d); })
+    .catch(function(){ toast('Erreur réseau', false); });
+}
+function hexA(hex, a) { hex = String(hex || '').replace('#', ''); if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2]; if (hex.length < 6) return 'rgba(16,185,129,'+a+')'; var r = parseInt(hex.substr(0,2),16), g = parseInt(hex.substr(2,2),16), b = parseInt(hex.substr(4,2),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+function flSitField(cur) { return '<div class="field"><label>Mode de notation pratique</label><select id="fe-sit">' + Object.keys(FL_SIT).map(function(k){ return '<option value="'+k+'"'+(k===cur?' selected':'')+'>'+esc(FL_SIT[k])+'</option>'; }).join('') + '</select></div>'; }
+function flSitHelp(mode) { if (mode==='conditional') return 'La note pratique ne compte que si la conduite d\'approche (DA) a échoué.'; if (mode==='never') return 'Seul le questionnaire compte ; la pratique n\'est pas notée.'; return 'La note pratique compte toujours dans le total.'; }
+
+function flImgField(label) {
+  return '<div class="field"><label>'+esc(label)+'</label><div class="fl-img-field"><div class="fl-img-prev" id="fe-imgprev">'+(FLB_IMG?'<img src="'+esc(FLB_IMG)+'" alt="">':'<i class="fa-regular fa-image"></i>')+'</div>'
+    + '<div class="fl-img-btns"><label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0"><i class="fa-solid fa-upload"></i> Choisir<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" onchange="flDoUpload(this)"></label>'
+    + '<button type="button" class="btn btn-ghost btn-sm" id="fe-imgclear" onclick="flClearImg()"'+(FLB_IMG?'':' style="display:none"')+'>Retirer</button></div></div></div>';
+}
+function flDoUpload(inp) {
+  var f = inp.files && inp.files[0]; if (!f) return;
+  if (f.size > 10*1024*1024) { toast('Image trop lourde (max 10 Mo)', false); inp.value=''; return; }
+  var prev = document.getElementById('fe-imgprev'); if (prev) prev.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  var fd = new FormData(); fd.append('file', f);
+  fetch(API + '?action=fl_image', { method:'POST', headers: authHeaders(), body: fd }).then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.success) { FLB_IMG = d.url; if (prev) prev.innerHTML = '<img src="'+esc(d.url)+'" alt="">'; var c = document.getElementById('fe-imgclear'); if (c) c.style.display=''; } else { toast((d&&d.error)||'Upload refusé', false); if (prev) prev.innerHTML = '<i class="fa-regular fa-image"></i>'; } })
+    .catch(function(){ toast('Erreur upload', false); if (prev) prev.innerHTML = '<i class="fa-regular fa-image"></i>'; });
+  inp.value = '';
+}
+function flClearImg() { FLB_IMG = ''; var p = document.getElementById('fe-imgprev'); if (p) p.innerHTML = '<i class="fa-regular fa-image"></i>'; var c = document.getElementById('fe-imgclear'); if (c) c.style.display='none'; }
+function flToggleElim(cb) { var r = document.getElementById('fe-elimrow'); if (r) r.style.display = cb.checked ? 'block' : 'none'; }
+
+function flSeg(active) {
+  return '<div class="fl-seg"><a class="fl-seg-b'+(active==='evals'?' on':'')+'" href="/td/first-lincoln"><i class="fa-solid fa-clipboard-check"></i> Passations</a>'
+    + '<a class="fl-seg-b'+(active==='baremes'?' on':'')+'" href="/td/first-lincoln/baremes"><i class="fa-solid fa-pen-ruler"></i> Barèmes</a></div>';
+}
+function flInstGuard(hostId) {
+  if (can('td_instructor')) return true;
+  var host = document.getElementById(hostId);
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="fl-empty"><div class="ei"><i class="fa-solid fa-lock"></i></div>First Lincoln est réservé aux instructeurs de la Training Division.</div>';
+  viewShow(hostId); return false;
+}
+function showFLBaremes() {
+  if (!flInstGuard('view-flbaremes')) return;
+  var host = document.getElementById('view-flbaremes');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><div style="min-width:0"><h1 style="font-size:1.4em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-clipboard-list" style="color:var(--accent-2)"></i> First Lincoln</h1>'
+    + '<div style="color:var(--muted);font-size:.88em;margin-top:5px">Construis tes barèmes d\'examen : sections, critères, questions, images. 100% personnalisable.</div></div>'
+    + (can('td_manage') ? '<button class="btn btn-primary" onclick="openFLNewType()"><i class="fa-solid fa-plus"></i> Nouveau barème</button>' : '') + '</div>'
+    + flSeg('baremes')
+    + '<div id="fl-hub-host">' + loadingHTML() + '</div>';
+  viewShow('view-flbaremes');
+  MDT_SKEL.show('#fl-hub-host', 'cards');
+  fetch(API + '?action=fl_types_all', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ FL_TYPES = (d && d.types) ? d.types : []; renderFLHub(); })
+    .catch(function(){ var h = document.getElementById('fl-hub-host'); if (h) h.innerHTML = '<div class="empty-state">Erreur réseau.</div>'; });
+}
+function renderFLHub() {
+  var host = document.getElementById('fl-hub-host'); if (!host) return;
+  var inst = can('td_manage');
+  if (!FL_TYPES.length) { host.innerHTML = '<div class="fl-empty"><div class="ei"><i class="fa-regular fa-clipboard"></i></div>Aucun barème.' + (inst ? ' Clique « Nouveau barème » pour en créer un.' : '') + '</div>'; return; }
+  host.innerHTML = '<div class="fl-hub-grid">' + FL_TYPES.map(function(t, i){
+    var cover = t.image_url ? '<img src="'+esc(t.image_url)+'" alt="">' : '<i class="fa-solid fa-clipboard-list"></i>';
+    var state = t.active ? '<span class="fl-state pub">Publié</span>' : '<span class="fl-state dft">Brouillon</span>';
+    var metrics = '<span class="fl-metric"><b>'+t.n_sections+'</b> sect.</span><span class="fl-metric"><b>'+t.n_criteres+'</b> crit.</span><span class="fl-metric"><b>'+t.n_questions+'</b> quest.</span><span class="fl-metric"><b>'+t.n_evals+'</b> passa.</span>';
+    var foot = inst ? '<div class="fl-card-foot"><button class="btn btn-primary btn-sm grow" onclick="event.stopPropagation();openFLType('+i+')"><i class="fa-solid fa-pen-ruler"></i> Construire</button>'
+      + '<button class="fl-mini" title="'+(t.active?'Dépublier':'Publier')+'" onclick="event.stopPropagation();toggleFLPub('+i+')"><i class="fa-solid '+(t.active?'fa-eye-slash':'fa-eye')+'"></i></button>'
+      + '<button class="fl-mini" title="Dupliquer" onclick="event.stopPropagation();cloneFLType('+i+')"><i class="fa-solid fa-clone"></i></button></div>' : '';
+    return '<div class="fl-type-card'+(t.active?'':' draft')+' clickable" onclick="openFLType('+i+')">'
+      + '<div class="fl-cover">'+cover+state+'</div>'
+      + '<div class="fl-card-b"><div class="fl-name">'+esc(t.label)+'</div>'
+      + '<div class="fl-desc">'+(t.description?esc(t.description):'<span style="color:var(--muted-2)">Sans description</span>')+'</div>'
+      + '<div class="fl-metrics"><span class="sit-badge '+t.situation_mode+'">'+esc(FL_SIT[t.situation_mode]||t.situation_mode)+'</span></div>'
+      + '<div class="fl-metrics">'+metrics+'</div>'+foot+'</div></div>';
+  }).join('') + '</div>';
+}
+function openFLType(i) { var t = FL_TYPES[i]; if (t) MDT_ROUTER.go('/td/first-lincoln/type/' + encodeURIComponent(t.id)); }
+function toggleFLPub(i) { var t = FL_TYPES[i]; if (!t) return; flPost('fl_type_active', { id:t.id, active: t.active ? 0 : 1 }, function(){ toast(t.active ? 'Dépublié' : 'Publié', true); showFLBaremes(); }); }
+async function cloneFLType(i) { var t = FL_TYPES[i]; if (!t) return; var lbl = await MDT_PROMPT('Nom du nouveau barème :', t.label + ' (copie)'); if (lbl === null) return; var payload = { id:t.id }; if (lbl.trim()) payload.label = lbl.trim(); flPost('fl_type_clone', payload, function(d){ toast('Barème dupliqué', true); MDT_ROUTER.go('/td/first-lincoln/type/' + encodeURIComponent(d.id)); }); }
+function openFLNewType() {
+  if (!can('td_manage')) return;
+  FLB_IMG = ''; FL_EDIT = { kind:'type', mode:'new' };
+  openModal('<h2>Nouveau barème</h2>'
+    + '<div class="field"><label>Nom du barème</label><input type="text" id="fe-label" placeholder="Ex : First Lincoln V5"></div>'
+    + '<div class="field"><label>Description (optionnel)</label><textarea id="fe-desc" class="cell-ta" style="min-height:58px" placeholder="À quoi sert ce barème ?"></textarea></div>'
+    + flSitField('always') + flImgField('Image de couverture (optionnel)')
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveFLType()">Créer le barème</button></div>');
+  document.getElementById('fe-label').focus();
+}
+function saveFLType() {
+  var label = (document.getElementById('fe-label').value || '').trim(); if (!label) { toast('Nom requis', false); return; }
+  var payload = { kind:'type', label:label, description:(document.getElementById('fe-desc').value||'').trim(), situation_mode:document.getElementById('fe-sit').value, image_url:FLB_IMG };
+  var editing = FL_EDIT && FL_EDIT.mode === 'edit';
+  if (editing) payload.id = FLB.id;
+  flPost('fl_ent_save', payload, function(d){ closeModal(); if (editing) { toast('Barème mis à jour', true); reloadFLB(); } else { toast('Barème créé', true); MDT_ROUTER.go('/td/first-lincoln/type/' + encodeURIComponent(d.id)); } });
+}
+
+var FL_EVALS = [], FLE = null, FLE_SAVE_T = null;
+var FL_VERD = { reussi:{l:'Réussi',c:'ok'}, echoue:{l:'Échoué',c:'no'}, eliminatoire:{l:'Éliminatoire',c:'elim'}, en_cours:{l:'En cours',c:'wait'} };
+function flVBadge(v) { var m = FL_VERD[v] || FL_VERD.en_cours; return '<span class="fle-vb '+m.c+'">'+m.l+'</span>'; }
+function flVLabel(v) { return (FL_VERD[v] || FL_VERD.en_cours).l; }
+function flRound(x) { return Math.round(+((+x).toPrecision(12))); }
+function flNormScore(v, max, step) { if (v===undefined || v===null || v==='' || isNaN(+v)) return null; var n = Math.max(0, Math.min(+v, +max||0)); if (+step>0) n = flRound(n/+step)*+step; return n; }
+function flComputeLocal(ref, scores, quest, daFailed) {
+  scores = scores || {}; quest = quest || {};
+  var mode = (ref.type && ref.type.situation_mode) || 'always', cfg = ref.config || {};
+  var seuil = cfg.seuil_validation!==undefined ? (+cfg.seuil_validation) : 80;
+  var qmax = cfg.total_questionnaire_max!==undefined ? (+cfg.total_questionnaire_max) : 30;
+  var prat = 0, elim = [];
+  (ref.sections||[]).forEach(function(sec){ (sec.criteres||[]).forEach(function(cr){
+    var cid = cr.id, n = flNormScore(scores[cid], cr.max_pts, cr.step);
+    if (n !== null) prat += n;
+    if (cr.elim && scores[cid+'_elim']===true) elim.push(cr.label);
+  }); });
+  var q = 0; (ref.categories||[]).forEach(function(cat){ (cat.questions||[]).forEach(function(qq){ if (quest[qq.id]===true) q += (+qq.points||0); }); });
+  if (q > qmax) q = qmax;
+  var compte = (mode==='always') || (mode==='conditional' && daFailed);
+  if (!compte) { prat = 0; elim = []; }
+  var global = compte ? (prat + q) : q;
+  return { total_pratique:Math.round(prat*10)/10, total_questionnaire:Math.round(q*10)/10, total_global:Math.round(global*10)/10, faute_eliminatoire:elim.length>0, faute_detail:elim.join(', '), seuil:seuil, pratique_compte:compte };
+}
+function flVerdictLocal(comp, finalized) { if (!finalized) return 'en_cours'; if (comp.faute_eliminatoire) return 'eliminatoire'; return comp.total_global>=comp.seuil ? 'reussi' : 'echoue'; }
+function showFLEvals() {
+  if (!flInstGuard('view-fl')) return;
+  var host = document.getElementById('view-fl'), inst = can('td_instructor');
+  host.innerHTML = '<a class="crumb-back" href="/td/"><i class="fa-solid fa-arrow-left"></i> Tableau de bord</a>'
+    + '<div class="tb"><div style="min-width:0"><h1 style="font-size:1.4em;display:flex;align-items:center;gap:10px"><i class="fa-solid fa-clipboard-list" style="color:var(--accent-2)"></i> First Lincoln</h1>'
+    + '<div style="color:var(--muted);font-size:.88em;margin-top:5px">Évalue un agent sur un barème : notation live, verdict recalculé côté serveur.</div></div>'
+    + (inst ? '<button class="btn btn-primary" onclick="openNewPassation()"><i class="fa-solid fa-plus"></i> Nouvelle passation</button>' : '') + '</div>'
+    + flSeg('evals')
+    + '<div class="fle-filters"><div class="toolbar-s" style="flex:1;margin:0"><i class="fa-solid fa-magnifying-glass"></i><input id="fev-q" placeholder="Rechercher un agent, un barème…" oninput="renderFLEvalsList()"></div>'
+    + '<select id="fev-r" class="fle-fsel" onchange="renderFLEvalsList()"><option value="">Tous les résultats</option><option value="en_cours">En cours</option><option value="reussi">Réussis</option><option value="echoue">Échoués</option><option value="eliminatoire">Éliminatoires</option></select></div>'
+    + '<div id="fl-evals-host">' + loadingHTML() + '</div>';
+  viewShow('view-fl');
+  MDT_SKEL.show('#fl-evals-host', 'cards');
+  fetch(API + '?action=fl_list', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ FL_EVALS = (d && d.evals) ? d.evals : []; renderFLEvalsList(); })
+    .catch(function(){ var h = document.getElementById('fl-evals-host'); if (h) h.innerHTML = '<div class="empty-state">Erreur réseau.</div>'; });
+}
+function flEvalVerdict(e) { return e.finalized ? e.resultat : 'en_cours'; }
+function renderFLEvalsList() {
+  var host = document.getElementById('fl-evals-host'); if (!host) return;
+  var q = norm((document.getElementById('fev-q')||{}).value||''), rf = (document.getElementById('fev-r')||{}).value||'';
+  var list = FL_EVALS.filter(function(e){ if (rf && flEvalVerdict(e)!==rf) return false; return !q || norm((e.agent||'')+' '+(e.type_label||'')+' '+(e.evaluateur||'')).indexOf(q)>=0; });
+  if (!list.length) { host.innerHTML = '<div class="fl-empty"><div class="ei"><i class="fa-regular fa-clipboard"></i></div>Aucune passation'+((q||rf)?' pour ce filtre':'')+'.'+(can('td_instructor')&&!q&&!rf?' Clique « Nouvelle passation ».':'')+'</div>'; return; }
+  host.innerHTML = '<div class="fle-grid">' + list.map(function(e){
+    var v = flEvalVerdict(e), score = (e.total_global!==undefined?e.total_global:0)+' / '+(e.seuil||0);
+    return '<div class="fle-card" onclick="MDT_ROUTER.go(\'/td/first-lincoln/eval/'+encodeURIComponent(e.id)+'\')">'
+      + '<div class="fle-card-top"><div class="fle-agent">'+esc(e.agent||'—')+'</div>'+flVBadge(v)+'</div>'
+      + '<div class="fle-card-meta"><i class="fa-solid fa-clipboard-list" style="opacity:.6"></i> '+esc(e.type_label||'')+'</div>'
+      + '<div class="fle-card-meta">'+esc(fmtDate(e.date_eval))+(e.evaluateur?(' · '+esc(e.evaluateur)):'')+'</div>'
+      + '<div class="fle-card-foot"><span class="fle-score'+(v==='reussi'?' ok':((v==='echoue'||v==='eliminatoire')?' no':''))+'">'+score+' pts</span>'+(e.finalized?'<span class="lock-tag"><i class="fa-solid fa-lock"></i> Finalisée</span>':'<span class="fle-live">Brouillon</span>')+'</div></div>';
+  }).join('') + '</div>';
+}
+function openNewPassation() {
+  if (!can('td_instructor')) return;
+  fetch(API + '?action=fl_types_active', { headers: authHeaders() }).then(function(r){ return r.json(); }).then(function(d){
+    var types = (d && d.types) || [];
+    if (!types.length) { toast('Aucun barème publié. Publie un barème d\'abord (onglet Barèmes).', false); return; }
+    var opts = types.map(function(t){ return '<option value="'+esc(t.id)+'">'+esc(t.label)+'</option>'; }).join('');
+    openModal('<h2>Nouvelle passation</h2>'
+      + '<div class="field"><label>Barème d\'évaluation</label><select id="np-type">'+opts+'</select></div>'
+      + '<div class="field"><label>Agent évalué</label><input type="text" id="np-agent" autocomplete="off" placeholder="Matricule | Nom"></div>'
+      + '<div class="field"><label>Véhicule (optionnel)</label><input type="text" id="np-veh" autocomplete="off" placeholder="Ex : Interceptor"></div>'
+      + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="createPassation()">Démarrer l\'évaluation</button></div>');
+    loadRoster(function(){ rosterAC(document.getElementById('np-agent')); });
+    document.getElementById('np-agent').focus();
+  }).catch(function(){ toast('Erreur réseau', false); });
+}
+function createPassation() {
+  var agent = (document.getElementById('np-agent').value||'').trim(); if (!agent) { toast('Agent requis', false); return; }
+  flPost('fl_create', { fl_type_id:document.getElementById('np-type').value, agent:agent, vehicule:(document.getElementById('np-veh').value||'').trim() }, function(d){ closeModal(); toast('Passation créée', true); MDT_ROUTER.go('/td/first-lincoln/eval/' + encodeURIComponent(d.id)); });
+}
+function showFLEval(id) {
+  if (!flInstGuard('view-fleval')) return;
+  var host = document.getElementById('view-fleval'); host.innerHTML = loadingHTML(); viewShow('view-fleval');
+  loadRoster(function(){
+    fetch(API + '?action=fl_get&id=' + encodeURIComponent(id), { headers: authHeaders() }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+      .then(function(x){ if (!x.ok || !x.d || x.d.error) { showError('404', 'Passation introuvable', 'Cette évaluation n\'existe pas ou a été supprimée.'); return; }
+        var d = x.d;
+        FLE = { id:d.id, ref:d.referentiel, scores:(d.scores&&typeof d.scores==='object')?d.scores:{}, quest:(d.questionnaire&&typeof d.questionnaire==='object')?d.questionnaire:{}, da_failed:!!d.da_failed, notes:d.notes||'', agent:d.agent||'', vehicule:d.vehicule||'', finalized:!!d.finalized, resultat:d.resultat, ro:!d.can_edit, can_finalize:d.can_finalize, can_delete:d.can_delete, type_label:d.type_label, evaluateur:d.evaluateur, date_eval:d.date_eval, rev:(+d.rev||0), saving:false, dirty:false, finalizing:false };
+        renderFLEval();
+      }).catch(function(){ showFatal(); });
+  });
+}
+function renderFLEval() {
+  if (!FLE.ref || !FLE.ref.type) { showError('500', 'Barème introuvable', 'Le référentiel de cette évaluation est introuvable.'); return; }
+  var host = document.getElementById('view-fleval'), ro = FLE.ro, t = FLE.ref.type;
+  var h = '<a class="crumb-back" href="/td/first-lincoln"><i class="fa-solid fa-arrow-left"></i> Passations</a>';
+  h += '<div class="tb"><div style="min-width:0"><h1 style="font-size:1.3em;display:flex;align-items:center;gap:9px;flex-wrap:wrap"><i class="fa-solid fa-clipboard-check" style="color:var(--accent-2)"></i> <span style="overflow-wrap:anywhere">'+esc(FLE.agent||'Passation')+'</span>'+(FLE.finalized?' <span class="lock-tag"><i class="fa-solid fa-lock"></i> Finalisée</span>':'')+'</h1>'
+    + '<div style="color:var(--muted);font-size:.85em;margin-top:4px">'+esc(FLE.type_label||'')+' · '+esc(fmtDate(FLE.date_eval))+(FLE.evaluateur?(' · '+esc(FLE.evaluateur)):'')+' <span id="fle-savestate" class="fle-savestate"></span></div></div>';
+  h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  if (FLE.finalized && FLE.can_finalize) h += '<button class="btn btn-ghost" onclick="flReopenEval()"><i class="fa-solid fa-lock-open"></i> Rouvrir</button>';
+  if (!FLE.finalized && FLE.can_finalize) h += '<button class="btn btn-primary" onclick="flFinalizeEval()"><i class="fa-solid fa-flag-checkered"></i> Finaliser</button>';
+  if (FLE.can_delete) h += '<button class="btn btn-ghost" style="color:#ef4444" onclick="flDeleteEval()" title="Supprimer"><i class="fa-solid fa-trash"></i></button>';
+  h += '</div></div>';
+  h += '<div class="fiche-meta"><div class="field"><label>Agent évalué</label><input id="fle-agent" value="'+esc(FLE.agent)+'"'+(ro?' disabled':'')+' autocomplete="off" oninput="FLE.agent=this.value;flScheduleSave()"></div>'
+    + '<div class="field"><label>Véhicule</label><input id="fle-veh" value="'+esc(FLE.vehicule)+'"'+(ro?' disabled':'')+' autocomplete="off" oninput="FLE.vehicule=this.value;flScheduleSave()"></div>';
+  if (t.situation_mode==='conditional') h += '<div class="field"><label>Conduite d\'approche</label><label class="fl-chk" style="padding-top:9px"><input type="checkbox" id="fle-da"'+(FLE.da_failed?' checked':'')+(ro?' disabled':'')+' onchange="FLE.da_failed=this.checked;flRefresh();flScheduleSave()"> DA échouée → la pratique compte</label></div>';
+  h += '</div>';
+  h += '<div id="fle-verdict"></div><div id="fle-form"></div>';
+  h += '<div class="section-title">Notes</div><textarea id="fle-notes" class="cell-ta" style="min-height:70px;width:100%"'+(ro?' disabled':'')+' placeholder="Observations, remarques…" oninput="FLE.notes=this.value;flScheduleSave()">'+esc(FLE.notes)+'</textarea>';
+  host.innerHTML = h; viewShow('view-fleval');
+  flRefresh();
+  if (!ro) rosterAC(document.getElementById('fle-agent'));
+}
+function flRefresh() { var comp = flComputeLocal(FLE.ref, FLE.scores, FLE.quest, FLE.da_failed); var vd = document.getElementById('fle-verdict'); if (vd) vd.innerHTML = renderFLVerdict(comp); var fm = document.getElementById('fle-form'); if (fm) fm.innerHTML = renderFLForm(comp); }
+function flRefreshVerdictOnly() { var comp = flComputeLocal(FLE.ref, FLE.scores, FLE.quest, FLE.da_failed); var vd = document.getElementById('fle-verdict'); if (vd) vd.innerHTML = renderFLVerdict(comp); }
+function renderFLVerdict(comp) {
+  var v = flVerdictLocal(comp, true), pct = comp.seuil>0 ? Math.min(100, Math.round(comp.total_global/comp.seuil*100)) : 0;
+  var cls = comp.faute_eliminatoire ? 'elim' : (v==='reussi' ? 'ok' : 'no');
+  var head = FLE.finalized ? ('Résultat figé : '+flVLabel(FLE.resultat)) : ('Projection : '+flVLabel(v));
+  return '<div class="fle-hero '+cls+'"><div class="fle-hero-main"><div class="fle-hero-score">'+comp.total_global+' <span>/ '+comp.seuil+'</span></div>'
+    + '<div class="fle-hero-sub">'+esc(head)+(comp.faute_eliminatoire?(' — '+esc(comp.faute_detail)):'')+'</div></div>'
+    + '<div class="fle-hero-break"><span>Pratique '+comp.total_pratique+(comp.pratique_compte?'':' (non comptée)')+'</span><span>Questionnaire '+comp.total_questionnaire+'</span></div>'
+    + '<div class="fle-bar"><div class="fle-bar-f" style="width:'+pct+'%"></div></div></div>';
+}
+function renderFLForm(comp) {
+  var ref = FLE.ref, h = '';
+  var secs = (ref.sections||[]).filter(function(s){ return s.active!==false; });
+  if (secs.length) {
+    h += '<div class="section-title">Évaluation pratique'+(comp.pratique_compte?'':' — non comptée dans ce mode')+'</div>';
+    h += secs.map(function(s){
+      var crs = (s.criteres||[]).filter(function(c){ return c.active!==false; });
+      var sub = 0; crs.forEach(function(c){ var n = flNormScore(FLE.scores[c.id], c.max_pts, c.step); if (n !== null) sub += n; });
+      var smax = 0; crs.forEach(function(c){ smax += (+c.max_pts||0); });
+      var ic = s.image_url ? '<img src="'+esc(s.image_url)+'" alt="">' : '<i class="fa-solid '+(s.icon?esc(s.icon):'fa-flag')+'"></i>';
+      return '<div class="fle-sec"><div class="fle-sec-head" style="border-left-color:'+(s.color?esc(s.color):'var(--accent)')+'"><span class="fle-sec-ic"'+(s.color?' style="background:'+hexA(s.color,.16)+';color:'+esc(s.color)+'"':'')+'>'+ic+'</span><div class="fle-sec-t">'+esc(s.label)+'</div><span class="fle-sec-pts">'+(Math.round(sub*10)/10)+' / '+smax+'</span></div><div class="fle-sec-body">'+crs.map(renderFLScoreRow).join('')+'</div></div>';
+    }).join('');
+  }
+  var cats = (ref.categories||[]).filter(function(c){ return c.active!==false; });
+  if (cats.length) {
+    h += '<div class="section-title">Questionnaire</div>';
+    h += cats.map(function(cat){
+      var qs = (cat.questions||[]).filter(function(q){ return q.active!==false; });
+      var got = 0, tot = 0, bonus = 0; qs.forEach(function(q){ if (q.bonus) { if (FLE.quest[q.id]===true) bonus += (+q.points||0); } else { tot += (+q.points||0); if (FLE.quest[q.id]===true) got += (+q.points||0); } });
+      return '<div class="fle-cat"><div class="fle-cat-head"><span class="fl-dot" style="background:'+(cat.color?esc(cat.color):'var(--accent)')+'"></span><div class="fle-cat-t">'+esc(cat.label)+'</div><span class="fle-sec-pts">'+got+' / '+tot+(bonus?(' +'+bonus):'')+'</span></div><div class="fle-cat-body">'+qs.map(renderFLQuestRow).join('')+'</div></div>';
+    }).join('');
+  }
+  if (!secs.length && !cats.length) h += '<div class="fl-empty">Ce barème n\'a ni critère ni question.</div>';
+  return h;
+}
+function renderFLScoreRow(c) {
+  var ro = FLE.ro, cur = FLE.scores[c.id]; cur = (cur!==undefined && cur!=='' && !isNaN(+cur)) ? +cur : undefined;
+  var th = c.image_url ? '<img src="'+esc(c.image_url)+'" alt="">' : '<i class="fa-regular fa-image" style="opacity:.35"></i>';
+  var desc = c.description ? '<div class="fle-crit-d">'+esc(c.description)+'</div>' : '';
+  var elimOn = FLE.scores[c.id+'_elim']===true;
+  var elimBtn = c.elim ? '<button class="fle-elimtog'+(elimOn?' on':'')+'"'+(ro?' disabled':'')+' onclick="toggleElim(\''+c.id+'\')" title="'+esc(c.elim_desc||'Faute éliminatoire')+'"><i class="fa-solid fa-triangle-exclamation"></i></button>' : '';
+  return '<div class="fle-crit"><span class="fle-crit-th">'+th+'</span><div class="fle-crit-t"><div class="fle-crit-n">'+esc(c.label)+(c.elim?' <span class="fl-elim">élim</span>':'')+'</div>'+desc+'</div><div class="fle-crit-sc">'+flScorer(c, cur)+elimBtn+'</div></div>';
+}
+function flScorer(c, cur) {
+  var ro = FLE.ro, mp = +c.max_pts||0, step = +c.step||1, n = step>0 ? mp/step : 0;
+  if (step>0 && n<=10 && Math.abs(Math.round(n)-n)<1e-9) {
+    var btns = ''; for (var i=0;i<=Math.round(n);i++) { var v = Math.round(i*step*100)/100, on = (cur!==undefined && Math.abs(cur-v)<1e-9); btns += '<button class="sc-b'+(on?' on':'')+'"'+(ro?' disabled':'')+' onclick="setScore(\''+c.id+'\','+v+')">'+v+'</button>'; }
+    return '<div class="sc-seg">'+btns+'</div>';
+  }
+  return '<span class="sc-numwrap"><input class="sc-num" type="number" min="0" max="'+mp+'" step="'+step+'" value="'+(cur!==undefined?cur:'')+'"'+(ro?' disabled':'')+' oninput="setScoreInput(\''+c.id+'\',this.value)"><span class="sc-max">/ '+mp+'</span></span>';
+}
+function renderFLQuestRow(q) {
+  var ro = FLE.ro, on = FLE.quest[q.id]===true;
+  var img = q.image_url ? '<span class="fle-q-th"><img src="'+esc(q.image_url)+'" alt=""></span>' : '';
+  var rep = q.reponse ? '<div class="fle-q-r"><i class="fa-solid fa-check" style="font-size:.85em"></i> '+esc(q.reponse)+'</div>' : '';
+  var pts = q.bonus ? ('+'+(+q.points||0)+' bonus') : ((+q.points||0)+' pt'+((+q.points||0)>1?'s':''));
+  return '<div class="fle-q'+(on?' on':'')+'"'+(ro?'':' onclick="toggleQuest(\''+q.id+'\')"')+'><span class="fle-q-chk"><i class="fa-solid '+(on?'fa-circle-check':'fa-circle')+'"></i></span>'+img+'<div class="fle-q-t"><div class="fle-q-q">'+esc(q.question)+'</div>'+rep+'</div><span class="fle-q-pts'+(q.bonus?' bonus':'')+'">'+pts+'</span></div>';
+}
+function setScore(cid, v) { if (FLE.ro) return; FLE.scores[cid] = v; flRefresh(); flScheduleSave(); }
+function setScoreInput(cid, val) { if (FLE.ro) return; val = String(val).trim(); if (val==='') delete FLE.scores[cid]; else FLE.scores[cid] = +val; flRefreshVerdictOnly(); flScheduleSave(); }
+function toggleElim(cid) { if (FLE.ro) return; if (FLE.scores[cid+'_elim']===true) delete FLE.scores[cid+'_elim']; else FLE.scores[cid+'_elim'] = true; flRefresh(); flScheduleSave(); }
+function toggleQuest(qid) { if (FLE.ro) return; if (FLE.quest[qid]===true) delete FLE.quest[qid]; else FLE.quest[qid] = true; flRefresh(); flScheduleSave(); }
+function flSetSaveState(s) { var el = document.getElementById('fle-savestate'); if (!el) return; el.innerHTML = (s==='saving') ? '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement…' : (s==='saved') ? '<i class="fa-solid fa-check"></i> Enregistré' : (s==='err') ? '<span style="color:#f87171"><i class="fa-solid fa-triangle-exclamation"></i> Erreur</span>' : ''; }
+function flScheduleSave() { if (FLE.ro) return; FLE.dirty = true; flSetSaveState('saving'); if (FLE_SAVE_T) clearTimeout(FLE_SAVE_T); FLE_SAVE_T = setTimeout(flSaveEval, 650); }
+function flSaveEval() {
+  if (FLE.ro || FLE.saving) return;
+  var id = FLE.id; FLE.saving = true; FLE.dirty = false;
+  fetch(API + '?action=fl_save', { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify({ id:id, _rev:FLE.rev, scores:FLE.scores, questionnaire:FLE.quest, da_failed:FLE.da_failed, notes:FLE.notes, agent:FLE.agent, vehicule:FLE.vehicule }) })
+    .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, status:r.status, d:d }; }); })
+    .then(function(x){ if (!FLE || FLE.id!==id) return; FLE.saving = false;
+      if (x.status===409) { toast((x.d&&x.d.error)||'Modifiée ailleurs — rechargement', false); showFLEval(id); return; }
+      if (!x.ok || !x.d || !x.d.success) { flSetSaveState('err'); return; }
+      if (x.d.rev!==undefined) FLE.rev = x.d.rev;
+      if (x.d.computed) { var vd = document.getElementById('fle-verdict'); if (vd) vd.innerHTML = renderFLVerdict(x.d.computed); }
+      flSetSaveState('saved');
+      if (FLE.dirty) flScheduleSave();
+    })
+    .catch(function(){ if (FLE && FLE.id===id) { FLE.saving = false; flSetSaveState('err'); } });
+}
+async function flFinalizeEval() {
+  if (FLE.finalizing) return;
+  if (!await MDT_CONFIRM('Finaliser cette évaluation ? Le barème sera figé et le résultat verrouillé. Tu pourras la rouvrir si besoin.')) return;
+  FLE.finalizing = true; if (FLE_SAVE_T) { clearTimeout(FLE_SAVE_T); FLE_SAVE_T = null; }
+  var id = FLE.id;
+  var post = function(action, payload){ return fetch(API+'?action='+action, { method:'POST', headers: authHeaders({ 'Content-Type':'application/json' }), body: JSON.stringify(payload) }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, status:r.status, d:d }; }); }); };
+  post('fl_save', { id:id, _rev:FLE.rev, scores:FLE.scores, questionnaire:FLE.quest, da_failed:FLE.da_failed, notes:FLE.notes, agent:FLE.agent, vehicule:FLE.vehicule })
+    .then(function(sv){ if (!sv.ok || !sv.d || !sv.d.success) throw new Error((sv.d&&sv.d.error)||'Sauvegarde refusée'); if (FLE && FLE.id===id && sv.d.rev!==undefined) FLE.rev = sv.d.rev; return post('fl_finalize', { id:id }); })
+    .then(function(fn){ if (FLE) FLE.finalizing = false; if (!fn.ok || !fn.d || !fn.d.success) { toast((fn.d&&fn.d.error)||'Finalisation refusée', false); showFLEval(id); return; } toast('Finalisée : '+flVLabel(fn.d.resultat), true); showFLEval(id); })
+    .catch(function(e){ if (FLE) FLE.finalizing = false; toast((e&&e.message)||'Erreur réseau', false); });
+}
+async function flReopenEval() { if (!await MDT_CONFIRM('Rouvrir cette évaluation ? Elle redevient modifiable et sera recalculée sur le barème actuel.')) return; var id = FLE.id; flPost('fl_reopen', { id:id }, function(){ toast('Rouverte', true); showFLEval(id); }); }
+async function flDeleteEval() { if (!await MDT_CONFIRM('Supprimer définitivement cette passation ?')) return; flPost('fl_delete', { id:FLE.id }, function(){ toast('Supprimée', true); MDT_ROUTER.go('/td/first-lincoln'); }); }
+
+function flPrune(ref) {
+  ref.sections = (ref.sections || []).filter(function(s){ return s.active !== false; });
+  ref.sections.forEach(function(s){ s.criteres = (s.criteres || []).filter(function(c){ return c.active !== false; }); });
+  ref.categories = (ref.categories || []).filter(function(c){ return c.active !== false; });
+  ref.categories.forEach(function(c){ c.questions = (c.questions || []).filter(function(q){ return q.active !== false; }); });
+  return ref;
+}
+function flTotals(ref) {
+  var pratMax = 0; (ref.sections||[]).forEach(function(s){ (s.criteres||[]).forEach(function(c){ pratMax += (+c.max_pts||0); }); });
+  var qStd = 0, qBonus = 0; (ref.categories||[]).forEach(function(cat){ (cat.questions||[]).forEach(function(q){ if (q.bonus) qBonus += (+q.points||0); else qStd += (+q.points||0); }); });
+  var cfg = ref.config || {};
+  return { pratMax:Math.round(pratMax*10)/10, qStd:qStd, qBonus:qBonus, questCap:(cfg.total_questionnaire_max!==undefined?(+cfg.total_questionnaire_max||0):qStd), seuil:(cfg.seuil_validation!==undefined?(+cfg.seuil_validation||0):0) };
+}
+function showFLBuilder(id) {
+  if (!flInstGuard('view-flbuilder')) return;
+  FLB = { id:id, ref:null, tab:(FLB && FLB.id===id && FLB.tab) ? FLB.tab : 'pratique' };
+  var host = document.getElementById('view-flbuilder'); host.innerHTML = loadingHTML(); viewShow('view-flbuilder');
+  fetch(API + '?action=fl_type_full&id=' + encodeURIComponent(id), { headers: authHeaders() }).then(function(r){ return r.json().then(function(d){ return { ok:r.ok, d:d }; }); })
+    .then(function(x){ if (!x.ok || !x.d || !x.d.success || !x.d.referentiel) { showError('404', 'Barème introuvable', 'Ce barème n\'existe pas ou a été supprimé.'); return; } FLB.ref = flPrune(x.d.referentiel); renderFLBuilder(); })
+    .catch(function(){ showFatal(); });
+}
+function reloadFLB() {
+  fetch(API + '?action=fl_type_full&id=' + encodeURIComponent(FLB.id), { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.success && d.referentiel) { FLB.ref = flPrune(d.referentiel); renderFLBuilder(); } }).catch(function(){ toast('Rechargement impossible', false); });
+}
+function flTabBtn(k, ic, label) { return '<button class="flb-tab'+(FLB.tab===k?' on':'')+'" onclick="flSetTab(\''+k+'\')"><i class="fa-solid '+ic+'"></i> '+label+'</button>'; }
+function flSetTab(k) { FLB.tab = k; renderFLBuilder(); }
+function renderFLBuilder() {
+  var ref = FLB.ref, t = ref.type, inst = can('td_manage'), host = document.getElementById('view-flbuilder'), tot = flTotals(ref);
+  var cover = t.image_url ? '<img src="'+esc(t.image_url)+'" alt="">' : '';
+  var h = '<a class="crumb-back" href="/td/first-lincoln"><i class="fa-solid fa-arrow-left"></i> Barèmes</a>';
+  h += '<div class="flb-head"><div class="flb-cover">'+cover+'</div><div class="flb-head-b"><div class="flb-title-row"><div style="min-width:0">'
+    + '<h1><i class="fa-solid fa-clipboard-list" style="color:var(--accent-2)"></i> <span class="nm">'+esc(t.label)+'</span> <span class="sit-badge '+t.situation_mode+'">'+esc(FL_SIT[t.situation_mode]||t.situation_mode)+'</span> '+(t.active?'<span class="fl-state pub" style="position:static">Publié</span>':'<span class="fl-state dft" style="position:static">Brouillon</span>')+'</h1>'
+    + (t.description?'<div class="flb-desc">'+esc(t.description)+'</div>':'') + '</div>';
+  if (inst) h += '<div class="flb-actions"><button class="btn btn-ghost btn-sm" onclick="editFLType()"><i class="fa-solid fa-sliders"></i> Éditer</button>'
+    + '<button class="btn btn-ghost btn-sm" onclick="setFLPub('+(t.active?0:1)+')"><i class="fa-solid '+(t.active?'fa-eye-slash':'fa-eye')+'"></i> '+(t.active?'Dépublier':'Publier')+'</button></div>';
+  h += '</div></div></div>';
+  h += '<div class="flb-totals"><div class="flb-tot prat"><div class="tv">'+tot.pratMax+'</div><div class="tl">Points pratique (max)</div></div>'
+    + '<div class="flb-tot quest"><div class="tv">'+tot.questCap+'</div><div class="tl">Questionnaire (plafond)</div></div>'
+    + '<div class="flb-tot seuil"><div class="tv">'+tot.seuil+'</div><div class="tl">Seuil de validation</div></div></div>';
+  h += '<div class="flb-tabs">' + flTabBtn('pratique','fa-list-check','Pratique') + flTabBtn('questionnaire','fa-circle-question','Questionnaire') + flTabBtn('reglages','fa-gear','Réglages') + '</div>';
+  h += '<div id="flb-tabc"></div>';
+  host.innerHTML = h; viewShow('view-flbuilder');
+  renderFLBTab();
+}
+function renderFLBTab() {
+  var c = document.getElementById('flb-tabc'); if (!c) return;
+  if (FLB.tab === 'questionnaire') { c.innerHTML = renderFLBQuest(); flWireQuest(); }
+  else if (FLB.tab === 'reglages') { c.innerHTML = renderFLBConfig(); }
+  else { c.innerHTML = renderFLBPratique(); flWirePratique(); }
+}
+function renderFLBPratique() {
+  var ref = FLB.ref, inst = can('td_manage'), secs = ref.sections || [], h = '';
+  if (!secs.length) h += '<div class="fl-empty"><div class="ei"><i class="fa-solid fa-layer-group"></i></div>Aucune section d\'évaluation pratique.'+(inst?' Ajoute-en une ci-dessous.':'')+'</div>';
+  h += '<div class="fl-sec-list" id="fl-seclist">' + secs.map(function(s, si){
+    var pts = 0; (s.criteres||[]).forEach(function(c){ pts += (+c.max_pts||0); }); pts = Math.round(pts*10)/10;
+    var ic = s.image_url ? '<img src="'+esc(s.image_url)+'" alt="">' : '<i class="fa-solid '+(s.icon?esc(s.icon):'fa-flag')+'"></i>';
+    var head = '<div class="fl-sec-head" style="border-left-color:'+(s.color?esc(s.color):'var(--accent)')+'">'
+      + (inst?'<span class="fl-drag" title="Glisser pour réordonner"><i class="fa-solid fa-grip-vertical"></i></span>':'')
+      + '<span class="fl-sec-ic"'+(s.color?' style="background:'+hexA(s.color,.16)+';color:'+esc(s.color)+'"':'')+'>'+ic+'</span>'
+      + '<div class="fl-sec-t"><div class="sn">'+esc(s.label)+'</div><div class="sm">'+(s.criteres?s.criteres.length:0)+' critère'+((s.criteres&&s.criteres.length>1)?'s':'')+'</div></div>'
+      + '<span class="fl-sec-pts">'+pts+' pts</span>'
+      + (inst?'<div class="fl-crit-acts"><button class="fl-mini" title="Éditer la section" onclick="editFLSection('+si+')"><i class="fa-solid fa-pen"></i></button><button class="fl-mini del" title="Supprimer" onclick="delFLSection('+si+')"><i class="fa-solid fa-trash"></i></button></div>':'') + '</div>';
+    var crits = '<div class="fl-crit-list" id="fl-critlist-'+si+'">' + (s.criteres||[]).map(function(c, ci){ return renderFLCrit(si, c, ci, inst); }).join('') + '</div>';
+    var addC = inst ? '<button class="fl-add crit" onclick="addFLCrit('+si+')"><i class="fa-solid fa-plus"></i> Ajouter un critère</button>' : '';
+    return '<div class="fl-sec" data-id="'+esc(s.id)+'"'+(inst?' draggable="true"':'')+'>'+head+'<div class="fl-sec-body">'+crits+addC+'</div></div>';
+  }).join('') + '</div>';
+  if (inst) h += '<button class="fl-add block" onclick="addFLSection()"><i class="fa-solid fa-plus"></i> Ajouter une section</button>';
+  return h;
+}
+function renderFLCrit(si, c, ci, inst) {
+  var th = c.image_url ? '<img src="'+esc(c.image_url)+'" alt="">' : '<i class="fa-regular fa-image" style="opacity:.4"></i>';
+  var elim = c.elim ? ' <span class="fl-elim" title="'+esc(c.elim_desc||'Faute éliminatoire')+'"><i class="fa-solid fa-triangle-exclamation"></i> Élim</span>' : '';
+  var desc = c.description ? '<div class="cd">'+esc(c.description)+'</div>' : '';
+  var acts = inst ? '<div class="fl-crit-acts"><button class="fl-mini" title="Éditer" onclick="editFLCrit('+si+','+ci+')"><i class="fa-solid fa-pen"></i></button><button class="fl-mini del" title="Supprimer" onclick="delFLCrit('+si+','+ci+')"><i class="fa-solid fa-trash"></i></button></div>' : '';
+  return '<div class="fl-crit" data-id="'+esc(c.id)+'"'+(inst?' draggable="true"':'')+'>'
+    + (inst?'<span class="fl-drag"><i class="fa-solid fa-grip-vertical"></i></span>':'')
+    + '<span class="fl-crit-th">'+th+'</span>'
+    + '<div class="fl-crit-t"><div class="cn">'+esc(c.label)+elim+'</div>'+desc+'</div>'
+    + '<span class="fl-crit-pts">'+(+c.max_pts||0)+'<span class="st">pas '+(+c.step||1)+'</span></span>'+acts+'</div>';
+}
+function flWirePratique() {
+  if (!can('td_manage')) return;
+  flMakeSortable(document.getElementById('fl-seclist'), 'sec', function(cont){ flPersistOrder(cont, 'section', function(order){ FLB.ref.sections = flSortBy(FLB.ref.sections, order); }); });
+  (FLB.ref.sections||[]).forEach(function(s, si){
+    flMakeSortable(document.getElementById('fl-critlist-'+si), 'crit'+si, (function(sidx){ return function(cont){ flPersistOrder(cont, 'critere', function(order){ FLB.ref.sections[sidx].criteres = flSortBy(FLB.ref.sections[sidx].criteres, order); }); }; })(si));
+  });
+}
+function renderFLBQuest() {
+  var ref = FLB.ref, inst = can('td_manage'), cats = ref.categories || [], h = '';
+  if (!cats.length) h += '<div class="fl-empty"><div class="ei"><i class="fa-solid fa-circle-question"></i></div>Aucune catégorie de questions.'+(inst?' Ajoute-en une ci-dessous.':'')+'</div>';
+  h += '<div class="fl-cat-list" id="fl-catlist">' + cats.map(function(cat, qi){
+    var qs = cat.questions || [], pts = 0; qs.forEach(function(q){ if (!q.bonus) pts += (+q.points||0); });
+    var head = '<div class="fl-cat-head">'
+      + (inst?'<span class="fl-drag"><i class="fa-solid fa-grip-vertical"></i></span>':'')
+      + '<span class="fl-dot" style="background:'+(cat.color?esc(cat.color):'var(--accent)')+'"></span>'
+      + '<div class="fl-cat-t">'+esc(cat.label)+'</div><span class="fl-cat-c">'+qs.length+' Q · '+pts+' pts</span>'
+      + (inst?'<div class="fl-crit-acts"><button class="fl-mini" title="Éditer" onclick="editFLCat('+qi+')"><i class="fa-solid fa-pen"></i></button><button class="fl-mini del" title="Supprimer" onclick="delFLCat('+qi+')"><i class="fa-solid fa-trash"></i></button></div>':'') + '</div>';
+    var ql = '<div class="fl-q-list" id="fl-qlist-'+qi+'">' + qs.map(function(q, qqi){ return renderFLQ(qi, q, qqi, inst); }).join('') + '</div>';
+    var addQ = inst ? '<button class="fl-add crit" onclick="addFLQ('+qi+')"><i class="fa-solid fa-plus"></i> Ajouter une question</button>' : '';
+    return '<div class="fl-cat" data-id="'+esc(cat.id)+'"'+(inst?' draggable="true"':'')+'>'+head+'<div class="fl-cat-body">'+ql+addQ+'</div></div>';
+  }).join('') + '</div>';
+  if (inst) h += '<button class="fl-add block" onclick="addFLCat()"><i class="fa-solid fa-plus"></i> Ajouter une catégorie</button>';
+  return h;
+}
+function renderFLQ(qi, q, qqi, inst) {
+  var th = q.image_url ? '<img src="'+esc(q.image_url)+'" alt="">' : '<i class="fa-regular fa-image" style="opacity:.4"></i>';
+  var rep = q.reponse ? '<div class="qr"><i class="fa-solid fa-check" style="font-size:.85em"></i> '+esc(q.reponse)+'</div>' : '';
+  var pts = q.bonus ? '<span class="fl-q-pts bonus">+'+(+q.points||0)+' bonus</span>' : '<span class="fl-q-pts">'+(+q.points||0)+' pt'+((+q.points||0)>1?'s':'')+'</span>';
+  var acts = inst ? '<div class="fl-crit-acts"><button class="fl-mini" title="Éditer" onclick="editFLQ('+qi+','+qqi+')"><i class="fa-solid fa-pen"></i></button><button class="fl-mini del" title="Supprimer" onclick="delFLQ('+qi+','+qqi+')"><i class="fa-solid fa-trash"></i></button></div>' : '';
+  return '<div class="fl-q" data-id="'+esc(q.id)+'"'+(inst?' draggable="true"':'')+'>'
+    + (inst?'<span class="fl-drag" style="margin-top:2px"><i class="fa-solid fa-grip-vertical"></i></span>':'')
+    + '<span class="fl-q-th">'+th+'</span><div class="fl-q-t"><div class="qq">'+esc(q.question)+'</div>'+rep+'</div>'+pts+acts+'</div>';
+}
+function flWireQuest() {
+  if (!can('td_manage')) return;
+  flMakeSortable(document.getElementById('fl-catlist'), 'cat', function(cont){ flPersistOrder(cont, 'qcat', function(order){ FLB.ref.categories = flSortBy(FLB.ref.categories, order); }); });
+  (FLB.ref.categories||[]).forEach(function(cat, qi){
+    flMakeSortable(document.getElementById('fl-qlist-'+qi), 'q'+qi, (function(cidx){ return function(cont){ flPersistOrder(cont, 'question', function(order){ FLB.ref.categories[cidx].questions = flSortBy(FLB.ref.categories[cidx].questions, order); }); }; })(qi));
+  });
+}
+function renderFLBConfig() {
+  var ref = FLB.ref, inst = can('td_manage'), cfg = ref.config || {}, tot = flTotals(ref);
+  var seuil = cfg.seuil_validation!==undefined ? cfg.seuil_validation : 80;
+  var qmax = cfg.total_questionnaire_max!==undefined ? cfg.total_questionnaire_max : 30;
+  var h = '<div style="max-width:560px">';
+  h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:14px"><div class="section-title" style="margin-top:0">Notation pratique</div>';
+  h += '<p style="color:var(--muted);font-size:.85em;line-height:1.5">Le total pratique est la somme automatique des points de tous les critères : <b style="color:var(--accent-2)">'+tot.pratMax+' pts</b>.<br>Mode : <b>'+esc(FL_SIT[ref.type.situation_mode]||ref.type.situation_mode)+'</b> — '+esc(flSitHelp(ref.type.situation_mode))+'</p></div>';
+  h += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px"><div class="section-title" style="margin-top:0">Barème global</div>';
+  h += '<div class="fl-row2"><div class="field"><label>Seuil de validation (pts)</label><input type="number" min="0" id="cfg-seuil" value="'+esc(seuil)+'"'+(inst?'':' disabled')+'></div>'
+    + '<div class="field"><label>Plafond questionnaire (pts)</label><input type="number" min="0" id="cfg-qmax" value="'+esc(qmax)+'"'+(inst?'':' disabled')+'></div></div>';
+  h += '<p style="color:var(--muted);font-size:.82em;line-height:1.5">Questionnaire actuel : <b>'+tot.qStd+'</b> pts standard'+(tot.qBonus?(' + <b>'+tot.qBonus+'</b> bonus'):'')+'. Un agent est validé s\'il atteint <b>'+esc(seuil)+'</b> points au total.</p>';
+  if (inst) h += '<div style="margin-top:14px"><button class="btn btn-primary" onclick="saveFLConfig()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer les réglages</button></div>';
+  h += '</div></div>';
+  return h;
+}
+function saveFLConfig() {
+  flPost('fl_config_save', { type_id:FLB.id, config:{ seuil_validation:document.getElementById('cfg-seuil').value, total_questionnaire_max:document.getElementById('cfg-qmax').value } }, function(){ toast('Réglages enregistrés', true); reloadFLB(); });
+}
+function editFLType() {
+  if (!can('td_manage')) return;
+  var t = FLB.ref.type; FLB_IMG = t.image_url || ''; FL_EDIT = { kind:'type', mode:'edit' };
+  openModal('<h2>Éditer le barème</h2>'
+    + '<div class="field"><label>Nom du barème</label><input type="text" id="fe-label" value="'+esc(t.label||'')+'"></div>'
+    + '<div class="field"><label>Description</label><textarea id="fe-desc" class="cell-ta" style="min-height:60px">'+esc(t.description||'')+'</textarea></div>'
+    + flSitField(t.situation_mode||'always') + flImgField('Image de couverture')
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveFLType()">Enregistrer</button></div>');
+  document.getElementById('fe-label').focus();
+}
+function setFLPub(active) { flPost('fl_type_active', { id:FLB.id, active:active }, function(){ toast(active?'Barème publié':'Barème dépublié', true); reloadFLB(); }); }
+function addFLSection() { openFLSection(null); }
+function editFLSection(si) { openFLSection(si); }
+function openFLSection(si) {
+  if (!can('td_manage')) return;
+  var has = (si !== null && si !== undefined), s = has ? FLB.ref.sections[si] : {};
+  FLB_IMG = s.image_url || ''; FL_EDIT = { kind:'section', si:(has?si:null) };
+  openModal('<h2>'+(has?'Modifier la section':'Nouvelle section')+'</h2>'
+    + '<div class="field"><label>Nom de la section</label><input type="text" id="fe-label" value="'+esc(s.label||'')+'" placeholder="Ex : Conduite & maîtrise du véhicule"></div>'
+    + '<div class="fl-row2"><div class="field"><label>Icône (Font Awesome)</label><input type="text" id="fe-icon" value="'+esc(s.icon||'')+'" placeholder="fa-car"></div>'
+    + '<div class="field"><label>Couleur</label><input type="color" class="color-in" id="fe-color" value="'+esc(s.color||'#10b981')+'"></div></div>'
+    + flImgField('Image (optionnel)')
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveFLSection()">Enregistrer</button></div>');
+  document.getElementById('fe-label').focus();
+}
+function saveFLSection() {
+  var label = (document.getElementById('fe-label').value||'').trim(); if (!label) { toast('Nom requis', false); return; }
+  var payload = { kind:'section', label:label, icon:(document.getElementById('fe-icon').value||'').trim(), color:document.getElementById('fe-color').value, image_url:FLB_IMG };
+  if (FL_EDIT.si !== null) payload.id = FLB.ref.sections[FL_EDIT.si].id; else payload.parent_id = FLB.id;
+  flPost('fl_ent_save', payload, function(){ closeModal(); toast('Enregistré', true); reloadFLB(); });
+}
+async function delFLSection(si) { var s = FLB.ref.sections[si]; if (!s) return; if (!await MDT_CONFIRM('Supprimer la section « '+(s.label||'')+' » et tous ses critères ?')) return; flPost('fl_ent_delete', { kind:'section', id:s.id }, function(){ toast('Section supprimée', true); reloadFLB(); }); }
+function addFLCrit(si) { openFLCrit(si, null); }
+function editFLCrit(si, ci) { openFLCrit(si, ci); }
+function openFLCrit(si, ci) {
+  if (!can('td_manage')) return;
+  var has = (ci !== null && ci !== undefined), c = has ? FLB.ref.sections[si].criteres[ci] : {};
+  FLB_IMG = c.image_url || ''; FL_EDIT = { kind:'critere', si:si, ci:(has?ci:null) };
+  openModal('<h2>'+(has?'Modifier le critère':'Nouveau critère')+'</h2>'
+    + '<div class="field"><label>Intitulé du critère</label><input type="text" id="fe-label" value="'+esc(c.label||'')+'" placeholder="Ex : Respect des distances de sécurité"></div>'
+    + '<div class="field"><label>Description / consigne (optionnel)</label><textarea id="fe-desc" class="cell-ta" style="min-height:52px" placeholder="Ce que l\'évaluateur doit vérifier…">'+esc(c.description||'')+'</textarea></div>'
+    + '<div class="fl-row2"><div class="field"><label>Points max</label><input type="number" min="0" step="0.5" id="fe-max" value="'+esc(c.max_pts!==undefined?c.max_pts:1)+'"></div>'
+    + '<div class="field"><label>Pas de notation</label><input type="number" min="0.1" step="0.1" id="fe-step" value="'+esc(c.step!==undefined?c.step:1)+'"></div></div>'
+    + '<div class="field"><label class="fl-chk"><input type="checkbox" id="fe-elim"'+(c.elim?' checked':'')+' onchange="flToggleElim(this)"> Faute éliminatoire (recale l\'examen)</label></div>'
+    + '<div class="field" id="fe-elimrow" style="display:'+(c.elim?'block':'none')+'"><label>Motif de l\'élimination</label><input type="text" id="fe-elimdesc" value="'+esc(c.elim_desc||'')+'" placeholder="Ex : Accident responsable"></div>'
+    + flImgField('Image (optionnel)')
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveFLCrit()">Enregistrer</button></div>');
+  document.getElementById('fe-label').focus();
+}
+function saveFLCrit() {
+  var label = (document.getElementById('fe-label').value||'').trim(); if (!label) { toast('Intitulé requis', false); return; }
+  var payload = { kind:'critere', label:label, description:(document.getElementById('fe-desc').value||'').trim(), max_pts:document.getElementById('fe-max').value, step:document.getElementById('fe-step').value, elim:document.getElementById('fe-elim').checked, elim_desc:(document.getElementById('fe-elimdesc').value||'').trim(), image_url:FLB_IMG };
+  if (FL_EDIT.ci !== null) payload.id = FLB.ref.sections[FL_EDIT.si].criteres[FL_EDIT.ci].id; else payload.parent_id = FLB.ref.sections[FL_EDIT.si].id;
+  flPost('fl_ent_save', payload, function(){ closeModal(); toast('Enregistré', true); reloadFLB(); });
+}
+async function delFLCrit(si, ci) { var c = FLB.ref.sections[si].criteres[ci]; if (!c) return; if (!await MDT_CONFIRM('Supprimer ce critère ?')) return; flPost('fl_ent_delete', { kind:'critere', id:c.id }, function(){ toast('Critère supprimé', true); reloadFLB(); }); }
+function addFLCat() { openFLCat(null); }
+function editFLCat(qi) { openFLCat(qi); }
+function openFLCat(qi) {
+  if (!can('td_manage')) return;
+  var has = (qi !== null && qi !== undefined), cat = has ? FLB.ref.categories[qi] : {};
+  FL_EDIT = { kind:'qcat', qi:(has?qi:null) };
+  openModal('<h2>'+(has?'Modifier la catégorie':'Nouvelle catégorie')+'</h2>'
+    + '<div class="field"><label>Nom de la catégorie</label><input type="text" id="fe-label" value="'+esc(cat.label||'')+'" placeholder="Ex : Code de la route"></div>'
+    + '<div class="field"><label>Couleur</label><input type="color" class="color-in" id="fe-color" value="'+esc(cat.color||'#3b82f6')+'"></div>'
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveFLCat()">Enregistrer</button></div>');
+  document.getElementById('fe-label').focus();
+}
+function saveFLCat() {
+  var label = (document.getElementById('fe-label').value||'').trim(); if (!label) { toast('Nom requis', false); return; }
+  var payload = { kind:'qcat', label:label, color:document.getElementById('fe-color').value };
+  if (FL_EDIT.qi !== null) payload.id = FLB.ref.categories[FL_EDIT.qi].id; else payload.parent_id = FLB.id;
+  flPost('fl_ent_save', payload, function(){ closeModal(); toast('Enregistré', true); reloadFLB(); });
+}
+async function delFLCat(qi) { var c = FLB.ref.categories[qi]; if (!c) return; if (!await MDT_CONFIRM('Supprimer la catégorie « '+(c.label||'')+' » et ses questions ?')) return; flPost('fl_ent_delete', { kind:'qcat', id:c.id }, function(){ toast('Catégorie supprimée', true); reloadFLB(); }); }
+function addFLQ(qi) { openFLQ(qi, null); }
+function editFLQ(qi, qqi) { openFLQ(qi, qqi); }
+function openFLQ(qi, qqi) {
+  if (!can('td_manage')) return;
+  var has = (qqi !== null && qqi !== undefined), q = has ? FLB.ref.categories[qi].questions[qqi] : {};
+  FLB_IMG = q.image_url || ''; FL_EDIT = { kind:'question', qi:qi, qqi:(has?qqi:null) };
+  openModal('<h2>'+(has?'Modifier la question':'Nouvelle question')+'</h2>'
+    + '<div class="field"><label>Question</label><textarea id="fe-q" class="cell-ta" style="min-height:52px" placeholder="Ex : Quelle est la vitesse max en agglomération ?">'+esc(q.question||'')+'</textarea></div>'
+    + '<div class="field"><label>Réponse attendue (optionnel)</label><textarea id="fe-rep" class="cell-ta" style="min-height:42px" placeholder="Ex : 50 km/h">'+esc(q.reponse||'')+'</textarea></div>'
+    + '<div class="fl-row2"><div class="field"><label>Points</label><input type="number" min="0" step="1" id="fe-pts" value="'+esc(q.points!==undefined?q.points:1)+'"></div>'
+    + '<div class="field"><label>&nbsp;</label><label class="fl-chk" style="padding-top:9px"><input type="checkbox" id="fe-bonus"'+(q.bonus?' checked':'')+'> Question bonus</label></div></div>'
+    + flImgField('Image (optionnel)')
+    + '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveFLQ()">Enregistrer</button></div>');
+  document.getElementById('fe-q').focus();
+}
+function saveFLQ() {
+  var q = (document.getElementById('fe-q').value||'').trim(); if (!q) { toast('Question requise', false); return; }
+  var payload = { kind:'question', question:q, reponse:(document.getElementById('fe-rep').value||'').trim(), points:document.getElementById('fe-pts').value, bonus:document.getElementById('fe-bonus').checked, image_url:FLB_IMG };
+  if (FL_EDIT.qqi !== null) payload.id = FLB.ref.categories[FL_EDIT.qi].questions[FL_EDIT.qqi].id; else payload.parent_id = FLB.ref.categories[FL_EDIT.qi].id;
+  flPost('fl_ent_save', payload, function(){ closeModal(); toast('Enregistré', true); reloadFLB(); });
+}
+async function delFLQ(qi, qqi) { var q = FLB.ref.categories[qi].questions[qqi]; if (!q) return; if (!await MDT_CONFIRM('Supprimer cette question ?')) return; flPost('fl_ent_delete', { kind:'question', id:q.id }, function(){ toast('Question supprimée', true); reloadFLB(); }); }
+function flChildrenWithId(container) { var out = [], ch = container.children; for (var i = 0; i < ch.length; i++) { if (ch[i].getAttribute && ch[i].getAttribute('data-id') != null) out.push(ch[i]); } return out; }
+function flDragAfter(container, y) {
+  var els = flChildrenWithId(container).filter(function(el){ return !el.classList.contains('dragging'); });
+  var closest = null, closestOff = -Infinity;
+  els.forEach(function(c){ var box = c.getBoundingClientRect(); var off = y - box.top - box.height/2; if (off < 0 && off > closestOff) { closestOff = off; closest = c; } });
+  return closest;
+}
+function flMakeSortable(container, group, onDrop) {
+  if (!container) return;
+  flChildrenWithId(container).forEach(function(el){
+    if (el.getAttribute('draggable') !== 'true') return;
+    el.addEventListener('dragstart', function(e){ FL_DRAG = { el:el, group:group, container:container }; el.classList.add('dragging'); if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', el.getAttribute('data-id')||''); } catch(_){} } });
+    el.addEventListener('dragend', function(){ el.classList.remove('dragging'); if (FL_DRAG && FL_DRAG.el === el) { FL_DRAG = null; onDrop(container); } });
+  });
+  container.addEventListener('dragover', function(e){ if (!FL_DRAG || FL_DRAG.group !== group || FL_DRAG.container !== container) return; e.preventDefault(); var after = flDragAfter(container, e.clientY); if (after == null) container.appendChild(FL_DRAG.el); else container.insertBefore(FL_DRAG.el, after); });
+}
+function flSortBy(arr, order) { return (arr||[]).slice().sort(function(a, b){ return order.indexOf(a.id) - order.indexOf(b.id); }); }
+function flPersistOrder(container, kind, applyFn) {
+  var order = flChildrenWithId(container).map(function(el){ return el.getAttribute('data-id'); });
+  applyFn(order); renderFLBTab(); flPost('fl_ent_reorder', { kind:kind, order:order }, null);
+}
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr" data-module="npu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - NPU · Épreuve de recrutement</title>
+<link rel="stylesheet" href="/assets/app.css">
+<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+html[data-module="npu"]{ --accent:#0ea5e9; --accent-2:#7dd3fc; --accent-rgb:14,165,233; }
+.app a { color:inherit; text-decoration:none; }
+
+.np-wrap { max-width:1080px; margin:0 auto; padding:22px 18px 60px; }
+.np-head { display:flex; align-items:center; gap:13px; margin-bottom:20px; flex-wrap:wrap; }
+.np-head .ic { width:44px; height:44px; border-radius:12px; background:rgba(var(--accent-rgb),.16); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.2em; }
+.np-head h1 { font-size:1.25em; font-weight:800; }
+.np-head .sub { font-size:.83em; color:var(--muted); }
+.np-sp { flex:1; }
+
+.np-steps { display:flex; gap:8px; margin-bottom:20px; }
+.np-step { flex:1; padding:11px 14px; border-radius:11px; background:var(--surface); border:1px solid var(--border); font-size:.84em; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:9px; }
+.np-step.on { border-color:var(--accent); color:var(--text); background:rgba(var(--accent-rgb),.09); }
+.np-step.done { color:var(--accent-2); }
+.np-step .n { width:22px; height:22px; border-radius:50%; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:.85em; }
+.np-step.on .n { background:var(--accent); color:#04222e; }
+
+.np-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:14px; }
+.np-q { font-weight:700; margin-bottom:12px; font-size:.95em; }
+.np-q .num { color:var(--accent-2); margin-right:7px; }
+.np-choix { display:flex; flex-direction:column; gap:7px; }
+.np-c { padding:10px 14px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border); cursor:pointer; font-size:.88em; transition:.12s; }
+.np-c:hover { border-color:var(--accent); }
+.np-c.sel { background:rgba(var(--accent-rgb),.16); border-color:var(--accent); font-weight:600; }
+
+.np-bar { position:sticky; bottom:0; background:var(--surface); border-top:1px solid var(--border); padding:13px 18px; display:flex; align-items:center; gap:13px; margin:0 -18px -60px; }
+.np-prog { flex:1; height:7px; border-radius:99px; background:var(--surface-2); overflow:hidden; }
+.np-prog i { display:block; height:100%; background:var(--accent); width:0; transition:width .2s; }
+.np-btn { border:none; background:var(--accent); color:#04222e; font-family:inherit; font-weight:800; font-size:.88em; padding:11px 22px; border-radius:10px; cursor:pointer; }
+.np-btn[disabled] { opacity:.4; cursor:not-allowed; }
+.np-btn.ghost { background:var(--surface-2); color:var(--muted); border:1px solid var(--border); }
+
+.np-geo { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:860px) { .np-geo { grid-template-columns:1fr; } }
+.np-photo { border-radius:12px; overflow:hidden; border:1px solid var(--border); background:#000; }
+.np-photo img { width:100%; display:block; max-height:440px; object-fit:contain; }
+#npMap { height:440px; border-radius:12px; border:1px solid var(--border); }
+.leaflet-container { background:#0b1220; font-family:var(--font); outline:none; }
+.np-hint { font-size:.8em; color:var(--muted-2); margin-top:8px; }
+.np-dots { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.np-dot { width:30px; height:30px; border-radius:9px; background:var(--surface-2); border:1px solid var(--border); font-size:.8em; font-weight:700; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.np-dot.on { border-color:var(--accent); color:var(--text); }
+.np-dot.ok { background:rgba(var(--accent-rgb),.2); color:var(--accent-2); border-color:var(--accent); }
+
+.np-msg { text-align:center; padding:60px 20px; }
+.np-msg .ei { width:64px; height:64px; border-radius:50%; background:rgba(var(--accent-rgb),.12); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.6em; margin:0 auto 18px; }
+.np-score { display:flex; gap:12px; justify-content:center; margin:22px 0; flex-wrap:wrap; }
+.np-sc { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:16px 26px; min-width:150px; }
+.np-sc .v { font-size:1.7em; font-weight:800; color:var(--accent-2); }
+.np-sc .l { font-size:.74em; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+</style>
+</head>
+<body class="app">
+<div class="app-bg"></div>
+
+<div class="np-wrap">
+  <div class="np-head">
+    <a class="np-btn ghost" href="/" title="Retour"><i class="fa-solid fa-arrow-left"></i></a>
+    <span class="ic"><i class="fa-solid fa-mountain-sun"></i></span>
+    <div><h1>NPU · Épreuve de recrutement</h1><div class="sub" id="npSub">North Patrol Unit</div></div>
+    <div class="np-sp"></div>
+    <a class="np-btn ghost" href="/npu/gestion" id="npAdmin" style="display:none"><i class="fa-solid fa-sliders"></i> Gestion</a>
+  </div>
+
+  <div id="npBody"></div>
+</div>
+
+<script>
+window.MDT_SHELL = { module: 'npu', title: 'NPU', icon: 'fa-mountain-sun', back: { href: '/', label: 'Menu' } };
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script src="/assets/vendor/leaflet/leaflet.js"></script>
+<script>
+var API = '/npu/npu_api.php';
+var META = null, QUIZ = {}, GEO = [], geoIdx = 0, GUESS = {}, MAP = null, MARK = null, T0 = null;
+var TILE = 6144, MZ = 5;
+
+function $(i){ return document.getElementById(i); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+function hdr(x){ var h=x||{}; try{ var t=localStorage.getItem('mdt_auth_token')||''; if(t) h['Authorization']='Bearer '+t; }catch(e){} return h; }
+function notify(m,ok){ if(typeof toast==='function') toast(m,!!ok); }
+
+function steps(cur){
+  var s=[['Questionnaire','fa-list-check'],['Repérage carte','fa-map-location-dot'],['Résultat','fa-flag-checkered']];
+  return '<div class="np-steps">'+s.map(function(x,i){
+    return '<div class="np-step '+(i===cur?'on':(i<cur?'done':''))+'"><span class="n">'+(i<cur?'<i class="fa-solid fa-check"></i>':(i+1))+'</span> '+x[0]+'</div>';
+  }).join('')+'</div>';
+}
+
+function boot(){
+  fetch(API+'?action=meta',{headers:hdr()}).then(function(r){
+    if(r.status===403) throw new Error('denied');
+    if(r.status===401) throw new Error('unauth');
+    return r.json();
+  }).then(function(d){
+    META=d; GEO=d.geo||[];
+    if(d.is_admin) $('npAdmin').style.display='';
+    if(!d.open && !d.is_admin) return ecran('lock','Épreuve fermée','Le recrutement NPU n’est pas ouvert pour le moment.');
+    if(d.already) return ecran('circle-check','Épreuve déjà passée','Tes réponses ont bien été enregistrées. Le commandement NPU reviendra vers toi.');
+    T0=Date.now();
+    renderQuiz();
+  }).catch(function(e){
+    var m=e&&e.message;
+    if(m==='denied') ecran('lock','Accès refusé','Ce module est réservé aux agents autorisés.');
+    else if(m==='unauth') ecran('lock','Connexion requise','Reconnecte-toi pour accéder à l’épreuve.');
+    else ecran('triangle-exclamation','Erreur','Impossible de charger l’épreuve.');
+  });
+}
+
+function ecran(icon,titre,txt,extra){
+  $('npBody').innerHTML='<div class="np-msg"><div class="ei"><i class="fa-solid fa-'+icon+'"></i></div>'
+    +'<h2 style="margin-bottom:8px">'+esc(titre)+'</h2><p style="color:var(--muted)">'+esc(txt)+'</p>'+(extra||'')+'</div>';
+}
+
+function renderQuiz(){
+  var qs=META.questions||[];
+  var h=steps(0)+'<div class="np-card" style="border-color:var(--accent);background:rgba(var(--accent-rgb),.06)">'
+    +'<b>'+qs.length+' questions</b> à choix unique. Une seule réponse par question, pas de retour en arrière une fois validé.</div>';
+  qs.forEach(function(it){
+    h+='<div class="np-card"><div class="np-q"><span class="num">'+(it.i+1)+'.</span>'+esc(it.q)+'</div><div class="np-choix">'
+      +(it.choix||[]).map(function(c,ci){ return '<div class="np-c" data-q="'+it.i+'" data-c="'+ci+'">'+esc(c)+'</div>'; }).join('')
+      +'</div></div>';
+  });
+  h+='<div class="np-bar"><span id="npCount" style="font-size:.85em;color:var(--muted);white-space:nowrap"></span>'
+    +'<div class="np-prog"><i id="npProg"></i></div>'
+    +'<button class="np-btn" id="npNext" disabled>Passer au repérage <i class="fa-solid fa-arrow-right"></i></button></div>';
+  $('npBody').innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll('.np-c'),function(el){
+    el.onclick=function(){
+      var q=this.getAttribute('data-q');
+      Array.prototype.forEach.call(document.querySelectorAll('.np-c[data-q="'+q+'"]'),function(x){x.classList.remove('sel');});
+      this.classList.add('sel');
+      QUIZ[q]=parseInt(this.getAttribute('data-c'),10);
+      majQuiz();
+    };
+  });
+  $('npNext').onclick=function(){ renderGeo(); };
+  majQuiz();
+}
+function majQuiz(){
+  var tot=(META.questions||[]).length, fait=Object.keys(QUIZ).length;
+  $('npCount').textContent=fait+' / '+tot;
+  $('npProg').style.width=(tot?Math.round(fait/tot*100):0)+'%';
+  $('npNext').disabled=(fait<tot);
+}
+
+function renderGeo(){
+  if(!GEO.length){ return envoyer(); }
+  $('npBody').innerHTML=steps(1)
+    +'<div class="np-card" style="border-color:var(--accent);background:rgba(var(--accent-rgb),.06)">'
+    +'Pour chaque photo, <b>clique sur la carte</b> à l’endroit où elle a été prise. Plus tu es proche, plus tu marques de points.</div>'
+    +'<div class="np-dots" id="npDots"></div>'
+    +'<div class="np-geo"><div><div class="np-photo"><img id="npImg" alt="Lieu à identifier"></div>'
+    +'<div class="np-hint" id="npHint"></div></div>'
+    +'<div><div id="npMap"></div><div class="np-hint">Clique pour poser ton repère. Tu peux le déplacer tant que tu n’as pas validé.</div></div></div>'
+    +'<div class="np-bar"><button class="np-btn ghost" id="npPrev"><i class="fa-solid fa-arrow-left"></i></button>'
+    +'<span id="npGCount" style="font-size:.85em;color:var(--muted);white-space:nowrap"></span>'
+    +'<div class="np-prog"><i id="npGProg"></i></div>'
+    +'<button class="np-btn" id="npSend" disabled>Terminer l’épreuve <i class="fa-solid fa-paper-plane"></i></button></div>';
+
+  MAP=L.map('npMap',{crs:L.CRS.Simple,minZoom:0,maxZoom:MZ+2,zoomControl:true,attributionControl:false});
+  var bounds=L.latLngBounds(MAP.unproject([0,TILE],MZ),MAP.unproject([TILE,0],MZ));
+  L.tileLayer('/tiles/gta/{z}/{x}/{y}.png',{tileSize:256,minZoom:0,maxNativeZoom:MZ,maxZoom:MZ+2,noWrap:true,bounds:bounds}).addTo(MAP);
+  MAP.setMaxBounds(bounds.pad(0.25));
+  MAP.fitBounds(bounds);
+  MAP.on('click',function(e){ poser(e.latlng); });
+
+  $('npPrev').onclick=function(){ if(geoIdx>0){ geoIdx--; majGeo(); } else renderQuiz(); };
+  $('npSend').onclick=function(){ envoyer(); };
+  majGeo();
+}
+function norm(ll){ var p=MAP.project(ll,MZ); return { x:p.x/TILE, y:p.y/TILE }; }
+function denorm(n){ return MAP.unproject([n.x*TILE,n.y*TILE],MZ); }
+function poser(ll){
+  var n=norm(ll);
+  if(n.x<0||n.x>1||n.y<0||n.y>1) return;
+  GUESS[GEO[geoIdx].id]=n;
+  if(MARK) MAP.removeLayer(MARK);
+  MARK=L.marker(ll,{draggable:true}).addTo(MAP);
+  MARK.on('dragend',function(){ poser(MARK.getLatLng()); });
+  majGeo(true);
+}
+function majGeo(garderMarqueur){
+  var g=GEO[geoIdx];
+  $('npImg').src=g.photo;
+  $('npHint').textContent='Photo '+(geoIdx+1)+' sur '+GEO.length+(g.nom?' — '+g.nom:'');
+  if(!garderMarqueur){
+    if(MARK){ MAP.removeLayer(MARK); MARK=null; }
+    if(GUESS[g.id]){ MARK=L.marker(denorm(GUESS[g.id]),{draggable:true}).addTo(MAP);
+      MARK.on('dragend',function(){ poser(MARK.getLatLng()); }); }
+  }
+  var faits=Object.keys(GUESS).length;
+  $('npGCount').textContent=faits+' / '+GEO.length;
+  $('npGProg').style.width=Math.round(faits/GEO.length*100)+'%';
+  $('npSend').disabled=(faits<GEO.length);
+  $('npDots').innerHTML=GEO.map(function(x,i){
+    return '<div class="np-dot '+(i===geoIdx?'on':'')+' '+(GUESS[x.id]?'ok':'')+'" data-i="'+i+'">'+(i+1)+'</div>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('.np-dot'),function(el){
+    el.onclick=function(){ geoIdx=parseInt(this.getAttribute('data-i'),10); majGeo(); };
+  });
+  if(!garderMarqueur && geoIdx<GEO.length-1 && GUESS[g.id]) { }
+}
+
+function envoyer(){
+  var quiz=[]; (META.questions||[]).forEach(function(it){ quiz[it.i]=(QUIZ[it.i]!=null?QUIZ[it.i]:-1); });
+  var geo=GEO.map(function(g){ var n=GUESS[g.id]||{}; return { id:g.id, x:(n.x!=null?n.x:null), y:(n.y!=null?n.y:null) }; });
+  var btn=$('npSend'); if(btn){ btn.disabled=true; btn.innerHTML='Envoi…'; }
+  if(T0){ fetch(API+'?action=save_chrono',{method:'POST',headers:hdr({'Content-Type':'application/json'}),
+    body:JSON.stringify({temps_ms:Date.now()-T0})}).catch(function(){}); }
+  fetch(API+'?action=submit',{method:'POST',headers:hdr({'Content-Type':'application/json'}),
+    body:JSON.stringify({quiz:quiz,geo:geo})})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d||!d.success){ notify((d&&d.error)||'Envoi refusé',false); if(btn){btn.disabled=false;btn.innerHTML='Terminer l’épreuve';} return; }
+      $('npBody').innerHTML=steps(2)
+        +'<div class="np-msg"><div class="ei"><i class="fa-solid fa-flag-checkered"></i></div>'
+        +'<h2 style="margin-bottom:8px">Épreuve terminée</h2>'
+        +'<p style="color:var(--muted)">Tes réponses sont enregistrées. Le commandement NPU reviendra vers toi.</p>'
+        +'<div class="np-score"><div class="np-sc"><div class="v">'+d.quiz_score+' / '+d.total_quiz+'</div><div class="l">Questionnaire</div></div>'
+        +'<div class="np-sc"><div class="v">'+d.geo_score+'</div><div class="l">Repérage carte</div></div></div>'
+        +'<a class="np-btn ghost" href="/"><i class="fa-solid fa-arrow-left"></i> Retour au menu</a></div>';
+    })
+    .catch(function(){ notify('Erreur réseau',false); if(btn){btn.disabled=false;btn.innerHTML='Terminer l’épreuve';} });
+}
+
+(function(){
+  var t=''; try{ t=localStorage.getItem('mdt_auth_token')||''; }catch(e){}
+  if(!t){ ecran('lock','Connexion requise','Connecte-toi pour accéder à l’épreuve NPU.'); return; }
+  boot();
+})();
+</script>
+</body>
+</html>

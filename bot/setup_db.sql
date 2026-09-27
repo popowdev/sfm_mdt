@@ -1,0 +1,15 @@
+USE mdt_main;
+
+CREATE TABLE IF NOT EXISTS module_permissions (
+  module_key VARCHAR(30) NOT NULL,
+  role_id VARCHAR(30) NOT NULL,
+  PRIMARY KEY (module_key, role_id)
+);
+
+CREATE TABLE IF NOT EXISTS discord_roles_cache (
+  role_id VARCHAR(30) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  color VARCHAR(7) NOT NULL DEFAULT '#99aab5',
+  position INT NOT NULL DEFAULT 0,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

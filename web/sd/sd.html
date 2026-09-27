@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - Laboratoire</title>
+<link rel="stylesheet" href="/assets/app.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; }
+html[data-module="sd"]{ --accent:#8b5cf6; --accent-2:#a78bfa; --accent-rgb:139,92,246; }
+.app a { color:inherit; text-decoration:none; }
+.app a:hover { text-decoration:none; }
+.wrap { max-width:1100px; margin:0 auto; padding:24px 20px 70px; }
+.app .btn { padding:10px 16px; border:none; border-radius:10px; font-weight:700; font-size:.88em; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:8px; transition:.15s; }
+.app .btn-primary { background:var(--accent); color:#150a2e; }
+.app .btn-primary:hover { background:var(--accent-2); }
+.app .btn-ghost { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+.app .btn-ghost:hover { border-color:var(--accent); }
+.btn-sm { padding:7px 12px; font-size:.82em; }
+.btn-danger { background:transparent; border:1px solid var(--border); color:var(--muted); }
+.btn-danger:hover { border-color:var(--danger); color:var(--danger); }
+
+.crumbs { display:flex; flex-wrap:wrap; align-items:center; gap:7px; font-size:.82em; color:var(--muted); margin-bottom:18px; }
+.crumbs a { color:var(--muted); }
+.crumbs a:hover { color:var(--accent-2); }
+.crumbs .sep { opacity:.5; }
+.crumbs .here { color:var(--text); font-weight:600; overflow-wrap:anywhere; min-width:0; }
+.sec-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+.sec-head h1 { font-size:1.5em; display:flex; align-items:center; gap:11px; flex-wrap:wrap; min-width:0; overflow-wrap:anywhere; }
+.sec-head h1 .ic { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.05em; flex:0 0 auto; background:rgba(var(--accent-rgb),.15); color:var(--accent-2); }
+
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:26px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+.stat-card .sv { font-size:2em; font-weight:800; color:var(--accent-2); }
+.stat-card .sl { color:var(--muted); font-size:.85em; margin-top:2px; }
+.section-title { font-size:.82em; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-2); font-weight:700; margin:0 0 12px; }
+
+.toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+.search { position:relative; flex:1 1 240px; min-width:190px; }
+.search i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--muted-2); font-size:.9em; }
+.search input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:11px; padding:11px 14px 11px 36px; color:var(--text); font-family:inherit; font-size:.92em; }
+.search input:focus { outline:none; border-color:var(--accent); }
+.filter { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--text); font-family:inherit; font-size:.85em; cursor:pointer; }
+.filter:focus { outline:none; border-color:var(--accent); }
+.count { color:var(--muted-2); font-size:.8em; margin-bottom:10px; }
+
+.card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:13px; }
+.ev-card { background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:15px 16px; cursor:pointer; transition:.15s; display:block; border-left:3px solid var(--border); }
+.ev-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.ev-top { display:flex; align-items:center; gap:9px; margin-bottom:7px; }
+.ev-ic { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:.9em; }
+.ev-type { font-size:.68em; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+.ev-title { font-weight:700; overflow-wrap:break-word; }
+.ev-meta { color:var(--muted-2); font-size:.78em; margin-top:6px; display:flex; gap:6px 12px; flex-wrap:wrap; }
+.doc-list { display:flex; flex-direction:column; gap:9px; }
+.list-row { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; cursor:pointer; transition:.15s; display:flex; align-items:center; gap:13px; }
+.list-row:hover { border-color:var(--accent); }
+.lr-ic { color:var(--accent); font-size:1.05em; flex:0 0 auto; }
+.lr-body { flex:1; min-width:0; }
+.lr-title { font-weight:700; overflow-wrap:break-word; }
+.lr-sub { color:var(--muted); font-size:.82em; margin-top:2px; display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lr-when { font-size:.76em; color:var(--muted-2); flex:0 0 auto; white-space:nowrap; }
+
+.article { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:24px 26px; }
+.a-head { display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.a-ic { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:1.2em; }
+.a-htext { flex:1; min-width:0; }
+.a-htext h1 { font-size:1.3em; overflow-wrap:break-word; }
+.a-sub { color:var(--muted); font-size:.85em; margin-top:3px; }
+.a-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.kv-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:11px; margin-top:22px; }
+.kv { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 13px; }
+.kv .k { font-size:.7em; text-transform:uppercase; letter-spacing:.04em; color:var(--muted-2); font-weight:700; }
+.kv .v { margin-top:3px; overflow-wrap:break-word; }
+.md-body { margin-top:22px; line-height:1.7; overflow-wrap:break-word; }
+.md-body h1 { font-size:1.4em; margin:18px 0 10px; }
+.md-body h2 { font-size:1.18em; margin:16px 0 8px; }
+.md-body h3 { font-size:1.04em; margin:14px 0 7px; }
+.md-body p { margin:0 0 12px; }
+.md-body ul, .md-body ol { margin:0 0 12px 22px; }
+.md-body li { margin-bottom:4px; }
+.md-body code { font-family:ui-monospace,monospace; background:var(--surface-2); border:1px solid var(--border); border-radius:5px; padding:1px 5px; font-size:.9em; }
+.md-body pre { background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:12px; overflow-x:auto; margin:0 0 12px; }
+.md-body pre code { background:none; border:none; padding:0; }
+.md-body a, .md-body a:hover { color:var(--accent-2); text-decoration:underline; }
+.md-body hr { border:none; border-top:1px solid var(--border); margin:16px 0; }
+.md-body blockquote { border-left:3px solid var(--accent); padding-left:14px; color:var(--muted); margin:0 0 12px; }
+
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-state .es-ic { font-size:2.4em; opacity:.4; margin-bottom:12px; }
+#denied, #view-fatal, #view-error { display:none; text-align:center; padding:80px 20px; }
+#denied .lock, #view-fatal .lock, #view-error .ecode { font-size:2.8em; margin-bottom:12px; }
+#denied .lock { color:var(--danger); } #view-fatal .lock { color:var(--warning); } #view-error .ecode { font-weight:800; color:var(--accent); }
+#denied h2, #view-fatal h2, #view-error h2 { font-size:1.25em; margin-bottom:8px; }
+#denied p, #view-fatal p, #view-error p { color:var(--muted); max-width:460px; margin:0 auto 20px; line-height:1.6; }
+.view { display:none; } .view.on { display:block; }
+
+.ov { display:none; position:fixed; inset:0; background:rgba(2,6,23,.7); z-index:8000; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto; }
+.ov.open { display:flex; }
+.editor { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:100%; max-width:720px; padding:24px 26px; }
+.editor h2 { font-size:1.2em; margin-bottom:18px; }
+.editor .field { margin-bottom:15px; }
+.editor label { display:block; font-size:.78em; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted-2); margin-bottom:6px; }
+.editor input[type=text], .editor select, .editor textarea { width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:11px 13px; color:var(--text); font-family:inherit; font-size:.95em; }
+.editor textarea { min-height:120px; resize:vertical; line-height:1.5; }
+.editor input:focus, .editor select:focus, .editor textarea:focus { outline:none; border-color:var(--accent); }
+.type-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.type-tab { padding:8px 13px; border-radius:9px; border:1px solid var(--border); background:var(--surface-2); cursor:pointer; font-size:.84em; font-weight:600; }
+.type-tab.on { border-color:var(--accent); color:var(--accent-2); background:rgba(var(--accent-rgb),.1); }
+.ed-foot { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:20px; flex-wrap:wrap; }
+.gen-preview { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; max-height:280px; overflow-y:auto; }
+.mono { font-family:ui-monospace,monospace; }
+@media (max-width:640px){ .wrap{ padding:18px 14px 60px; } .article{ padding:18px 16px; } .editor{ padding:18px 16px; } .ov{ padding:20px 12px; } .lr-when{ display:none; } }
+</style>
+</head>
+<body class="app">
+<div class="app-bg"></div>
+<div class="wrap">
+  <div id="denied"><div class="lock"><i class="fa-solid fa-lock"></i></div><h2>Accès au Laboratoire refusé</h2><p>Ta session n'est pas valide ou a expiré. Reconnecte-toi depuis le menu.</p><a class="btn btn-ghost" href="/"><i class="fa-solid fa-arrow-left"></i> Retour au menu</a></div>
+  <div id="view-fatal"><div class="lock"><i class="fa-solid fa-plug-circle-xmark"></i></div><h2>Module indisponible</h2><p>Impossible de charger le Laboratoire. Le serveur ne répond pas, ou ta session a expiré.</p><button class="btn btn-primary" onclick="window.location.reload()"><i class="fa-solid fa-rotate-right"></i> Réessayer</button></div>
+  <div id="view-error"><div class="ecode" id="err-code">404</div><h2 id="err-title">Page introuvable</h2><p id="err-msg"></p><a class="btn btn-ghost" href="/sd/"><i class="fa-solid fa-house"></i> Tableau de bord</a></div>
+  <div id="view-dashboard" class="view"></div>
+  <div id="view-analyses" class="view"></div>
+  <div id="view-analyse" class="view"></div>
+  <div id="view-reports" class="view"></div>
+  <div id="view-report" class="view"></div>
+</div>
+
+<div id="ov-editor" class="ov"><div class="editor" id="editor-box"></div></div>
+<div id="ov-modal" class="ov"><div class="editor" id="modal-box" style="max-width:520px"></div></div>
+
+<script>
+window.MDT_SHELL = {
+  module: 'sd', title: 'Laboratoire', icon: 'fa-flask', back: { href: '/', label: 'Menu' },
+  nav: [
+    { key:'dash', label:'Tableau de bord', icon:'fa-gauge-high', href:'/sd/' },
+    { key:'analyses', label:'Analyses', icon:'fa-vials', href:'/sd/analyses' },
+    { key:'reports', label:'Rapports', icon:'fa-file-lines', href:'/sd/rapports' }
+  ]
+};
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/skeleton.js"></script>
+<script src="/assets/select.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/modules.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/router.js"></script>
+<script src="/assets/dock.js"></script>
+<script src="/assets/autocomplete.js"></script>
+<script src="/assets/identity.js"></script>
+<script>
+var API = '/sd/sd_api.php';
+function authHeaders(extra) { var h = extra || {}; try { var t = localStorage.getItem('mdt_auth_token') || ''; if (t) h['Authorization'] = 'Bearer ' + t; } catch(e) {} return h; }
+function jsonHeaders() { return authHeaders({ 'Content-Type': 'application/json' }); }
+function toast(msg, ok) { if (window.MDT_TOAST) { ok ? MDT_TOAST.ok(msg) : MDT_TOAST.err(msg); } }
+function esc(s) { if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+
+var PERMS = {}, ME = {}, STATS = {};
+var ANALYSES = [], A_BY_ID = {}, REPORTS = [], R_BY_ID = {};
+
+var EV = {
+  DOUILLE:  { label:'Douille',       ic:'fa-circle-dot', color:'#eab308', fields:[['categorie','Catégorie'],['model','Arme suspectée'],['serial','N° de série'],['match','Correspondance ADN'],['heure','Heure de collecte'],['notes','Notes']] },
+  FRAGMENT: { label:'Fragment',      ic:'fa-explosion',  color:'#f97316', fields:[['categorie','Catégorie'],['model','Arme suspectée'],['heure','Heure de collecte'],['notes','Notes']] },
+  TROU:     { label:'Trou de balle', ic:'fa-bullseye',   color:'#ef4444', fields:[['categorie','Catégorie'],['model','Arme suspectée'],['heure','Heure de collecte'],['notes','Notes']] },
+  SANG:     { label:'Sang / ADN',    ic:'fa-droplet',    color:'#dc2626', fields:[['etiquette','Étiquette'],['match','Correspondance'],['heure','Heure de collecte'],['notes','Notes']] },
+  ARME:     { label:'Arme saisie',   ic:'fa-gun',        color:'#64748b', fields:[['model','Modèle'],['serial','N° de série'],['owner','Propriétaire'],['heure','Heure de collecte'],['notes','Notes']] }
+};
+function evMeta(t) { return EV[t] || { label:t || 'Analyse', ic:'fa-vial', color:'#8b5cf6', fields:[] }; }
+
+function fmtDate(s) { if (!s) return ''; var d = new Date(String(s).replace(' ', 'T')); if (isNaN(d.getTime())) return ''; return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }); }
+function fmtDateTime(s) { if (!s) return ''; var d = new Date(String(s).replace(' ', 'T')); if (isNaN(d.getTime())) return ''; return fmtDate(s) + ' à ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }); }
+function can(p) { return !!PERMS[p]; }
+function hexA(hex, a) { hex = String(hex || '#8b5cf6'); if (!/^#[0-9a-f]{6}$/i.test(hex)) hex = '#8b5cf6'; var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16); return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')'; }
+
+function mdInline(s) {
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, function(m, c){ return '<code>' + c + '</code>'; });
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
+  s = s.replace(/__([^_]+)__/g, '<u>$1</u>');
+  s = s.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function(m, t, u){ if (!/^https?:\/\//i.test(u) && u.charAt(0) !== '/') return t; return '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + t + '</a>'; });
+  return s;
+}
+function mdToHtml(src) {
+  var lines = String(src || '').replace(/\r/g, '').split('\n');
+  var out = [], i = 0;
+  while (i < lines.length) {
+    var l = lines[i];
+    if (/^```/.test(l)) { var buf = []; i++; while (i < lines.length && !/^```/.test(lines[i])) { buf.push(esc(lines[i])); i++; } i++; out.push('<pre><code>' + buf.join('\n') + '</code></pre>'); continue; }
+    if (/^###\s+/.test(l)) { out.push('<h3>' + mdInline(l.replace(/^###\s+/, '')) + '</h3>'); i++; continue; }
+    if (/^##\s+/.test(l)) { out.push('<h2>' + mdInline(l.replace(/^##\s+/, '')) + '</h2>'); i++; continue; }
+    if (/^#\s+/.test(l)) { out.push('<h1>' + mdInline(l.replace(/^#\s+/, '')) + '</h1>'); i++; continue; }
+    if (/^\s*([-*])\s+/.test(l)) { var items = []; while (i < lines.length && /^\s*([-*])\s+/.test(lines[i])) { items.push('<li>' + mdInline(lines[i].replace(/^\s*([-*])\s+/, '')) + '</li>'); i++; } out.push('<ul>' + items.join('') + '</ul>'); continue; }
+    if (/^\s*\d+\.\s+/.test(l)) { var oi = []; while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { oi.push('<li>' + mdInline(lines[i].replace(/^\s*\d+\.\s+/, '')) + '</li>'); i++; } out.push('<ol>' + oi.join('') + '</ol>'); continue; }
+    if (/^\s*>\s?/.test(l)) { out.push('<blockquote>' + mdInline(l.replace(/^\s*>\s?/, '')) + '</blockquote>'); i++; continue; }
+    if (/^\s*---\s*$/.test(l) || /^\s*___\s*$/.test(l)) { out.push('<hr>'); i++; continue; }
+    if (/^\s*$/.test(l)) { i++; continue; }
+    var para = [l]; i++;
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,3}\s|```|\s*[-*]\s|\s*\d+\.\s|\s*>\s)/.test(lines[i])) { para.push(lines[i]); i++; }
+    out.push('<p>' + para.map(mdInline).join('<br>') + '</p>');
+  }
+  return out.join('\n');
+}
+
+function boot() {
+  fetch(API + '?action=bootstrap', { headers: authHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d || d.error) { if (d && d.code === 'E-SEC-401') document.getElementById('denied').style.display = 'block'; else showFatal(); return; }
+      if (!d.access) { document.getElementById('denied').style.display = 'block'; return; }
+      PERMS = d.perms || {}; ME = d.me || {}; STATS = d.stats || {};
+      buildIndexes(d);
+      startRouter();
+    })
+    .catch(function(e){ if (window.console && console.error) console.error('[SD] boot', e); showFatal(); });
+}
+function showFatal() { document.getElementById('view-fatal').style.display = 'block'; }
+function buildIndexes(d) {
+  ANALYSES = d.analyses || []; A_BY_ID = {}; ANALYSES.forEach(function(a){ A_BY_ID[a.id] = a; });
+  REPORTS = d.reports || []; R_BY_ID = {}; REPORTS.forEach(function(r){ R_BY_ID[r.id] = r; });
+  STATS = d.stats || STATS;
+}
+function reloadBootstrap(cb) {
+  fetch(API + '?action=bootstrap', { headers: authHeaders() }).then(function(r){ return r.json(); })
+    .then(function(d){ if (d && d.access) { PERMS = d.perms || PERMS; buildIndexes(d); if (cb) cb(); else MDT_ROUTER.refresh(); } })
+    .catch(function(){ toast('Rechargement impossible', false); });
+}
+
+function viewShow(id) {
+  ['denied','view-fatal','view-error'].forEach(function(x){ document.getElementById(x).style.display = 'none'; });
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.toggle('on', v.id === id); });
+  window.scrollTo(0, 0);
+}
+function crumbs(items) {
+  return '<div class="crumbs">' + items.map(function(it, i){ var sep = i > 0 ? '<span class="sep">/</span>' : ''; return it.href ? sep + '<a href="' + esc(it.href) + '">' + esc(it.label) + '</a>' : sep + '<span class="here">' + esc(it.label) + '</span>'; }).join('') + '</div>';
+}
+
+function showDashboard() {
+  shellActive(0);
+  var h = crumbs([{ label:'Laboratoire' }]);
+  h += '<div class="sec-head"><h1><span class="ic"><i class="fa-solid fa-flask"></i></span> Laboratoire scientifique</h1>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    (can('create') ? '<button class="btn btn-ghost btn-sm" onclick="openAnalyse(null)"><i class="fa-solid fa-vial-circle-check"></i> Nouvelle analyse</button><button class="btn btn-primary btn-sm" onclick="openReport(null)"><i class="fa-solid fa-file-medical"></i> Nouveau rapport</button>' : '') +
+    '</div></div>';
+  h += '<div class="stat-grid">' +
+    '<a class="stat-card" href="/sd/analyses"><div class="sv">' + (STATS.analyses || 0) + '</div><div class="sl"><i class="fa-solid fa-vials"></i> Analyses / preuves</div></a>' +
+    '<a class="stat-card" href="/sd/rapports"><div class="sv">' + (STATS.reports || 0) + '</div><div class="sl"><i class="fa-solid fa-file-lines"></i> Rapports de labo</div></a>' +
+    '</div>';
+  h += '<h2 class="section-title">Activité récente</h2>';
+  var recent = ANALYSES.slice(0, 4).map(function(a){ return { kind:'analyse', o:a }; })
+    .concat(REPORTS.slice(0, 4).map(function(r){ return { kind:'report', o:r }; }));
+  recent.sort(function(x, y){ return new Date((y.o.created_at || y.o.date)) - new Date((x.o.created_at || x.o.date)); });
+  recent = recent.slice(0, 6);
+  if (!recent.length) h += '<div class="empty-state"><div class="es-ic"><i class="fa-regular fa-folder-open"></i></div>Aucune activité pour le moment.</div>';
+  else h += '<div class="doc-list">' + recent.map(function(x){ return x.kind === 'analyse' ? analyseRow(x.o) : reportRow(x.o); }).join('') + '</div>';
+  document.getElementById('view-dashboard').innerHTML = h;
+  viewShow('view-dashboard');
+}
+
+function analyseRow(a) {
+  var m = evMeta(a.evidence_type);
+  return '<a class="list-row" href="/sd/analyses/' + encodeURIComponent(a.id) + '"><span class="lr-ic" style="color:' + esc(m.color) + '"><i class="fa-solid ' + esc(m.ic) + '"></i></span>' +
+    '<span class="lr-body"><span class="lr-title">' + esc(a.case_name || '—') + '</span><span class="lr-sub">' + esc(m.label) + ' · par ' + esc(a.author || '—') + '</span></span>' +
+    '<span class="lr-when">' + esc(fmtDate(a.created_at)) + '</span></a>';
+}
+function showAnalyses() {
+  shellActive(1);
+  var h = crumbs([{ label:'Laboratoire', href:'/sd/' }, { label:'Analyses' }]);
+  h += '<div class="sec-head"><h1><span class="ic"><i class="fa-solid fa-vials"></i></span> Base des analyses</h1>' + (can('create') ? '<button class="btn btn-primary btn-sm" onclick="openAnalyse(null)"><i class="fa-solid fa-plus"></i> Nouvelle analyse</button>' : '') + '</div>';
+  h += '<div class="toolbar"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="a-q" type="text" placeholder="Rechercher (dossier, auteur, série, correspondance…)" oninput="renderAnalyses()"></div>' +
+    '<select class="filter" id="a-type" onchange="renderAnalyses()"><option value="">Tous les types</option>' + Object.keys(EV).map(function(k){ return '<option value="' + k + '">' + esc(EV[k].label) + '</option>'; }).join('') + '</select>' +
+    '<select class="filter" id="a-sort" onchange="renderAnalyses()"><option value="date">Plus récentes</option><option value="old">Plus anciennes</option><option value="az">A → Z</option></select></div>';
+  h += '<div class="count" id="a-count"></div><div id="a-list"></div>';
+  document.getElementById('view-analyses').innerHTML = h;
+  viewShow('view-analyses');
+  renderAnalyses();
+}
+function renderAnalyses() {
+  var list = document.getElementById('a-list'); if (!list) return;
+  var q = norm((document.getElementById('a-q') || {}).value || '');
+  var type = (document.getElementById('a-type') || {}).value || '';
+  var sort = (document.getElementById('a-sort') || {}).value || 'date';
+  var rows = ANALYSES.filter(function(a){
+    if (type && a.evidence_type !== type) return false;
+    if (q) { var hay = norm([a.case_name, a.author, a.evidence_type, JSON.stringify(a.data || {})].join(' ')); if (hay.indexOf(q) === -1) return false; }
+    return true;
+  });
+  rows.sort(function(a, b){ if (sort === 'az') return String(a.case_name).localeCompare(String(b.case_name)); var d = new Date(a.created_at) - new Date(b.created_at); return sort === 'old' ? d : -d; });
+  var cnt = document.getElementById('a-count'); if (cnt) cnt.textContent = rows.length + ' analyse' + (rows.length > 1 ? 's' : '');
+  if (!rows.length) { list.innerHTML = '<div class="empty-state"><div class="es-ic"><i class="fa-regular fa-folder-open"></i></div>Aucune analyse ne correspond.</div>'; return; }
+  list.innerHTML = '<div class="card-grid">' + rows.map(function(a){
+    var m = evMeta(a.evidence_type);
+    return '<a class="ev-card" href="/sd/analyses/' + encodeURIComponent(a.id) + '" style="border-left-color:' + esc(m.color) + '">' +
+      '<div class="ev-top"><span class="ev-ic" style="background:' + hexA(m.color, .16) + ';color:' + esc(m.color) + '"><i class="fa-solid ' + esc(m.ic) + '"></i></span><span class="ev-type" style="color:' + esc(m.color) + '">' + esc(m.label) + '</span></div>' +
+      '<div class="ev-title">' + esc(a.case_name || '—') + '</div>' +
+      '<div class="ev-meta"><span><i class="fa-regular fa-user"></i> ' + esc(a.author || '—') + '</span><span><i class="fa-regular fa-clock"></i> ' + esc(fmtDate(a.created_at)) + '</span></div></a>';
+  }).join('') + '</div>';
+}
+function showAnalyse(id) {
+  shellActive(1);
+  var a = A_BY_ID[id];
+  if (!a) { showError('404', 'Analyse introuvable', 'Cette analyse a été supprimée, ou n\'existe pas.'); return; }
+  var m = evMeta(a.evidence_type);
+  var h = crumbs([{ label:'Laboratoire', href:'/sd/' }, { label:'Analyses', href:'/sd/analyses' }, { label:a.case_name || 'Analyse' }]);
+  var acts = '';
+  if (can('edit')) acts += '<button class="btn btn-ghost btn-sm" onclick="openAnalyse(\'' + esc(a.id) + '\')"><i class="fa-solid fa-pen"></i> Modifier</button>';
+  if (can('delete')) acts += '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'analyse\',\'' + esc(a.id) + '\')"><i class="fa-solid fa-trash"></i> Supprimer</button>';
+  h += '<div class="article"><div class="a-head"><span class="a-ic" style="background:' + hexA(m.color, .16) + ';color:' + esc(m.color) + '"><i class="fa-solid ' + esc(m.ic) + '"></i></span>' +
+    '<span class="a-htext"><h1>' + esc(a.case_name || '—') + '</h1><span class="a-sub">' + esc(m.label) + ' · relevée par ' + esc(a.author || '—') + ' le ' + esc(fmtDateTime(a.created_at)) + '</span></span>' +
+    (acts ? '<span class="a-actions">' + acts + '</span>' : '') + '</div>';
+  var data = a.data || {}, seen = {};
+  var kv = m.fields.map(function(f){ seen[f[0]] = 1; var val = data[f[0]]; return (val === undefined || val === '' || val === null) ? '' : '<div class="kv"><div class="k">' + esc(f[1]) + '</div><div class="v">' + esc(val) + '</div></div>'; }).join('');
+  Object.keys(data).forEach(function(k){ if (!seen[k] && data[k] !== '' && data[k] !== null) kv += '<div class="kv"><div class="k">' + esc(k) + '</div><div class="v">' + esc(data[k]) + '</div></div>'; });
+  h += kv ? '<div class="kv-grid">' + kv + '</div>' : '<p style="color:var(--muted);margin-top:18px">Aucune métadonnée enregistrée.</p>';
+  h += '</div>';
+  document.getElementById('view-analyse').innerHTML = h;
+  viewShow('view-analyse');
+}
+
+function reportRow(r) {
+  return '<a class="list-row" href="/sd/rapports/' + encodeURIComponent(r.id) + '"><span class="lr-ic"><i class="fa-solid fa-file-lines"></i></span>' +
+    '<span class="lr-body"><span class="lr-title">' + esc(r.title || '—') + '</span><span class="lr-sub">Rapport · par ' + esc(r.author || '—') + '</span></span>' +
+    '<span class="lr-when">' + esc(fmtDate(r.date)) + '</span></a>';
+}
+function showReports() {
+  shellActive(2);
+  var h = crumbs([{ label:'Laboratoire', href:'/sd/' }, { label:'Rapports' }]);
+  h += '<div class="sec-head"><h1><span class="ic"><i class="fa-solid fa-file-lines"></i></span> Rapports de laboratoire</h1>' + (can('create') ? '<button class="btn btn-primary btn-sm" onclick="openReport(null)"><i class="fa-solid fa-plus"></i> Nouveau rapport</button>' : '') + '</div>';
+  h += '<div class="toolbar"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="r-q" type="text" placeholder="Rechercher un rapport…" oninput="renderReports()"></div></div>';
+  h += '<div class="count" id="r-count"></div><div id="r-list"></div>';
+  document.getElementById('view-reports').innerHTML = h;
+  viewShow('view-reports');
+  renderReports();
+}
+function renderReports() {
+  var list = document.getElementById('r-list'); if (!list) return;
+  var q = norm((document.getElementById('r-q') || {}).value || '');
+  var rows = REPORTS.filter(function(r){ if (!q) return true; return norm([r.title, r.author, r.content].join(' ')).indexOf(q) !== -1; });
+  var cnt = document.getElementById('r-count'); if (cnt) cnt.textContent = rows.length + ' rapport' + (rows.length > 1 ? 's' : '');
+  if (!rows.length) { list.innerHTML = '<div class="empty-state"><div class="es-ic"><i class="fa-regular fa-file"></i></div>Aucun rapport.</div>'; return; }
+  list.innerHTML = '<div class="doc-list">' + rows.map(reportRow).join('') + '</div>';
+}
+function showReport(id) {
+  shellActive(2);
+  var r = R_BY_ID[id];
+  if (!r) { showError('404', 'Rapport introuvable', 'Ce rapport a été supprimé, ou n\'existe pas.'); return; }
+  var h = crumbs([{ label:'Laboratoire', href:'/sd/' }, { label:'Rapports', href:'/sd/rapports' }, { label:r.title || 'Rapport' }]);
+  var acts = '';
+  if (can('edit')) acts += '<button class="btn btn-ghost btn-sm" onclick="openReport(\'' + esc(r.id) + '\')"><i class="fa-solid fa-pen"></i> Modifier</button>';
+  if (can('delete')) acts += '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'report\',\'' + esc(r.id) + '\')"><i class="fa-solid fa-trash"></i> Supprimer</button>';
+  h += '<div class="article"><div class="a-head"><span class="a-ic" style="background:rgba(var(--accent-rgb),.16);color:var(--accent-2)"><i class="fa-solid fa-file-lines"></i></span>' +
+    '<span class="a-htext"><h1>' + esc(r.title || '—') + '</h1><span class="a-sub">Rédigé par ' + esc(r.author || '—') + ' le ' + esc(fmtDateTime(r.date)) + '</span></span>' +
+    (acts ? '<span class="a-actions">' + acts + '</span>' : '') + '</div>';
+  h += '<div class="md-body">' + mdToHtml(r.content || '') + '</div></div>';
+  document.getElementById('view-report').innerHTML = h;
+  viewShow('view-report');
+}
+
+function showError(code, title, msg) {
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('on'); });
+  document.getElementById('denied').style.display = 'none'; document.getElementById('view-fatal').style.display = 'none';
+  document.getElementById('err-code').textContent = code; document.getElementById('err-title').textContent = title; document.getElementById('err-msg').textContent = msg || '';
+  document.getElementById('view-error').style.display = 'block'; window.scrollTo(0, 0);
+}
+function shellActive(i) { if (typeof window.MDT_SHELL_SET_ACTIVE === 'function') MDT_SHELL_SET_ACTIVE(i); }
+window.MDT_BACK = function () {
+  var p = (location.pathname || '/sd/').replace(/^\/sd\/?/, '').replace(/\/+$/, '');
+  if (p === '') return '/';
+  if (p.indexOf('analyses/') === 0) return '/sd/analyses';
+  if (p.indexOf('rapports/') === 0) return '/sd/rapports';
+  return '/sd/';
+};
+
+function startRouter() {
+  MDT_ROUTER.define({
+    base: '/sd',
+    routes: [
+      { path:'/', view:'dashboard' },
+      { path:'/analyses', view:'analyses' },
+      { path:'/analyses/:id', view:'analyse' },
+      { path:'/rapports', view:'reports' },
+      { path:'/rapports/:id', view:'report' }
+    ],
+    onRoute: onRoute,
+    onNotFound: function(){ showError('404', 'Page introuvable', 'Cette page n\'existe pas.'); }
+  }).start();
+}
+var CURRENT_VIEWNAME = null;
+function onRoute(m) {
+  var view = m.route.view, p = m.params || {};
+  CURRENT_VIEWNAME = view;
+  if (view === 'dashboard') return showDashboard();
+  if (view === 'analyses') return showAnalyses();
+  if (view === 'analyse') return showAnalyse(p.id);
+  if (view === 'reports') return showReports();
+  if (view === 'report') return showReport(p.id);
+}
+
+var anId = null, anType = 'DOUILLE';
+function openAnalyse(id) {
+  var a = id ? A_BY_ID[id] : null;
+  anId = id || null;
+  anType = a ? (EV[a.evidence_type] ? a.evidence_type : 'DOUILLE') : 'DOUILLE';
+  renderAnalyseEditor(a);
+  document.getElementById('ov-editor').classList.add('open');
+}
+function renderAnalyseEditor(a) {
+  var data = a ? (a.data || {}) : {};
+  var h = '<h2>' + (a ? 'Modifier l\'analyse' : 'Nouvelle analyse') + '</h2>';
+  h += '<div class="field"><label>Nom du dossier</label><input type="text" id="an-case" maxlength="255" placeholder="Ex : Fusillade LTD Sud" value="' + esc(a ? a.case_name : '') + '"></div>';
+  h += '<div class="field"><label>Type de preuve</label><div class="type-tabs" id="an-tabs">' + Object.keys(EV).map(function(k){ return '<div class="type-tab' + (k === anType ? ' on' : '') + '" onclick="setAnType(\'' + k + '\')"><i class="fa-solid ' + EV[k].ic + '"></i> ' + esc(EV[k].label) + '</div>'; }).join('') + '</div></div>';
+  h += '<div id="an-fields"></div>';
+  h += '<div class="ed-foot"><button class="btn btn-ghost" onclick="closeEditor()">Annuler</button><button class="btn btn-primary" id="an-save" onclick="saveAnalyse()"><i class="fa-solid fa-check"></i> Enregistrer</button></div>';
+  document.getElementById('editor-box').innerHTML = h;
+  renderAnFields(data);
+}
+function setAnType(t) {
+  var cur = collectAnData();
+  anType = t;
+  document.querySelectorAll('#an-tabs .type-tab').forEach(function(el, i){ el.classList.toggle('on', Object.keys(EV)[i] === t); });
+  renderAnFields(cur);
+}
+function renderAnFields(data) {
+  var m = evMeta(anType);
+  document.getElementById('an-fields').innerHTML = m.fields.map(function(f){
+    var big = f[0] === 'notes';
+    var listAttr = (f[0] === 'match' || f[0] === 'owner') ? ' list="mdt-suspects"' : '';
+    return '<div class="field"><label>' + esc(f[1]) + '</label>' + (big ? '<textarea id="anf-' + f[0] + '" style="min-height:70px">' + esc(data[f[0]] || '') + '</textarea>' : '<input type="text" id="anf-' + f[0] + '"' + listAttr + ' value="' + esc(data[f[0]] || '') + '">') + '</div>';
+  }).join('');
+}
+function collectAnData() {
+  var m = evMeta(anType), out = {};
+  m.fields.forEach(function(f){ var el = document.getElementById('anf-' + f[0]); if (el) out[f[0]] = el.value; });
+  return out;
+}
+function saveAnalyse() {
+  var caseName = document.getElementById('an-case').value.trim();
+  if (!caseName) { toast('Nom du dossier requis', false); return; }
+  var payload = { case_name: caseName, evidence_type: anType, data: collectAnData() };
+  if (anId) payload.id = anId;
+  var btn = document.getElementById('an-save'); btn.disabled = true;
+  fetch(API + '?action=' + (anId ? 'update_analyse' : 'create_analyse'), { method:'POST', headers: jsonHeaders(), body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ btn.disabled = false; if (d && d.success) { toast(anId ? 'Analyse modifiée' : 'Analyse créée', true); var nid = anId || d.id; closeEditor(); reloadBootstrap(function(){ MDT_ROUTER.go('/sd/analyses/' + encodeURIComponent(nid)); }); } else toast((d && d.error) || 'Erreur', false); })
+    .catch(function(){ btn.disabled = false; toast('Erreur réseau', false); });
+}
+
+var repId = null;
+function openReport(id) {
+  var r = id ? R_BY_ID[id] : null;
+  repId = id || null;
+  var h = '<h2>' + (r ? 'Modifier le rapport' : 'Nouveau rapport') + '</h2>';
+  h += '<div class="field"><label>Titre</label><input type="text" id="rep-title" maxlength="255" placeholder="Titre du rapport" value="' + esc(r ? r.title : '') + '"></div>';
+  if (!r) h += '<div class="field"><label>Insérer une analyse</label><select class="filter" style="width:100%" id="rep-insert" onchange="insertAnalyse(this.value); this.value=\'\';"><option value="">— Choisir une analyse à insérer —</option>' + ANALYSES.map(function(a){ return '<option value="' + esc(a.id) + '">' + esc((evMeta(a.evidence_type).label) + ' · ' + (a.case_name || a.id)) + '</option>'; }).join('') + '</select></div>';
+  h += '<div class="field"><label>Contenu (markdown)</label><textarea id="rep-content" style="min-height:200px" oninput="repPreview()" placeholder="# Titre\nRédige le rapport en markdown…">' + esc(r ? r.content : '') + '</textarea></div>';
+  h += '<div class="field"><label>Aperçu</label><div class="gen-preview md-body" id="rep-prev"></div></div>';
+  h += '<div class="ed-foot"><button class="btn btn-ghost" onclick="closeEditor()">Annuler</button><button class="btn btn-primary" id="rep-save" onclick="saveReport()"><i class="fa-solid fa-check"></i> Enregistrer</button></div>';
+  document.getElementById('editor-box').innerHTML = h;
+  document.getElementById('ov-editor').classList.add('open');
+  repPreview();
+}
+function repPreview() { var el = document.getElementById('rep-prev'); if (el) el.innerHTML = mdToHtml(document.getElementById('rep-content').value); }
+function insertAnalyse(id) {
+  var a = A_BY_ID[id]; if (!a) return;
+  var m = evMeta(a.evidence_type), data = a.data || {};
+  var block = '\n## ' + (a.case_name || 'Analyse') + ' (' + m.label + ')\n';
+  m.fields.forEach(function(f){ if (data[f[0]]) block += '- **' + f[1] + '** : ' + data[f[0]] + '\n'; });
+  var ta = document.getElementById('rep-content'); ta.value += block; repPreview();
+}
+function saveReport() {
+  var title = document.getElementById('rep-title').value.trim();
+  var content = document.getElementById('rep-content').value;
+  if (!title) { toast('Titre requis', false); return; }
+  if (!content.trim()) { toast('Le contenu est requis', false); return; }
+  var payload = { title: title, content: content };
+  if (repId) payload.id = repId;
+  var btn = document.getElementById('rep-save'); btn.disabled = true;
+  fetch(API + '?action=' + (repId ? 'update_report' : 'create_report'), { method:'POST', headers: jsonHeaders(), body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ btn.disabled = false; if (d && d.success) { toast(repId ? 'Rapport modifié' : 'Rapport créé', true); var nid = repId || d.id; closeEditor(); reloadBootstrap(function(){ MDT_ROUTER.go('/sd/rapports/' + encodeURIComponent(nid)); }); } else toast((d && d.error) || 'Erreur', false); })
+    .catch(function(){ btn.disabled = false; toast('Erreur réseau', false); });
+}
+function closeEditor() { document.getElementById('ov-editor').classList.remove('open'); }
+
+function confirmDelete(kind, id) {
+  var msg = kind === 'analyse' ? 'Supprimer définitivement cette analyse ? Cette action est irréversible.' : 'Supprimer définitivement ce rapport ? Cette action est irréversible.';
+  confirmModal(msg, function(){
+    fetch(API + '?action=delete_' + kind, { method:'POST', headers: jsonHeaders(), body: JSON.stringify({ id: id }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (d && d.success) { toast('Supprimé', true); reloadBootstrap(function(){ MDT_ROUTER.go(kind === 'analyse' ? '/sd/analyses' : '/sd/rapports'); }); } else toast('Erreur', false); })
+      .catch(function(){ toast('Erreur réseau', false); });
+  });
+}
+function confirmModal(msg, onYes) {
+  document.getElementById('modal-box').innerHTML = '<h2>Confirmation</h2><p style="color:var(--muted);line-height:1.6;margin-bottom:8px">' + esc(msg) + '</p><div class="ed-foot"><button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" id="cm-yes"><i class="fa-solid fa-check"></i> Confirmer</button></div>';
+  document.getElementById('ov-modal').classList.add('open');
+  document.getElementById('cm-yes').onclick = function(){ closeModal(); onYes(); };
+}
+function closeModal() { document.getElementById('ov-modal').classList.remove('open'); }
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeEditor(); closeModal(); } });
+
+boot();
+</script>
+</body>
+</html>

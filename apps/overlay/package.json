@@ -1,0 +1,71 @@
+{
+  "name": "mdt-dispatch-overlay",
+  "version": "1.0.1",
+  "description": "Overlay RP MDT Dispatch pour FiveM. Affiche le dispatch exemple.tld en surimpression via une hotkey configurable.",
+  "main": "main.js",
+  "author": {
+    "name": "RP MDT",
+    "email": "contact@exemple.tld"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win",
+    "publish-update": "electron-builder --win --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "fr.rp-mdt.dispatch",
+    "productName": "RP MDT Dispatch",
+    "copyright": "Copyright (c) 2026 RP MDT",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "preload-settings.js",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://exemple.tld/downloads/updates/",
+        "channel": "latest"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "verifyUpdateCodeSignature": false,
+      "signAndEditExecutable": false,
+      "artifactName": "MDT-Dispatch-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RP MDT Dispatch",
+      "uninstallDisplayName": "RP MDT Dispatch Overlay",
+      "deleteAppDataOnUninstall": false,
+      "differentialPackage": true
+    }
+  }
+}

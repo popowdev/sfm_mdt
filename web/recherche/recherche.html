@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr" data-module="recherche">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDT - Recherche</title>
+<link rel="stylesheet" href="/assets/app.css">
+<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; overflow:hidden; }
+html[data-module="recherche"]{ --accent:#f97316; --accent-2:#fdba74; --accent-rgb:249,115,22; }
+.app a { color:inherit; text-decoration:none; }
+
+.rc-shell { display:flex; flex-direction:column; height:100vh; }
+.rc-bar { display:flex; align-items:center; gap:9px; padding:9px 13px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; flex:0 0 auto; }
+.rc-title { display:flex; align-items:center; gap:10px; font-weight:800; font-size:.95em; }
+.rc-title .ic { width:32px; height:32px; border-radius:9px; background:rgba(var(--accent-rgb),.16); color:var(--accent-2); display:flex; align-items:center; justify-content:center; }
+.rc-title small { display:block; font-weight:400; font-size:.75em; color:var(--muted-2); }
+.rc-spacer { flex:1; }
+.rc-btn { border:none; background:var(--surface-2); color:var(--muted); font-family:inherit; font-weight:700; font-size:.82em; padding:8px 13px; border-radius:9px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border); }
+.rc-btn:hover { color:var(--text); border-color:var(--accent); }
+.rc-btn.primary { background:var(--accent); color:#3b1a02; border-color:var(--accent); }
+.rc-btn.on { background:var(--accent); color:#3b1a02; }
+.rc-btn[disabled] { opacity:.4; cursor:not-allowed; }
+
+.rc-main { flex:1; display:flex; min-height:0; }
+.rc-mapwrap { position:relative; flex:1; min-width:0; }
+#rcMap { position:absolute; inset:0; background:#0b1220; }
+.leaflet-container { background:#0b1220; font-family:var(--font); outline:none; }
+.rc-side { width:330px; flex:0 0 330px; border-left:1px solid var(--border); background:var(--surface); display:flex; flex-direction:column; min-height:0; }
+.rc-side.hide { display:none; }
+
+.rc-cellname { font-weight:800; font-size:11px; color:#fff; text-shadow:0 1px 3px #000,0 0 5px #000; pointer-events:none; }
+.rc-legend { display:flex; gap:6px; flex-wrap:wrap; padding:9px 13px; border-bottom:1px solid var(--border); }
+.rc-lg { font-size:.7em; font-weight:800; padding:4px 9px; border-radius:999px; display:flex; align-items:center; gap:5px; }
+
+#rcDenied { display:none; text-align:center; padding:70px 20px; }
+#rcDenied .lock { width:64px; height:64px; border-radius:50%; background:rgba(var(--accent-rgb),.12); color:var(--accent-2); display:flex; align-items:center; justify-content:center; font-size:1.6em; margin:0 auto 18px; }
+
+@media (max-width:900px) { .rc-side { display:none; } }
+</style>
+</head>
+<body class="app">
+<div class="app-bg"></div>
+
+<div class="rc-shell" id="rcShell">
+  <div class="rc-bar">
+    <a class="rc-btn" href="/" title="Retour au menu"><i class="fa-solid fa-arrow-left"></i></a>
+    <div class="rc-title">
+      <span class="ic"><i class="fa-solid fa-magnifying-glass-location"></i></span>
+      <span id="rcTitle">Recherche<small id="rcSub">Aucune recherche en cours</small></span>
+    </div>
+    <div class="rc-spacer"></div>
+    <button class="rc-btn" id="rcSect" title="Afficher le découpage en secteurs"><i class="fa-solid fa-draw-polygon"></i> Secteurs</button>
+    <button class="rc-btn" id="rcZones" title="Afficher les lieux à risque"><i class="fa-solid fa-location-dot"></i> Lieux</button>
+    <button class="rc-btn" id="rcGrid" title="Quadrillage grossier (repérage rapide)"><i class="fa-solid fa-table-cells"></i> Quadrillage</button>
+    <button class="rc-btn" id="rcEdit" title="Découpage : tracer les quartiers à la main"><i class="fa-solid fa-pen-ruler"></i> Découpage</button>
+    <button class="rc-btn" id="rcWipe" title="Effacer les contours de secteurs générés automatiquement"><i class="fa-solid fa-eraser"></i></button>
+    <button class="rc-btn" id="rcOps" title="Changer de recherche"><i class="fa-solid fa-list"></i></button>
+    <button class="rc-btn primary" id="rcNew" title="Lancer une recherche (Supervision)"><i class="fa-solid fa-bullhorn"></i> Lancer</button>
+    <button class="rc-btn" id="rcClose" title="Clôturer la recherche"><i class="fa-solid fa-flag-checkered"></i></button>
+    <button class="rc-btn" id="rcSideBtn" title="Panneau"><i class="fa-solid fa-bars"></i></button>
+  </div>
+
+  <div class="rc-legend" id="rcLegend"></div>
+
+  <div class="rc-main">
+    <div class="rc-mapwrap"><div id="rcMap"></div></div>
+    <aside class="rc-side" id="rcSide"></aside>
+  </div>
+</div>
+
+<div id="rcDenied"><div class="lock"><i class="fa-solid fa-lock"></i></div><h2 id="rcDeniedT">Accès refusé</h2><p id="rcDeniedM">Le module Recherche est réservé aux agents ayant accès au Dispatch.</p><a class="rc-btn" href="/" style="margin-top:16px"><i class="fa-solid fa-arrow-left"></i> Retour au menu</a></div>
+
+<script>
+window.MDT_SHELL = { module: 'recherche', title: 'Recherche', icon: 'fa-magnifying-glass-location', back: { href: '/', label: 'Menu' } };
+</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/vendor/leaflet/leaflet.js"></script>
+<script src="/assets/tacmap.js"></script>
+<script src="/assets/recherche.js"></script>
+<script>
+var API = '/recherche/rch_api.php';
+var MAP = null, GRID_ON = false, ZONES_ON = true, SECT_ON = true;
+
+function $(id) { return document.getElementById(id); }
+function authHeaders(x) { var h = x || {}; try { var t = localStorage.getItem('mdt_auth_token') || ''; if (t) h['Authorization'] = 'Bearer ' + t; } catch (e) {} return h; }
+function notify(m, ok) { if (typeof toast === 'function') toast(m, !!ok); }
+
+function deny(login, msg) {
+  $('rcShell').style.display = 'none';
+  $('rcDenied').style.display = 'block';
+  if (login) {
+    $('rcDeniedT').textContent = 'Connexion requise';
+    $('rcDeniedM').textContent = msg || 'Connecte-toi sur ce serveur pour ouvrir le module Recherche.';
+  }
+}
+
+function boot() {
+  MAP = new TacMap($('rcMap'), {
+    api: '/carte/tacmap_api.php',
+    onStatus: function (st, m) { if (st === 'err' && m) notify(m, false); }
+  });
+  MAP.setTool('pan');
+  MAP.canWrite = false;
+  MAP.stopPolling();
+
+  window.MDT_RECHERCHE.mount($('rcSide'), MAP, notify, {
+    onOp: function (op) {
+      $('rcTitle').firstChild.textContent = op ? op.titre : 'Recherche';
+      $('rcSub').textContent = op
+        ? (op.motif ? op.motif + ' — ' : '') + 'ouverte par ' + (op.par || '—')
+        : 'Aucune recherche en cours';
+      $('rcClose').disabled = !op || op.statut !== 'active';
+    },
+    onLegend: function (html) { $('rcLegend').innerHTML = html; },
+    onEdit: function (on, quoi) {
+      $('rcEdit').classList.toggle('on', on);
+      $('rcEdit').innerHTML = on
+        ? '<i class="fa-solid fa-check"></i> Terminer (' + (quoi || '') + ')'
+        : '<i class="fa-solid fa-pen-ruler"></i> Découpage';
+      $('rcMap').style.cursor = on ? 'crosshair' : '';
+    }
+  });
+
+  $('rcEdit').onclick = function () { window.MDT_RECHERCHE.decoupage(); };
+  $('rcWipe').onclick = function () { window.MDT_RECHERCHE.effacerContours(); };
+  $('rcNew').onclick = function () { window.MDT_RECHERCHE.nouvelle(); };
+  $('rcOps').onclick = function (e) { window.MDT_RECHERCHE.choisir(e.currentTarget); };
+  $('rcClose').onclick = function () { window.MDT_RECHERCHE.cloturer(); };
+  $('rcSideBtn').onclick = function () { $('rcSide').classList.toggle('hide'); MAP.invalidate(); };
+  function majCalques() { window.MDT_RECHERCHE.setLayers(GRID_ON, ZONES_ON, SECT_ON); }
+  $('rcGrid').onclick = function () { GRID_ON = !GRID_ON; this.classList.toggle('on', GRID_ON); majCalques(); };
+  $('rcZones').onclick = function () { ZONES_ON = !ZONES_ON; this.classList.toggle('on', ZONES_ON); majCalques(); };
+  $('rcSect').onclick = function () { SECT_ON = !SECT_ON; this.classList.toggle('on', SECT_ON); majCalques(); };
+  $('rcZones').classList.add('on');
+  $('rcSect').classList.add('on');
+
+  var q = location.search.match(/[?&]op=(\d+)/);
+  if (q) window.MDT_RECHERCHE.ouvrir(parseInt(q[1], 10));
+
+  window.addEventListener('resize', function () { MAP.invalidate(); });
+}
+
+(function () {
+  var tok = '';
+  try { tok = localStorage.getItem('mdt_auth_token') || ''; } catch (e) {}
+  if (!tok) { deny(true); return; }
+  fetch(API + '?action=bootstrap', { headers: authHeaders({}) })
+    .then(function (r) {
+      if (r.status === 401) throw new Error('unauth');
+      if (r.status === 403) throw new Error('denied');
+      return r.json();
+    })
+    .then(function () { boot(); })
+    .catch(function (e) {
+      var m = e && e.message;
+      if (m === 'denied') deny(false);
+      else if (m === 'unauth') deny(true, 'Ta session a expiré. Reconnecte-toi.');
+      else boot();
+    });
+})();
+</script>
+</body>
+</html>

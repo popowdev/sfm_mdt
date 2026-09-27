@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Limitless - MDT MDT</title>
+    <link href="/assets/fonts/inter.css" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/assets/app.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --input-bg: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-da: #a855f7;
+            --accent-ra: #0ea5e9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-dark); background-image: radial-gradient(circle at top right, #1e293b 0%, transparent 40%); color: var(--text-main); margin: 0; padding: 0 20px 24px; min-height: 100vh; }
+
+        /* --- LAYOUT --- */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .header h1 { margin: 0; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header .subtitle { font-size: 0.9em; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        .container { display: grid; grid-template-columns: 1.3fr 1fr; gap: 30px; max-width: 1600px; margin: 0 auto; }
+
+        /* --- CARDS & INPUTS --- */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+        .card:hover { border-color: var(--primary); }
+        h2 { font-size: 1.1em; color: var(--primary); margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.85em; color: var(--text-muted); }
+        input, select, textarea { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid transparent; color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.95em; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: #2d3748; }
+        textarea { height: 120px; resize: vertical; line-height: 1.5; }
+
+        /* --- SEARCHABLE DROPDOWN --- */
+        .search-container { position: relative; width: 100%; }
+        .dropdown-list { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--primary); border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 1000; display: none; margin-top: 5px; box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
+        .dropdown-list.show { display: block; }
+        .dropdown-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #334155; font-size: 0.9em; display: flex; align-items: center; }
+        .dropdown-item:hover { background: var(--primary); color: white; }
+        .item-badge { font-size: 0.75em; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 10px; width: 35px; text-align: center; }
+        .bdg-B { background: var(--success); color: #000; }
+        .bdg-C { background: #facc15; color: #000; }
+        .bdg-D { background: var(--warning); color: #000; }
+        .bdg-E { background: var(--danger); color: #fff; }
+
+        /* --- CHARGES LIST UI --- */
+        .charges-container { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .charge-card { background: #334155; border-radius: 8px; padding: 10px 15px; border-left: 4px solid var(--border); display: flex; flex-direction: column; gap: 5px; animation: slideDown 0.2s ease-out; }
+        .charge-card.type-B { border-left-color: var(--success); }
+        .charge-card.type-C { border-left-color: #facc15; }
+        .charge-card.type-D { border-left-color: var(--warning); }
+        .charge-card.type-E { border-left-color: var(--danger); }
+
+        .charge-header { display: flex; justify-content: space-between; align-items: center; }
+        .charge-title { font-weight: 600; font-size: 0.95em; }
+        .charge-price { color: var(--success); font-weight: bold; font-family: monospace; font-size: 1.1em; }
+        .charge-actions { display: flex; gap: 10px; align-items: center; }
+
+        .charge-options { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; margin-top: 5px; display: none; font-size: 0.85em; }
+        .charge-options.show { display: block; }
+
+        /* Compteur */
+        .tier-control { display: flex; align-items: center; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+        .tier-btn { background: var(--input-bg); border: none; color: white; padding: 5px 12px; cursor: pointer; font-weight: bold; font-size: 1.1em; transition: 0.2s; }
+        .tier-btn:hover { background: var(--primary); }
+        .tier-count { padding: 0 12px; font-weight: bold; min-width: 20px; text-align: center; }
+
+        .btn-remove { color: var(--text-muted); cursor: pointer; background: none; border: none; font-size: 1.2em; transition:0.2s; }
+        .btn-remove:hover { color: var(--danger); }
+        .btn-settings { color: var(--text-muted); cursor: pointer; background: none; border: none; font-size: 1.1em; transition:0.2s; }
+        .btn-settings:hover { color: var(--primary); }
+
+        /* --- ITEMS DYNAMIQUES (Armes, Drogues...) --- */
+        .dynamic-item-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; animation: slideDown 0.2s ease-out; }
+        .dynamic-item-row input { padding: 8px; font-size: 0.9em; }
+        .dynamic-container { margin-bottom: 15px; }
+        .add-btn-small { background: var(--input-bg); border: 1px solid var(--border); color: var(--text-muted); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: 0.2s; margin-bottom: 5px; display: inline-block; }
+        .add-btn-small:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* --- BUTTONS & UTILS --- */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition:0.2s; }
+        .btn-add { background: var(--primary); color: white; width: auto; height: 42px; }
+        .btn-add:hover { background: var(--primary-hover); transform:translateY(-1px); }
+        .copy-btn { background: rgba(255,255,255,0.1); color: var(--primary); font-size: 0.8em; padding: 6px 12px; }
+        .copy-btn:hover { background: var(--primary); color: white; }
+
+        .row { display: flex; gap: 15px; } .col { flex: 1; }
+        .input-group { display: flex; gap: 10px; align-items: flex-start; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Dynamic Lists */
+        .simple-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .simple-chip { background: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.85em; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+        /* Preview */
+        .mdt-preview { background: #000; border-radius: 8px; border: 1px solid #333; overflow: hidden; margin-bottom: 20px; }
+        .mdt-header { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .mdt-input { width: 100%; background: transparent; border: none; color: #cbd5e1; font-family: 'Consolas', monospace; padding: 15px; font-size:0.9em; }
+        .mdt-textarea { min-height: 400px; white-space: pre-wrap; }
+
+        .mdt-textarea-small { min-height: 120px; white-space: pre-wrap; }
+
+        #da-fields { background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-da); padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+        #da-fields h3 { color: var(--accent-da); font-size: 0.9em; text-transform: uppercase; margin-top: 0; }
+
+        /* --- TOAST --- */
+        .toast-zone { position:fixed; top:20px; right:20px; z-index:10000; display:flex; flex-direction:column; gap:8px; }
+        .toast { padding:12px 20px; border-radius:8px; font-weight:600; font-size:0.9em; transform:translateX(120%); transition:transform .3s ease; }
+        .toast.show { transform:translateX(0); }
+        .toast-ok { background:#065f46; color:#6ee7b7; border:1px solid #10b981; }
+        .toast-err { background:#7f1d1d; color:#fca5a5; border:1px solid #ef4444; }
+
+        /* --- SAVE BUTTON --- */
+        .btn-save { background: var(--success); color: white; font-size: 1.2em; padding: 22px 32px; width: 100%; border: none; border-radius: 12px; font-weight: 800; letter-spacing:.02em; text-transform:uppercase; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow:0 8px 22px -6px rgba(16,185,129,.55); }
+        .btn-save::before { content:"\f0c7"; font-family:"Font Awesome 6 Free"; font-weight:900; }
+        .btn-save:hover { background: #059669; transform: translateY(-1px); }
+        .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* --- SUSPECT AUTOCOMPLETE --- */
+        .suspect-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid var(--primary); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; display: none; margin-top: 5px; box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
+        .suspect-dropdown.show { display: block; }
+        .suspect-dd-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #334155; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center; }
+        .suspect-dd-item:hover { background: var(--primary); color: white; }
+        .suspect-dd-item .nb-rapports { font-size: 0.75em; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 10px; }
+        .suspect-dd-item.new-item { color: var(--success); font-style: italic; }
+        .btn-casier { background: none; border: 1px solid var(--primary); color: var(--primary); padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75em; transition: 0.2s; }
+        .btn-casier:hover { background: var(--primary); color: white; }
+
+        /* --- CASIER MODAL --- */
+        .casier-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9000; display: none; justify-content: center; align-items: flex-start; padding: 40px 20px; overflow-y: auto; }
+        .casier-overlay.show { display: flex; }
+        .casier-modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; max-width: 800px; width: 100%; padding: 30px; position: relative; animation: slideDown 0.3s ease-out; }
+        .casier-close { position: absolute; top: 15px; right: 20px; background: none; border: none; color: var(--text-muted); font-size: 1.5em; cursor: pointer; }
+        .casier-close:hover { color: var(--danger); }
+        .casier-title { font-size: 1.3em; font-weight: 800; margin: 0 0 5px 0; }
+        .casier-subtitle { color: var(--text-muted); font-size: 0.85em; margin-bottom: 20px; }
+        .casier-section { margin-bottom: 20px; }
+        .casier-section h3 { color: var(--primary); font-size: 0.95em; margin: 0 0 10px 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .rapport-card { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; border-left: 4px solid var(--accent-ra); }
+        .rapport-card.type-DA { border-left-color: var(--accent-da); }
+        .rapport-card .rapport-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .rapport-card .rapport-title { font-weight: 600; font-size: 0.9em; }
+        .rapport-card .rapport-date { font-size: 0.8em; color: var(--text-muted); }
+        .rapport-card .rapport-badge { font-size: 0.7em; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+        .badge-DA { background: var(--accent-da); color: white; }
+        .badge-RA { background: var(--accent-ra); color: white; }
+        .rapport-card .rapport-amende { color: var(--success); font-weight: 600; font-size: 0.85em; }
+        .saisie-item { background: rgba(0,0,0,0.15); padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; font-size: 0.85em; display: flex; justify-content: space-between; }
+        .casier-empty { text-align: center; color: var(--text-muted); font-style: italic; padding: 20px; }
+
+        /* --- SAISIE MODAL --- */
+        .saisie-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9500; display: none; justify-content: center; align-items: flex-start; padding: 30px 20px; overflow-y: auto; }
+        .saisie-overlay.show { display: flex; }
+        .saisie-modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; max-width: 650px; width: 100%; padding: 30px; position: relative; animation: slideDown 0.3s ease-out; }
+        .saisie-modal h3 { margin: 0 0 20px 0; color: #f97316; font-size: 1.1em; display: flex; align-items: center; gap: 10px; }
+        .saisie-modal label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.82em; color: var(--text-muted); }
+        .saisie-modal input, .saisie-modal select, .saisie-modal textarea { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid transparent; color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.9em; margin-bottom: 12px; }
+        .saisie-modal input:focus, .saisie-modal select:focus, .saisie-modal textarea:focus { outline: none; border-color: #f97316; }
+        .saisie-modal textarea { height: 80px; resize: vertical; }
+        .saisie-close { position: absolute; top: 15px; right: 20px; background: none; border: none; color: var(--text-muted); font-size: 1.5em; cursor: pointer; }
+        .saisie-close:hover { color: var(--danger); }
+
+        .saisie-type-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .saisie-type-tab { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-muted); font-weight: 700; font-size: 0.9em; cursor: pointer; transition: 0.2s; text-align: center; }
+        .saisie-type-tab:hover { border-color: #f97316; color: #f97316; }
+        .saisie-type-tab.active { border-color: #f97316; background: rgba(249,115,22,0.1); color: #f97316; }
+        .saisie-type-tab .stt-icon { font-size: 1.3em; display: block; margin-bottom: 4px; }
+        .saisie-type-fields { display: none; }
+        .saisie-type-fields.active { display: block; }
+
+        .saisie-weapon-selector { position: relative; width: 100%; }
+        .saisie-weapon-selector input { padding-right: 36px; }
+        .saisie-weapon-selector .ws-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.85em; pointer-events: none; transition: 0.2s; }
+        .saisie-weapon-selector.open .ws-icon { transform: translateY(-50%) rotate(180deg); color: #f97316; }
+        .saisie-weapon-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border: 1px solid #f97316; border-radius: 10px; max-height: 320px; overflow-y: auto; z-index: 1000; display: none; margin-top: 6px; box-shadow: 0 12px 28px rgba(0,0,0,0.55); }
+        .saisie-weapon-dropdown.show { display: block; animation: wsSlide 0.15s ease-out; }
+        @keyframes wsSlide { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .saisie-weapon-dropdown::-webkit-scrollbar { width: 6px; }
+        .saisie-weapon-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .saisie-weapon-dropdown::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .saisie-weapon-dropdown .ws-category { padding: 8px 14px 4px; font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #f97316; background: rgba(249,115,22,0.06); border-bottom: 1px solid #293548; position: sticky; top: 0; z-index: 1; }
+        .saisie-weapon-dropdown .ws-item { padding: 9px 14px; cursor: pointer; font-size: 0.88em; color: #e2e8f0; border-bottom: 1px solid #293548; display: flex; align-items: center; gap: 10px; transition: background 0.12s; }
+        .saisie-weapon-dropdown .ws-item:last-child { border-bottom: none; }
+        .saisie-weapon-dropdown .ws-item:hover, .saisie-weapon-dropdown .ws-item.active { background: rgba(249,115,22,0.12); color: #f97316; }
+        .saisie-weapon-dropdown .ws-item i { font-size: 0.8em; color: #64748b; width: 18px; text-align: center; }
+        .saisie-weapon-dropdown .ws-item:hover i, .saisie-weapon-dropdown .ws-item.active i { color: #f97316; }
+        .saisie-weapon-dropdown .ws-item .ws-match { color: #f97316; font-weight: 700; }
+        .saisie-weapon-dropdown .ws-empty { padding: 24px 14px; text-align: center; color: #64748b; font-size: 0.85em; font-style: italic; }
+        .saisie-weapon-dropdown .ws-hint { padding: 18px 14px; text-align: center; color: #64748b; font-size: 0.85em; }
+        .saisie-weapon-dropdown .ws-hint i { margin-right: 6px; color: #475569; }
+
+        .saisie-acc-group { margin-top: 15px; }
+        .saisie-acc-group label.saisie-acc-title { color: #94a3b8; font-weight: 600; font-size: 0.85em; margin-bottom: 10px; display: block; }
+        .saisie-acc-options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .saisie-acc-check { display: none; }
+        .saisie-acc-label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; font-size: 0.85em; font-weight: 600; cursor: pointer; transition: 0.2s; user-select: none; }
+        .saisie-acc-label:hover { border-color: #f97316; color: #f97316; }
+        .saisie-acc-check:checked + .saisie-acc-label { background: rgba(249,115,22,0.15); border-color: #f97316; color: #f97316; }
+        .saisie-acc-label i { font-size: 0.95em; }
+
+        .btn-saisie-submit { background: #f97316; color: #0f172a; font-size: 1em; padding: 12px 24px; width: 100%; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-saisie-submit:hover { background: #ea580c; transform: translateY(-1px); }
+        .btn-saisie-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* --- DA SAISIES LIST --- */
+        .btn-saisie-add { background: rgba(249,115,22,0.15); border: 1px solid #f97316; color: #f97316; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.85em; cursor: pointer; transition: 0.2s; }
+        .btn-saisie-add:hover { background: #f97316; color: #0f172a; }
+
+        .da-saisie-card { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; animation: slideDown 0.2s ease-out; border-left: 3px solid var(--border); }
+        .da-saisie-card.type-arme { border-left-color: #ef4444; }
+        .da-saisie-card.type-drogue { border-left-color: #a855f7; }
+        .da-saisie-card.type-objet { border-left-color: #3b82f6; }
+        .da-saisie-info { flex: 1; }
+        .da-saisie-type { font-size: 0.7em; padding: 2px 8px; border-radius: 4px; font-weight: 700; display: inline-block; margin-bottom: 4px; }
+        .da-saisie-type.t-arme { background: rgba(239,68,68,0.15); color: #fca5a5; }
+        .da-saisie-type.t-drogue { background: rgba(168,85,247,0.15); color: #d8b4fe; }
+        .da-saisie-type.t-objet { background: rgba(59,130,246,0.15); color: #93c5fd; }
+        .da-saisie-detail { font-size: 0.85em; color: #cbd5e1; }
+        .da-saisie-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1em; padding: 4px 8px; transition: 0.2s; }
+        .da-saisie-remove:hover { color: var(--danger); }
+
+        .sd-link-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.82em; background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); padding: 2px 8px; border-radius: 4px; margin-top: 4px; }
+    #mdtActions{display:none;} body.has-app-shell{padding-top:var(--topbar-h,48px);}
+
+/* === Modernisation V2 (preview + copy) === */
+.card { padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.right-col .card { padding: 16px 18px; }
+.right-col .card > div:first-child { margin-bottom: 12px; }
+.mdt-input { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 10px; color: #e2e8f0; padding: 13px 15px; font-size: .85em; line-height: 1.62; box-sizing: border-box; }
+.mdt-input:focus { outline: none; border-color: var(--primary); }
+.mdt-textarea { min-height: 340px; }
+.mdt-textarea-small { min-height: 108px; }
+.mdt-input::-webkit-scrollbar { width: 9px; }
+.mdt-input::-webkit-scrollbar-thumb { background: var(--input-bg); border-radius: 6px; }
+.mdt-input::-webkit-scrollbar-track { background: transparent; }
+.copy-btn { background: var(--input-bg); color: #e2e8f0; border: none; border-radius: 8px; font-weight: 700; font-size: .72em; letter-spacing: .04em; text-transform: uppercase; padding: 7px 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: .15s; font-family: inherit; }
+.copy-btn:hover { background: var(--primary); color: #fff; transform: translateY(-1px); }
+.copy-btn::before { content: "\f0c5"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: .95em; }
+</style>
+</head>
+<body>
+<script>(function(){var _f=window.fetch;window.fetch=function(i,init){try{var u=(typeof i==='string')?i:(i&&i.url)||'';if(/_api\.php/.test(u)){init=init||{};var t=localStorage.getItem('mdt_auth_token');if(t){var h=new Headers((init&&init.headers)||{});if(!h.has('Authorization'))h.set('Authorization','Bearer '+t);init.headers=h;}}}catch(e){}return _f.call(this,i,init);};})();</script>
+<script>function mdtAuth(extra){var h=extra||{};try{var t=localStorage.getItem('mdt_auth_token');if(t)h['Authorization']='Bearer '+t;}catch(e){}return h;}</script>
+
+<div id="mdtActions" style="max-width:1400px;margin:0 auto;padding:16px 20px 0;display:flex;justify-content:flex-end;align-items:center;gap:12px;">
+    <div id="badge-mode" style="padding:5px 12px;border-radius:6px;font-weight:800;font-size:0.8em;background:var(--accent-ra);">MODE RA</div>
+    <button onclick="openRapportHistory()" style="padding:8px 16px;background:#8b5cf6;border:none;color:white;border-radius:8px;font-size:0.85em;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;"><i class="fa-solid fa-clock-rotate-left"></i> Historique</button>
+</div>
+
+<div class="container">
+
+    <div class="left-col">
+
+        <div style="background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); margin-bottom: 20px;">
+            <label style="margin:0;white-space:nowrap;flex:0 0 auto;">SYSTÈME :</label>
+            <div style="flex:0 0 240px;max-width:240px;"><select id="mode-force" style="width:100%; margin:0;" onchange="generate()">
+                <option value="auto">&#x1f916; AUTO (Recommand&eacute;)</option>
+                <option value="da">&#x1f6a8; FORCER D.A.</option>
+                <option value="ra">&#x1f4dd; FORCER R.A.</option>
+            </select></div>
+        </div>
+
+        <div class="card">
+            <h2>&#x1f46e; Effectifs & Suspects</h2>
+            <div class="row">
+                <div class="col">
+                    <label>Agent</label>
+                    <div class="input-group">
+                        <div class="search-container">
+                            <input type="text" id="officer-input" placeholder="Rechercher..." autocomplete="off">
+                            <div class="dropdown-list" id="officer-list-dropdown"></div>
+                        </div>
+                        <button class="btn btn-add" onclick="addOfficer()">+</button>
+                    </div>
+                    <div id="officer-list" class="simple-list"></div>
+                </div>
+                <div class="col">
+                    <label>Suspect</label>
+                    <div class="input-group">
+                        <div class="search-container">
+                            <input type="text" id="suspect-input" placeholder="Nom Prenom..." autocomplete="off">
+                            <div class="suspect-dropdown" id="suspect-dropdown"></div>
+                        </div>
+                        <button class="btn btn-add" onclick="addSuspectFromInput()">+</button>
+                    </div>
+                    <div id="suspect-list" class="simple-list"></div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:15px;">
+                <div class="col"><label>Date Incident</label><input type="date" id="date"></div>
+                <div class="col"><label>Heure Incident</label><input type="time" id="heure"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>&#x2696;&#xfe0f; Infractions & Circonstances</h2>
+            <div class="input-group">
+                <div class="search-container">
+                    <input type="text" id="charge-input" placeholder="Rechercher code (ex: D10, Vitesse, Braquage...)" autocomplete="off">
+                    <div class="dropdown-list" id="charge-list-dropdown"></div>
+                </div>
+                <button class="btn btn-add" onclick="addCharge()">AJOUTER</button>
+            </div>
+
+            <div id="charges-container" class="charges-container">
+                <div style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px;">Aucune infraction selectionnee</div>
+            </div>
+
+            <div style="text-align: right; margin-top: 15px; font-weight: bold; font-size: 1.1em; border-top: 1px solid var(--border); padding-top: 10px;">
+                TOTAL AMENDE: <span id="total-amende" style="color: var(--success);">$0</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>&#x1f4dd; Contexte & Proc&eacute;dure</h2>
+
+            <div class="row">
+                <div class="col">
+                    <label>Lieu de l'arrestation</label>
+                    <input type="text" id="lieu" oninput="generate()" placeholder="Ex: Vinewood, Sandy Shores...">
+                </div>
+                <div class="col">
+                    <label>Nature de l'incident</label>
+                    <input type="text" id="nature" oninput="generate()" placeholder="Ex: Contr&ocirc;le routier, Appel 911...">
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:15px;">
+                <div class="col">
+                    <label>Lecture des droits ?</label>
+                    <select id="miranda" onchange="generate()">
+                        <option value="Oui">Oui</option>
+                        <option value="Non">Non</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>Moyen d'arrestation</label>
+                    <input type="text" id="moyen" oninput="generate()" placeholder="Ex: Menottes, Taser...">
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:15px;">
+                <div class="col">
+                    <label>Demande Avocat ?</label>
+                    <select id="avocat" onchange="toggleAvocatResult(); generate();">
+                        <option value="Non">Non</option>
+                        <option value="Oui">Oui</option>
+                    </select>
+                </div>
+                <div class="col" id="avocat-result-box" style="display:none;">
+                    <label style="color:var(--primary);">R&eacute;sultat</label>
+                    <select id="avocat-result" onchange="generate()">
+                        <option value="Accord">&#x2705; Accord</option>
+                        <option value="Desaccord">&#x274c; D&eacute;saccord</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:15px;">
+                <label>Usage force ?</label>
+                <select id="force" onchange="generate()"><option value="Non">Non</option><option value="Oui">Oui</option></select>
+            </div>
+
+            <div style="margin-top:15px;">
+                <label>R&eacute;cit</label>
+                <textarea id="recit" oninput="generate()" placeholder="Faits..."></textarea>
+            </div>
+
+            <div id="da-fields">
+                <h3>&#x1f4c2; Compl&eacute;ment Dossier Arrestation (DA)</h3>
+
+                <div class="row">
+                    <div class="col">
+                        <label>Description Physique</label>
+                        <input type="text" id="da-physique" oninput="generate()" placeholder="Taille, corpulence, v&ecirc;tements...">
+                    </div>
+                    <div class="col">
+                        <label>Identifiant V&eacute;hicule (Suspect)</label>
+                        <input type="text" id="da-vehicule" oninput="generate()" placeholder="Marque, mod&egrave;le, plaque...">
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:10px;">
+                    <div class="col">
+                        <label>Heure Lecture Miranda</label>
+                        <input type="time" id="da-miranda-heure" oninput="generate()">
+                    </div>
+                    <div class="col">
+                        <label>Date de sortie</label>
+                        <input type="text" id="da-date-sortie" oninput="generate()" placeholder="En attente / Date">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; border-top: 1px solid var(--border); padding-top:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h4 style="color:var(--warning); margin:0;"><i class="fa-solid fa-box-open"></i> Saisies Judiciaires</h4>
+                        <button class="btn-saisie-add" onclick="openSaisieModal()"><i class="fa-solid fa-plus"></i> Ajouter une saisie</button>
+                    </div>
+                    <div id="da-saisies-list">
+                        <div style="text-align:center; color:var(--text-muted); font-style:italic; padding:15px; font-size:0.85em;">Aucune saisie ajoutee</div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <label>Autres &eacute;l&eacute;ments r&eacute;cup&eacute;r&eacute;s</label>
+                        <input type="text" id="da-autres" oninput="generate()" placeholder="Argent sale, t&eacute;l&eacute;phone, radio...">
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; border-top:1px solid #475569; padding-top:10px;">
+                    <label>Grade du r&eacute;dacteur</label>
+                    <input type="text" id="da-grade" oninput="generate()" placeholder="Ex: Trooper, Sergent...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-col">
+        <h2 style="color: white; border-bottom: none;">PR&Eacute;VISUALISATION</h2>
+
+        <div class="mdt-preview">
+            <div class="mdt-header">
+                <label>TITRE</label>
+                <button class="copy-btn" onclick="copyTitle(this)">COPIER</button>
+            </div>
+            <input type="text" id="output-title" class="mdt-input" readonly>
+        </div>
+
+        <div class="mdt-preview">
+            <div class="mdt-header">
+                <label>CONTENU</label>
+                <button class="copy-btn" onclick="copyContent(this, 'output-content')">COPIER TEXTE</button>
+            </div>
+            <textarea id="output-content" class="mdt-input mdt-textarea" readonly></textarea>
+        </div>
+
+        <div class="mdt-preview" style="border-color: var(--warning);">
+            <div class="mdt-header">
+                <label style="color:var(--warning)">DEMANDE AVOCAT</label>
+                <button class="copy-btn" onclick="copyContent(this, 'output-avocat')">COPIER</button>
+            </div>
+            <textarea id="output-avocat" class="mdt-input mdt-textarea-small" readonly></textarea>
+        </div>
+
+        <div class="mdt-preview" style="border-color: var(--accent-da);">
+            <div class="mdt-header">
+                <label style="color:var(--accent-da)">DEMANDE DOJ (JUGE/PROC)</label>
+                <button class="copy-btn" onclick="copyContent(this, 'output-doj')">COPIER</button>
+            </div>
+            <textarea id="output-doj" class="mdt-input mdt-textarea-small" readonly></textarea>
+        </div>
+
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;"><h2 style="margin:0 0 14px;">&#x1f4f8; Preuves photo</h2><div id="photoDrop" style="border:2px dashed var(--border);border-radius:10px;padding:22px;text-align:center;cursor:pointer;color:var(--text-muted);transition:.15s;"><i class="fa-solid fa-cloud-arrow-up" style="font-size:1.6em;display:block;margin-bottom:8px;"></i><div style="font-size:.88em;">Glisse une image, clique pour parcourir, ou <b>Ctrl+V</b> pour coller un screen.</div><input type="file" id="photoInput" accept="image/*" multiple style="display:none;"></div><button type="button" onclick="mdtPickPhoto()" style="margin-top:10px;background:var(--card-bg);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:8px 13px;font-size:.84em;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;"><i class="fa-solid fa-photo-film"></i> Mes médias ou un lien</button><div id="photoList" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div></div>
+
+        <button class="btn-save" id="btn-save-rapport" onclick="saveRapport()">SAUVEGARDER EN BASE</button>
+
+    </div>
+</div>
+
+<div class="toast-zone" id="toastZone"></div>
+
+<div class="casier-overlay" id="casier-overlay" onclick="if(event.target===this)closeCasier()">
+    <div class="casier-modal">
+        <button class="casier-close" onclick="closeCasier()">&times;</button>
+        <div id="casier-content"></div>
+    </div>
+</div>
+
+<div class="saisie-overlay" id="saisie-overlay" onclick="if(event.target===this)closeSaisieModal()">
+    <div class="saisie-modal">
+        <button class="saisie-close" onclick="closeSaisieModal()">&times;</button>
+        <h3><i class="fa-solid fa-box-open"></i> Nouvelle Saisie</h3>
+
+        <div class="row" style="margin-bottom:12px">
+            <div class="col">
+                <label>Agent</label>
+                <input type="text" id="saisie-agent" placeholder="Auto-rempli depuis effectifs" readonly style="opacity:0.7">
+            </div>
+            <div class="col">
+                <label>Date</label>
+                <input type="date" id="saisie-date">
+            </div>
+        </div>
+
+        <label style="margin-bottom:8px">Type de saisie</label>
+        <div class="saisie-type-tabs">
+            <div class="saisie-type-tab active" onclick="setSaisieType('arme')">
+                <span class="stt-icon"><i class="fa-solid fa-gun"></i></span> Arme
+            </div>
+            <div class="saisie-type-tab" onclick="setSaisieType('drogue')">
+                <span class="stt-icon"><i class="fa-solid fa-cannabis"></i></span> Drogue
+            </div>
+            <div class="saisie-type-tab" onclick="setSaisieType('objet')">
+                <span class="stt-icon"><i class="fa-solid fa-briefcase"></i></span> Objet
+            </div>
+        </div>
+
+        <div id="saisie-fields-arme" class="saisie-type-fields active">
+            <div class="row">
+                <div class="col">
+                    <label>Modele</label>
+                    <div class="saisie-weapon-selector" id="saisie-weapon-selector">
+                        <input type="text" id="saisie-arme-modele" placeholder="Rechercher une arme..." autocomplete="off">
+                        <i class="fa-solid fa-chevron-down ws-icon"></i>
+                        <div class="saisie-weapon-dropdown" id="saisie-weapon-dropdown"></div>
+                    </div>
+                </div>
+                <div class="col">
+                    <label>Numero de serie</label>
+                    <input type="text" id="saisie-arme-serial" placeholder="Ex: SA-4521-XK">
+                </div>
+            </div>
+            <div class="saisie-acc-group">
+                <label class="saisie-acc-title">Accessoires (optionnel)</label>
+                <div class="saisie-acc-options">
+                    <input type="checkbox" id="saisie-acc-viseur" class="saisie-acc-check" value="viseur">
+                    <label for="saisie-acc-viseur" class="saisie-acc-label"><i class="fa-solid fa-crosshairs"></i> Viseur / Lunette</label>
+                    <input type="checkbox" id="saisie-acc-silencieux" class="saisie-acc-check" value="silencieux">
+                    <label for="saisie-acc-silencieux" class="saisie-acc-label"><i class="fa-solid fa-volume-xmark"></i> Silencieux</label>
+                    <input type="checkbox" id="saisie-acc-chargeur" class="saisie-acc-check" value="chargeur_grande_capacite">
+                    <label for="saisie-acc-chargeur" class="saisie-acc-label"><i class="fa-solid fa-box-archive"></i> Chargeur grande capacite</label>
+                </div>
+            </div>
+            <label style="margin-top:15px">Liaison analyse SD (optionnel)</label>
+            <div class="search-container">
+                <input type="text" id="saisie-sd-input" placeholder="Rechercher une analyse SD d'arme..." autocomplete="off">
+                <div class="dropdown-list" id="saisie-sd-dropdown"></div>
+            </div>
+            <div id="saisie-sd-selected" style="margin-top:4px;margin-bottom:8px;display:none">
+                <span class="sd-link-badge"><i class="fa-solid fa-flask"></i> <span id="saisie-sd-label"></span></span>
+                <button style="background:none;border:none;color:var(--danger);cursor:pointer;margin-left:6px;font-size:0.9em" onclick="clearSaisieSD()">&times;</button>
+            </div>
+        </div>
+
+        <div id="saisie-fields-drogue" class="saisie-type-fields">
+            <div class="row">
+                <div class="col">
+                    <label>Variete / Substance</label>
+                    <input type="text" id="saisie-drogue-variete" placeholder="Ex: Cocaine, Cannabis, Methamphetamine...">
+                </div>
+                <div class="col">
+                    <label>Quantite</label>
+                    <input type="text" id="saisie-drogue-quantite" placeholder="Ex: 15g, 3 sachets...">
+                </div>
+            </div>
+        </div>
+
+        <div id="saisie-fields-objet" class="saisie-type-fields">
+            <div class="row">
+                <div class="col">
+                    <label>Description</label>
+                    <input type="text" id="saisie-objet-description" placeholder="Ex: Telephone, Faux papiers, Argent liquide...">
+                </div>
+                <div class="col">
+                    <label>Quantite</label>
+                    <input type="text" id="saisie-objet-quantite" placeholder="Ex: 1, 500$, 3 documents...">
+                </div>
+            </div>
+        </div>
+
+        <label>Motif de la saisie *</label>
+        <textarea id="saisie-motif" placeholder="Raison de la saisie (controle routier, perquisition, flagrant delit...)"></textarea>
+
+        <label>Notes supplementaires</label>
+        <textarea id="saisie-notes" placeholder="Informations complementaires (optionnel)" style="height:50px"></textarea>
+
+        <button class="btn-saisie-submit" id="btn-saisie-submit" onclick="submitSaisieFromMDT()"><i class="fa-solid fa-lock"></i> Enregistrer la saisie</button>
+    </div>
+</div>
+
+<script>
+    function escHtml(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+    function normaliseNom(nom) {
+        return nom.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().trim().split(/\s+/).sort().join(' ');
+    }
+    function formatDate(d) {
+        if (!d) return '';
+        const dt = new Date(d);
+        if (isNaN(dt)) return d;
+        return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    var toast = function(msg, ok) {
+        if (!window.MDT_TOAST) return;
+        if (ok) MDT_TOAST.ok(msg); else MDT_TOAST.err(msg);
+    };
+
+    const DEFAULT_ROSTER = [];
+    let ROSTER = DEFAULT_ROSTER.slice();
+
+    let DB = [];
+
+    let state = { officers: [], suspects: [], charges: [], saisies: [], photos: [] };
+    let tempCharge = null;
+    let suspectSearchTimer = null;
+    let sdArmes = [];
+    let saisieSelectedType = 'arme';
+    let saisieSelectedSdId = null;
+
+    window.onload = async () => {
+        try {
+            const penalRes = await fetch('/penal/penal_api.php?action=list');
+            const penalData = await penalRes.json();
+            var penalArr = Array.isArray(penalData) ? penalData : ((penalData && penalData.infractions) ? penalData.infractions : []); if (penalArr.length > 0) DB = penalArr;
+        } catch(e) { console.warn('Erreur chargement code penal:', e); }
+
+        try {
+            const res = await fetch('../roster_api.php?action=list');
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) ROSTER = data;
+        } catch(e) { }
+
+        document.getElementById('date').valueAsDate = new Date();
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('heure').value = timeStr;
+        document.getElementById('da-miranda-heure').value = timeStr;
+
+        setupDropdown('officer-input', 'officer-list-dropdown', ROSTER.map(x=>({l:x, v:x})), (i)=>{ document.getElementById('officer-input').value = i.v; });
+        setupDropdown('charge-input', 'charge-list-dropdown', DB.map(x=>({l: `${x.code} - ${x.label} ($${x.price})`, v:x.code, data:x})), (i)=>{
+            document.getElementById('charge-input').value = i.l;
+            tempCharge = i.data;
+        }, true);
+        setupSuspectAutocomplete();
+        await loadMdtSdArmes();
+        generate();
+    };
+
+    function handleEnter(e, f) { if(e.key==='Enter') f(); }
+
+    function setupSuspectAutocomplete() {
+        const inp = document.getElementById('suspect-input');
+        const dd = document.getElementById('suspect-dropdown');
+
+        inp.addEventListener('input', () => {
+            clearTimeout(suspectSearchTimer);
+            const q = inp.value.trim();
+            if (q.length < 2) { dd.classList.remove('show'); return; }
+            suspectSearchTimer = setTimeout(() => searchSuspects(q), 300);
+        });
+
+        inp.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addSuspectFromInput();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!inp.contains(e.target) && !dd.contains(e.target)) dd.classList.remove('show');
+        });
+    }
+
+    async function searchSuspects(q) {
+        const dd = document.getElementById('suspect-dropdown');
+        dd.innerHTML = '';
+
+        const newItem = document.createElement('div');
+        newItem.className = 'suspect-dd-item new-item';
+        newItem.innerHTML = `<span>+ Ajouter "${escHtml(q)}"</span>`;
+        newItem.onclick = () => { addSuspectObj({ name: q, personne_id: null }); dd.classList.remove('show'); };
+        dd.appendChild(newItem);
+
+        try {
+            const res = await fetch('../casier_api.php?action=search_personnes&q=' + encodeURIComponent(q), { headers: mdtAuth() });
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                data.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'suspect-dd-item';
+                    item.innerHTML = `<span>${escHtml(p.nom_complet)}</span><span class="nb-rapports">${p.nb_rapports} rapport(s)</span>`;
+                    item.onclick = () => {
+                        addSuspectObj({ name: p.nom_complet, personne_id: p.id });
+                        dd.classList.remove('show');
+                    };
+                    dd.appendChild(item);
+                });
+            }
+        } catch(e) { }
+
+        dd.classList.add('show');
+    }
+
+    function addSuspectObj(obj) {
+        const norm = normaliseNom(obj.name);
+        const exists = state.suspects.find(s => normaliseNom(s.name) === norm);
+        if (exists) { toast('Suspect deja ajoute', false); return; }
+        state.suspects.push(obj);
+        document.getElementById('suspect-input').value = '';
+        updateLists();
+        generate();
+    }
+
+    function addSuspectFromInput() {
+        const v = document.getElementById('suspect-input').value.trim();
+        if (!v) return;
+        addSuspectObj({ name: v, personne_id: null });
+        document.getElementById('suspect-dropdown').classList.remove('show');
+    }
+
+    async function loadMdtSdArmes() {
+        try {
+            const res = await fetch('../saisies/saisies_api.php?action=list_sd_armes');
+            sdArmes = await res.json();
+            if (!Array.isArray(sdArmes)) sdArmes = [];
+        } catch(e) { console.warn('Erreur chargement SD armes:', e); }
+
+        setupSaisieSDDropdown();
+    }
+
+    function setupSaisieSDDropdown() {
+        const inp = document.getElementById('saisie-sd-input');
+        const lst = document.getElementById('saisie-sd-dropdown');
+        const render = (filter) => {
+            lst.innerHTML = '';
+            const nf = filter.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const data = sdArmes.map(a => {
+                const model = (a.data && a.data.model) ? a.data.model : '?';
+                const serial = (a.data && a.data.serial) ? a.data.serial : '';
+                return { l: a.case_name + ' - ' + model + (serial ? ' (' + serial + ')' : ''), v: a.id, data: a };
+            });
+            const res = data.filter(x => x.l.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(nf));
+            if (!res.length) return lst.classList.remove('show');
+            res.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.innerHTML = escHtml(item.l);
+                div.onclick = () => {
+                    saisieSelectedSdId = item.v;
+                    inp.value = '';
+                    document.getElementById('saisie-sd-label').textContent = item.l;
+                    document.getElementById('saisie-sd-selected').style.display = 'inline-flex';
+                    if (item.data.data && item.data.data.model) document.getElementById('saisie-arme-modele').value = item.data.data.model;
+                    if (item.data.data && item.data.data.serial) document.getElementById('saisie-arme-serial').value = item.data.data.serial;
+                    lst.classList.remove('show');
+                };
+                lst.appendChild(div);
+            });
+            lst.classList.add('show');
+        };
+        inp.addEventListener('input', e => render(e.target.value));
+        inp.addEventListener('focus', e => render(e.target.value));
+        document.addEventListener('click', e => { if (!inp.contains(e.target) && !lst.contains(e.target)) lst.classList.remove('show'); });
+    }
+
+    function clearSaisieSD() {
+        saisieSelectedSdId = null;
+        document.getElementById('saisie-sd-input').value = '';
+        document.getElementById('saisie-sd-selected').style.display = 'none';
+    }
+
+    function openSaisieModal() {
+        const agent = state.officers.length > 0 ? state.officers[0] : '';
+        document.getElementById('saisie-agent').value = agent;
+        document.getElementById('saisie-date').valueAsDate = new Date();
+        setSaisieType('arme');
+        document.getElementById('saisie-overlay').classList.add('show');
+    }
+
+    function closeSaisieModal() {
+        document.getElementById('saisie-overlay').classList.remove('show');
+        document.getElementById('saisie-arme-modele').value = '';
+        document.getElementById('saisie-arme-serial').value = '';
+        document.getElementById('saisie-acc-viseur').checked = false;
+        document.getElementById('saisie-acc-silencieux').checked = false;
+        document.getElementById('saisie-acc-chargeur').checked = false;
+        document.getElementById('saisie-drogue-variete').value = '';
+        document.getElementById('saisie-drogue-quantite').value = '';
+        document.getElementById('saisie-objet-description').value = '';
+        document.getElementById('saisie-objet-quantite').value = '';
+        document.getElementById('saisie-motif').value = '';
+        document.getElementById('saisie-notes').value = '';
+        clearSaisieSD();
+    }
+
+    function setSaisieType(type) {
+        saisieSelectedType = type;
+        document.querySelectorAll('.saisie-type-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.saisie-type-fields').forEach(f => f.classList.remove('active'));
+        const types = ['arme', 'drogue', 'objet'];
+        const idx = types.indexOf(type);
+        if (idx >= 0) document.querySelectorAll('.saisie-type-tab')[idx].classList.add('active');
+        const fields = document.getElementById('saisie-fields-' + type);
+        if (fields) fields.classList.add('active');
+    }
+
+    async function submitSaisieFromMDT() {
+        const btn = document.getElementById('btn-saisie-submit');
+        const agent = document.getElementById('saisie-agent').value.trim();
+        const dateSaisie = document.getElementById('saisie-date').value;
+        const motif = document.getElementById('saisie-motif').value.trim();
+        const notes = document.getElementById('saisie-notes').value.trim();
+
+        if (!motif) { toast('Motif de la saisie requis', false); return; }
+
+        const payload = {
+            agent: agent || 'Agent MDT',
+            date_saisie: dateSaisie,
+            type: saisieSelectedType,
+            motif: motif,
+            notes: notes || null
+        };
+
+        let displayInfo = '';
+        if (saisieSelectedType === 'arme') {
+            payload.arme_modele = document.getElementById('saisie-arme-modele').value.trim();
+            payload.arme_serial = document.getElementById('saisie-arme-serial').value.trim();
+            payload.sd_analyse_id = saisieSelectedSdId || null;
+            var accs = [];
+            if (document.getElementById('saisie-acc-viseur').checked) accs.push('viseur');
+            if (document.getElementById('saisie-acc-silencieux').checked) accs.push('silencieux');
+            if (document.getElementById('saisie-acc-chargeur').checked) accs.push('chargeur_grande_capacite');
+            payload.arme_accessoires = accs;
+            displayInfo = payload.arme_modele || 'Arme';
+            if (payload.arme_serial) displayInfo += ' (SN: ' + payload.arme_serial + ')';
+            if (accs.length) displayInfo += ' [' + accs.length + ' acc.]';
+        } else if (saisieSelectedType === 'drogue') {
+            payload.drogue_variete = document.getElementById('saisie-drogue-variete').value.trim();
+            payload.drogue_quantite = document.getElementById('saisie-drogue-quantite').value.trim();
+            displayInfo = (payload.drogue_variete || 'Drogue') + ' x' + (payload.drogue_quantite || '?');
+        } else if (saisieSelectedType === 'objet') {
+            payload.objet_description = document.getElementById('saisie-objet-description').value.trim();
+            payload.objet_quantite = document.getElementById('saisie-objet-quantite').value.trim();
+            displayInfo = (payload.objet_description || 'Objet') + ' x' + (payload.objet_quantite || '?');
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Enregistrement...';
+
+        try {
+            const res = await fetch('../saisies/saisies_api.php?action=create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.success) {
+                state.saisies.push({
+                    id: json.id,
+                    type: saisieSelectedType,
+                    displayInfo: displayInfo,
+                    arme_modele: payload.arme_modele || null,
+                    arme_serial: payload.arme_serial || null,
+                    drogue_variete: payload.drogue_variete || null,
+                    drogue_quantite: payload.drogue_quantite || null,
+                    objet_description: payload.objet_description || null,
+                    objet_quantite: payload.objet_quantite || null,
+                    motif: motif
+                });
+                renderDaSaisies();
+                generate();
+                toast('Saisie enregistree', true);
+                closeSaisieModal();
+            } else {
+                toast(json.error || 'Erreur creation saisie', false);
+            }
+        } catch(e) {
+            toast('Erreur reseau: ' + e.message, false);
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-lock"></i> Enregistrer la saisie';
+    }
+
+    function renderDaSaisies() {
+        const container = document.getElementById('da-saisies-list');
+        if (state.saisies.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:var(--text-muted); font-style:italic; padding:15px; font-size:0.85em;">Aucune saisie ajoutee</div>';
+            return;
+        }
+        container.innerHTML = '';
+        state.saisies.forEach((s, idx) => {
+            const typeLabel = s.type === 'arme' ? 'Arme' : s.type === 'drogue' ? 'Drogue' : 'Objet';
+            const typeIcon = s.type === 'arme' ? 'fa-gun' : s.type === 'drogue' ? 'fa-cannabis' : 'fa-briefcase';
+            const div = document.createElement('div');
+            div.className = 'da-saisie-card type-' + s.type;
+            div.innerHTML = `<div class="da-saisie-info"><span class="da-saisie-type t-${escHtml(s.type)}"><i class="fa-solid ${typeIcon}"></i> ${escHtml(typeLabel)}</span><div class="da-saisie-detail">${escHtml(s.displayInfo)}</div></div><button class="da-saisie-remove" onclick="removeDaSaisie(${idx})" title="Retirer du dossier">&times;</button>`;
+            container.appendChild(div);
+        });
+    }
+
+    function removeDaSaisie(idx) {
+        state.saisies.splice(idx, 1);
+        renderDaSaisies();
+        generate();
+    }
+
+    function setupDropdown(inputId, listId, data, onSelect, isCharge=false) {
+        const inp = document.getElementById(inputId);
+        const lst = document.getElementById(listId);
+        const render = (filter) => {
+            lst.innerHTML = '';
+            const res = data.filter(x => x.l.toLowerCase().includes(filter.toLowerCase()));
+            if(!res.length) return lst.classList.remove('show');
+            res.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                let html = escHtml(item.l);
+                if(isCharge && item.data) html = `<span class="item-badge bdg-${escHtml(item.data.cat)}">${escHtml(item.data.cat)}</span>` + html;
+                div.innerHTML = html;
+                div.onclick = () => { onSelect(item); lst.classList.remove('show'); };
+                lst.appendChild(div);
+            });
+            lst.classList.add('show');
+        };
+        inp.addEventListener('input', (e) => render(e.target.value));
+        inp.addEventListener('focus', (e) => render(e.target.value));
+        document.addEventListener('click', (e) => { if(!inp.contains(e.target) && !lst.contains(e.target)) lst.classList.remove('show'); });
+    }
+
+    function addOfficer() { const v = document.getElementById('officer-input').value; if(v && !state.officers.includes(v)) { state.officers.push(v); updateLists(); document.getElementById('officer-input').value=''; generate(); } }
+
+    function addCharge() {
+        if(!tempCharge) return;
+        state.charges.push({ ...tempCharge, currentTier: 0, finalPrice: tempCharge.price });
+        tempCharge = null;
+        document.getElementById('charge-input').value = '';
+        renderCharges();
+        generate();
+    }
+
+    function changeTier(index, delta) {
+        const c = state.charges[index];
+        if(!c.tiers) return;
+        let newTier = c.currentTier + delta;
+        if(newTier < 0) newTier = 0;
+        if(newTier >= c.tiers.length) newTier = c.tiers.length - 1;
+        c.currentTier = newTier;
+        c.finalPrice = c.tiers[newTier];
+        renderCharges();
+        generate();
+    }
+
+    function removeCharge(index) { state.charges.splice(index, 1); renderCharges(); generate(); }
+
+    function renderCharges() {
+        const c = document.getElementById('charges-container');
+        c.innerHTML = '';
+        let total = 0;
+        if(state.charges.length === 0) c.innerHTML = '<div style="text-align: center; color: #94a3b8; font-style: italic; padding: 20px;">Aucune infraction selectionnee</div>';
+        state.charges.forEach((charge, idx) => {
+            total += charge.finalPrice;
+            let tierInfo = "";
+            let btnHtml = "";
+            if(charge.tiers) {
+                if(charge.currentTier > 0) tierInfo = `<span style="font-size:0.8em; color:#facc15; font-weight:bold;">⚠️ ${charge.currentTier} Circ. aggravante(s)</span>`;
+                else tierInfo = `<span style="font-size:0.8em; color:#94a3b8;">Prix de base</span>`;
+                btnHtml = `<div id="opt-${idx}" class="charge-options show"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="color:#cbd5e1;">Circonstances :</span><div class="tier-control"><button class="tier-btn" onclick="changeTier(${idx}, -1)">-</button><div class="tier-count">${charge.currentTier}</div><button class="tier-btn" onclick="changeTier(${idx}, 1)">+</button></div></div></div>`;
+            } else { btnHtml = `<div class="charge-options" style="display:none"></div>`; }
+            const div = document.createElement('div');
+            div.className = `charge-card type-${charge.cat}`;
+            div.innerHTML = `<div class="charge-header"><div class="charge-title"><span class="item-badge bdg-${escHtml(charge.cat)}" style="color:black">${escHtml(charge.cat)}</span>${escHtml(charge.code)} - ${escHtml(charge.label)}</div><div class="charge-actions"><span class="charge-price">$${charge.finalPrice.toLocaleString()}</span><button class="btn-settings" onclick="toggleOptions(${idx})" title="Options">⚙️</button><button class="btn-remove" onclick="removeCharge(${idx})">×</button></div></div><div>${tierInfo}</div>${btnHtml}`;
+            c.appendChild(div);
+        });
+        document.getElementById('total-amende').innerText = '$' + total.toLocaleString();
+    }
+
+    function toggleOptions(idx) { const el = document.getElementById(`opt-${idx}`); if(el) el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
+
+    function updateLists() {
+        const offEl = document.getElementById('officer-list');
+        let _offH = '';
+        state.officers.forEach((x, i) => {
+            _offH += `<div class="simple-chip"><span>${escHtml(x)}</span><span style="cursor:pointer;color:#ef4444" onclick="state.officers.splice(${i},1);updateLists();generate()">×</span></div>`;
+        });
+        offEl.innerHTML = _offH;
+        const susEl = document.getElementById('suspect-list');
+        let _susH = '';
+        state.suspects.forEach((s, i) => {
+            let casierBtn = '';
+            if (s.personne_id) {
+                casierBtn = `<button class="btn-casier" onclick="event.stopPropagation();showCasier('${escHtml(s.personne_id)}')" title="Voir casier">CASIER</button>`;
+            }
+            _susH += `<div class="simple-chip"><span>${escHtml(s.name)}</span>${casierBtn}<span style="cursor:pointer;color:#ef4444" onclick="state.suspects.splice(${i},1);updateLists();generate()">×</span></div>`;
+        });
+        susEl.innerHTML = _susH;
+    }
+
+    function toggleAvocatResult() { const v = document.getElementById('avocat').value; document.getElementById('avocat-result-box').style.display = v === 'Oui' ? 'block' : 'none'; }
+
+    function generate() {
+        const modeForce = document.getElementById('mode-force').value;
+        const date = document.getElementById('date').value.split('-').reverse().join('/');
+        const heure = document.getElementById('heure').value.replace(':','h');
+        const lieu = document.getElementById('lieu').value || "San Andreas";
+        const nature = document.getElementById('nature').value || "Intervention Police";
+        const miranda = document.getElementById('miranda').value;
+        const moyen = document.getElementById('moyen').value || "Menottage";
+        const avocat = document.getElementById('avocat').value;
+        const avocatRes = document.getElementById('avocat-result').value;
+        const force = document.getElementById('force').value;
+        const recit = document.getElementById('recit').value || '...';
+
+        const daPhys = document.getElementById('da-physique').value || '[Taille, corpulence, vetements]';
+        const daVeh = document.getElementById('da-vehicule').value || '[Marque, modele, couleur, plaque]';
+        const daMirandaHeure = document.getElementById('da-miranda-heure').value.replace(':','h') || '00h00';
+        const daDateSortie = document.getElementById('da-date-sortie').value || 'En attente';
+        const daAutres = document.getElementById('da-autres').value || '';
+        const daGrade = document.getElementById('da-grade').value || 'Grade';
+
+        let saisieArmes = [], saisieDrogues = [], saisieObjets = [];
+        state.saisies.forEach(s => {
+            if (s.type === 'arme') saisieArmes.push(`- ${s.arme_modele || 'Arme'} (SN: ${s.arme_serial || 'N/A'})`);
+            else if (s.type === 'drogue') saisieDrogues.push(`- ${s.drogue_variete || 'Drogue'} (x${s.drogue_quantite || '?'})`);
+            else if (s.type === 'objet') saisieObjets.push(`- ${s.objet_description || 'Objet'} (x${s.objet_quantite || '?'})`);
+        });
+        const daArmes = saisieArmes.length ? "\n" + saisieArmes.join("\n") : "N/A";
+        const daIllegals = saisieDrogues.length ? "\n" + saisieDrogues.join("\n") : "N/A";
+        const daObjets = saisieObjets.length ? "\n" + saisieObjets.join("\n") : "N/A";
+
+        let total = 0; let maxSev = 'B'; let chargesTxt = "";
+        state.charges.forEach(c => {
+            total += c.finalPrice;
+            let detail = "";
+            if(c.currentTier > 0) detail = ` (Aggrave x${c.currentTier})`;
+            chargesTxt += `Art. ${c.code} : ${c.label}${detail}\n`;
+            if(c.cat === 'C' && maxSev === 'B') maxSev = 'C';
+            if(c.cat === 'D' && maxSev !== 'E') maxSev = 'D';
+            if(c.cat === 'E') maxSev = 'E';
+        });
+
+        let isDA = false;
+        if(maxSev === 'D' || maxSev === 'E') isDA = true;
+        if(avocat === 'Oui' && avocatRes !== 'Accord') isDA = true;
+        if(modeForce === 'da') isDA = true;
+        if(modeForce === 'ra') isDA = false;
+
+        document.getElementById('da-fields').style.display = isDA ? 'block' : 'none';
+        const badge = document.getElementById('badge-mode');
+        badge.innerText = isDA ? "MODE DA (Dossier)" : "MODE RA (Simple)";
+        badge.style.background = isDA ? "var(--accent-da)" : "var(--accent-ra)";
+
+        const suspectNames = state.suspects.map(s => s.name);
+        let suspectsStr = suspectNames.length ? suspectNames.join(" & ") : "Prenom Nom";
+        let officersStr = state.officers.length ? state.officers.join(" - ") : "00 | Nom Prenom";
+        let mainCharge = state.charges.length ? state.charges[0].label : "Infraction";
+
+        let avocatLineRA = `- Demande d'avocat : ${avocat}`;
+        if(avocat === 'Oui') avocatLineRA += `\n- Intervention de l'avocat : ${avocatRes === 'Accord' ? 'Oui (Accord)' : 'Oui (Desaccord)'}`;
+
+        let avocatLineDA = `- Le suspect a demande a **${avocat === 'Oui' ? 'avoir' : 'ne pas avoir'}** d'avocat.`;
+        if(avocat === 'Oui') avocatLineDA += ` **${avocatRes === 'Accord' ? 'L\'avocat s\'est presente.' : 'L\'avocat ne s\'est pas presente / n\'etait pas disponible'}**`;
+
+        document.getElementById('output-title').value = `${mainCharge} | ${suspectsStr} | ${isDA?'DA':'RA'} ${date}`;
+
+        let content = "";
+        if(!isDA) {
+            content = `> **Details de l'Arrestation**
+
+- Trooper en Charge : ${officersStr}
+- Date et Heure : ${date} a ${heure}
+- Lieu de l'Arrestation : ${lieu}
+- Nature de l'Incident : ${nature}
+- Lecture des droits : ${miranda}
+
+> **Rapport de l'Arrestation**
+
+${recit}
+
+> **Chefs d'inculpation :**
+
+${chargesTxt}
+${avocatLineRA}
+- Usage de la force : ${force}
+- Moyen d'arrestation : ${moyen}
+- Montant de l'amende : ${total}$`;
+        } else {
+            let suspList = suspectNames.length ? suspectNames.map(x=>`- ${x}`).join('\n') : "- Prenom Nom";
+            let autresElements = daAutres ? `- ${daAutres}` : "";
+            content = `> **Dossier d'arrestation**
+
+- Date : ${date}
+- Heure : ${heure}
+- Trooper implique(s) : ${officersStr}
+
+**Suspect(s) :**
+
+${suspList}
+- Description physique : ${daPhys}
+- Identifiant vehicule : ${daVeh}
+
+> **Resume de l'Incident :**
+
+${recit}
+
+> **Deroulement de l'arrestation :**
+
+- A ${heure},
+- Lecture des droits Miranda a ${daMirandaHeure}
+- Date de sortie : ${daDateSortie}
+
+> **Preuves et Confiscations :**
+
+- Arme(s) saisie(s) : ${daArmes}
+- Drogue(s) saisie(s) : ${daIllegals}
+- Objet(s) saisi(s) : ${daObjets}
+${autresElements}
+
+> **Chefs d'accusation :**
+
+${chargesTxt}
+${avocatLineDA}
+
+> **Redige par :**
+
+- ${officersStr.split(" - ")[0] || "00 | Nom Prenom"}
+- ${daGrade}
+- Date : ${date}`;
+        }
+        if (state.photos && state.photos.length) { content += "\n\n> **Preuve photo :**\n\n" + state.photos.join("\n"); }
+        document.getElementById('output-content').value = content;
+
+        let badgeNumber = "00";
+        if(state.officers.length > 0) {
+            let firstOfficer = state.officers[0];
+            badgeNumber = firstOfficer.split('|')[0].trim();
+        }
+
+        let avocatText = `Bonsoir, <@&1371463911647481856> \n Nous avons besoin de vous au poste de Vespucci pour:\n\n`;
+        avocatText += `**Suspect(s) :** ${suspectsStr}\n\n`;
+        avocatText += `**Infractions reprochees :**\n${chargesTxt || "Aucune"}\n`;
+        avocatText += `**Cordialement, ** ${badgeNumber}`;
+
+        document.getElementById('output-avocat').value = avocatText;
+
+        let hasJuge = state.charges.some(c => c.doj === 'Jugement');
+        let hasProc = state.charges.some(c => c.doj === 'Procureur');
+        let dojPing = hasJuge ? '<@&1371578208125849650>' : (hasProc ? '<@&1371577983726387200>' : '');
+        let dojText = `Bonsoir, ${dojPing}\n Nous avons besoin de vous au poste de Vespucci\n\n`;
+        dojText += `**Dossier concernant :** ${suspectsStr}\n`;
+        dojText += `**Infractions :**\n${chargesTxt || "Aucune..."}\n\n`;
+        dojText += `**Cordialement, ** ${badgeNumber}`;
+
+        document.getElementById('output-doj').value = dojText;
+    }
+
+    function copyTitle(b){ navigator.clipboard.writeText(document.getElementById('output-title').value); b.innerText="OK"; setTimeout(()=>b.innerText="COPIER",1000); }
+    function copyContent(b, id){ navigator.clipboard.writeText(document.getElementById(id).value); b.innerText="OK"; setTimeout(()=>b.innerText="COPIER",1000); }
+
+    async function saveRapport() {
+        const btn = document.getElementById('btn-save-rapport');
+        if (state.suspects.length === 0) { toast('Ajoutez au moins un suspect', false); return; }
+        if (!document.getElementById('output-title').value) { toast('Generez le rapport d\'abord', false); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Sauvegarde...';
+
+        const badgeEl = document.getElementById('badge-mode');
+        const isDA = badgeEl.innerText.includes('DA');
+        const type = isDA ? 'DA' : 'RA';
+
+        const saisieIds = state.saisies.map(s => s.id);
+
+        const chargesData = state.charges.map(c => ({
+            code: c.code, label: c.label, cat: c.cat, finalPrice: c.finalPrice
+        }));
+        let totalAmende = 0;
+        state.charges.forEach(c => totalAmende += c.finalPrice);
+
+        let metadata = null;
+        if (isDA) {
+            metadata = {
+                physique: document.getElementById('da-physique').value,
+                vehicule: document.getElementById('da-vehicule').value,
+                miranda_heure: document.getElementById('da-miranda-heure').value,
+                date_sortie: document.getElementById('da-date-sortie').value,
+                grade: document.getElementById('da-grade').value,
+                autres: document.getElementById('da-autres').value
+            };
+        }
+
+        const payload = {
+            type: type,
+            titre: document.getElementById('output-title').value,
+            contenu: document.getElementById('output-content').value,
+            date_incident: document.getElementById('date').value,
+            heure_incident: document.getElementById('heure').value,
+            lieu: document.getElementById('lieu').value,
+            nature: document.getElementById('nature').value,
+            agents: state.officers,
+            suspects: state.suspects,
+            charges: chargesData.length ? chargesData : null,
+            total_amende: totalAmende,
+            saisies: state.saisies,
+            saisie_ids: saisieIds,
+            metadata: metadata
+        };
+
+        try {
+            const res = await fetch('../casier_api.php?action=save_rapport', {
+                method: 'POST',
+                headers: mdtAuth({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.success) {
+                toast('Rapport sauvegarde avec succes', true);
+                if (json.personnes && Array.isArray(json.personnes)) {
+                    json.personnes.forEach(p => {
+                        const match = state.suspects.find(s => normaliseNom(s.name) === normaliseNom(p.name));
+                        if (match && p.personne_id) match.personne_id = p.personne_id;
+                    });
+                    updateLists();
+                }
+            } else {
+                toast(json.error || 'Erreur sauvegarde', false);
+            }
+        } catch(e) {
+            toast('Erreur reseau: ' + e.message, false);
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'SAUVEGARDER EN BASE';
+    }
+
+    async function showCasier(personneId) {
+        const overlay = document.getElementById('casier-overlay');
+        const content = document.getElementById('casier-content');
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">Chargement...</div>';
+        overlay.classList.add('show');
+
+        try {
+            const res = await fetch('../casier_api.php?action=get_casier&personne_id=' + encodeURIComponent(personneId), { headers: mdtAuth() });
+            const data = await res.json();
+            if (data.error) { content.innerHTML = `<p style="color:var(--danger)">${escHtml(data.error)}</p>`; return; }
+
+            const p = data.personne;
+            const rapports = data.rapports || [];
+            const saisies = data.saisies || [];
+
+            let html = `<div class="casier-title">Casier - ${escHtml(p.nom_complet)}</div>`;
+            html += `<div class="casier-subtitle">Cree le ${formatDate(p.created_at)} | ${rapports.length} rapport(s) | ${saisies.length} saisie(s)</div>`;
+
+            html += `<div class="casier-section"><h3>Rapports</h3>`;
+            if (rapports.length === 0) {
+                html += `<div class="casier-empty">Aucun rapport</div>`;
+            } else {
+                rapports.forEach(r => {
+                    html += `<div class="rapport-card ${r.type === 'DA' ? 'type-DA' : ''}">`;
+                    html += `<div class="rapport-head"><div><span class="rapport-badge badge-${escHtml(r.type)}">${escHtml(r.type)}</span> <span class="rapport-title">${escHtml(r.titre)}</span></div><span class="rapport-date">${formatDate(r.date_incident)}</span></div>`;
+                    if (r.total_amende > 0) html += `<div class="rapport-amende">Amende: $${Number(r.total_amende).toLocaleString()}</div>`;
+                    if (r.charges && r.charges.length) {
+                        html += `<div style="font-size:0.8em;color:var(--text-muted);margin-top:4px">`;
+                        r.charges.forEach(ch => { html += `Art. ${escHtml(ch.code)} : ${escHtml(ch.label)}<br>`; });
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                });
+            }
+            html += `</div>`;
+
+            html += `<div class="casier-section"><h3>Saisies</h3>`;
+            if (saisies.length === 0) {
+                html += `<div class="casier-empty">Aucune saisie</div>`;
+            } else {
+                saisies.forEach(s => {
+                    let desc = '';
+                    if (s.type === 'arme') desc = `${s.arme_modele || 'Arme'} (SN: ${s.arme_serial || 'N/A'})`;
+                    else if (s.type === 'drogue') desc = `${s.drogue_variete || 'Drogue'} x${s.drogue_quantite || '?'}`;
+                    else desc = `${s.objet_description || 'Objet'} x${s.objet_quantite || '?'}`;
+                    html += `<div class="saisie-item"><span>${escHtml(s.type.toUpperCase())} - ${escHtml(desc)}</span><span style="color:var(--text-muted)">${formatDate(s.date_saisie)}</span></div>`;
+                });
+            }
+            html += `</div>`;
+
+            content.innerHTML = html;
+        } catch(e) {
+            content.innerHTML = `<p style="color:var(--danger)">Erreur reseau: ${escHtml(e.message)}</p>`;
+        }
+    }
+
+    function closeCasier() {
+        document.getElementById('casier-overlay').classList.remove('show');
+    }
+
+    var _histPage = 0;
+    var _histData = [];
+
+    function openRapportHistory() {
+        var overlay = document.getElementById('histOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'histOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+            overlay.innerHTML = '<div style="max-width:800px;width:95%;max-height:85vh;background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,0.5);display:flex;flex-direction:column;overflow:hidden;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #334155;">' +
+                '<h2 style="margin:0;font-size:1em;color:white;display:flex;align-items:center;gap:8px;"><i class="fa-solid fa-clock-rotate-left" style="color:#8b5cf6;"></i> Historique des rapports</h2>' +
+                '<button onclick="document.getElementById(\'histOverlay\').remove()" style="background:none;border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.82em;font-weight:600;font-family:inherit;"><i class="fa-solid fa-xmark"></i> Fermer</button>' +
+                '</div>' +
+                '<div id="histSearch" style="padding:12px 20px;border-bottom:1px solid #1e293b;">' +
+                '<input type="text" id="histSearchInput" placeholder="Rechercher par titre, suspect, type..." style="width:100%;padding:10px 14px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:white;font-size:.88em;font-family:inherit;outline:none;box-sizing:border-box;" oninput="filterHistRapports(this.value)">' +
+                '</div>' +
+                '<div id="histList" style="flex:1;overflow-y:auto;padding:12px 20px;"></div>' +
+                '<div id="histFooter" style="padding:12px 20px;border-top:1px solid #334155;text-align:center;"></div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+        } else {
+            overlay.style.display = 'flex';
+        }
+
+        document.getElementById('histList').innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Chargement...</div>';
+        fetch('../casier_api.php?action=list_rapports&limit=100', { headers: mdtAuth() })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                _histData = Array.isArray(data) ? data : [];
+                _histPage = 0;
+                renderHistRapports(_histData);
+            }).catch(function() {
+                document.getElementById('histList').innerHTML = '<div style="color:#ef4444;text-align:center;padding:20px;">Erreur chargement</div>';
+            });
+    }
+
+    function renderHistRapports(data) {
+        var list = document.getElementById('histList');
+        var footer = document.getElementById('histFooter');
+        list.innerHTML = '';
+
+        if (data.length === 0) {
+            list.innerHTML = '<div style="color:#64748b;text-align:center;padding:30px;">Aucun rapport trouve</div>';
+            footer.innerHTML = '';
+            return;
+        }
+
+        var PAGE_SIZE = 15;
+        var start = 0;
+        var end = Math.min((_histPage + 1) * PAGE_SIZE, data.length);
+        var visible = data.slice(start, end);
+
+        visible.forEach(function(r) {
+            var typeColors = { DA: '#ef4444', RA: '#3b82f6' };
+            var typeColor = typeColors[r.type] || '#64748b';
+            var suspects = r.suspects || '-';
+            var agents = Array.isArray(r.agents) ? r.agents.join(', ') : '-';
+            var dateStr = r.date_incident || '';
+
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:.15s;';
+            row.onmouseenter = function() { this.style.borderColor = '#8b5cf6'; };
+            row.onmouseleave = function() { this.style.borderColor = '#1e293b'; };
+            row.onclick = function() { openRapportDetail(r); };
+
+            row.innerHTML = '<span style="background:' + typeColor + '22;color:' + typeColor + ';border:1px solid ' + typeColor + '44;padding:4px 10px;border-radius:6px;font-weight:800;font-size:.78em;flex-shrink:0;">' + (r.type || '?') + '</span>' +
+                '<div style="flex:1;min-width:0;">' +
+                '<div style="font-weight:700;color:#e2e8f0;font-size:.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escH(r.titre || 'Sans titre') + '</div>' +
+                '<div style="font-size:.75em;color:#64748b;margin-top:2px;">' + escH(suspects) + ' · ' + escH(dateStr) + '</div>' +
+                '</div>' +
+                '<div style="font-size:.72em;color:#475569;text-align:right;flex-shrink:0;">' + escH(r.created_at ? r.created_at.substring(0, 10) : '') + '</div>';
+            list.appendChild(row);
+        });
+
+        if (end < data.length) {
+            footer.innerHTML = '<button onclick="_histPage++;renderHistRapports(_histFilteredData || _histData)" style="padding:10px 24px;border:1px solid #334155;border-radius:8px;background:#1e293b;color:#94a3b8;font-weight:700;font-size:.85em;cursor:pointer;font-family:inherit;">Charger plus (' + (data.length - end) + ' restants)</button>';
+        } else {
+            footer.innerHTML = '<span style="font-size:.78em;color:#475569;">' + data.length + ' rapport(s)</span>';
+        }
+    }
+
+    var _histFilteredData = null;
+    function filterHistRapports(query) {
+        var q = query.toLowerCase().trim();
+        if (!q) {
+            _histFilteredData = null;
+            _histPage = 0;
+            renderHistRapports(_histData);
+            return;
+        }
+        _histFilteredData = _histData.filter(function(r) {
+            return (r.titre && r.titre.toLowerCase().indexOf(q) !== -1) ||
+                   (r.suspects && r.suspects.toLowerCase().indexOf(q) !== -1) ||
+                   (r.type && r.type.toLowerCase().indexOf(q) !== -1) ||
+                   (r.contenu && r.contenu.toLowerCase().indexOf(q) !== -1) ||
+                   (r.lieu && r.lieu.toLowerCase().indexOf(q) !== -1);
+        });
+        _histPage = 0;
+        renderHistRapports(_histFilteredData);
+    }
+
+    function openRapportDetail(r) {
+        var overlay = document.getElementById('histOverlay');
+        if (overlay) overlay.style.display = 'none';
+
+        var detail = document.createElement('div');
+        detail.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);';
+
+        var typeColor = r.type === 'DA' ? '#ef4444' : '#3b82f6';
+        var agents = Array.isArray(r.agents) ? r.agents.join(', ') : '-';
+        var charges = '';
+        if (r.charges && Array.isArray(r.charges) && r.charges.length) {
+            charges = '<div style="margin-top:12px;"><div style="font-size:.72em;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Charges</div>';
+            r.charges.forEach(function(c) {
+                charges += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:.82em;border-bottom:1px solid #1e293b;"><span style="color:#e2e8f0;">' + escH(c.label || c.code || '') + '</span><span style="color:#f59e0b;font-weight:700;">' + (c.price ? '$' + c.price : '') + '</span></div>';
+            });
+            if (r.total_amende) charges += '<div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:800;color:#f59e0b;">Total<span>$' + r.total_amende + '</span></div>';
+            charges += '</div>';
+        }
+
+        detail.innerHTML = '<div style="max-width:700px;width:95%;max-height:85vh;background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,0.5);overflow-y:auto;padding:24px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+            '<div style="display:flex;align-items:center;gap:10px;"><span style="background:' + typeColor + '22;color:' + typeColor + ';border:1px solid ' + typeColor + '44;padding:5px 14px;border-radius:8px;font-weight:800;font-size:.85em;">' + escH(r.type || '?') + '</span><span style="font-weight:800;color:white;font-size:1.05em;">' + escH(r.titre || 'Sans titre') + '</span></div>' +
+            '<button onclick="this.closest(\'div[style]\').parentElement.remove();var o=document.getElementById(\'histOverlay\');if(o)o.style.display=\'flex\';" style="background:none;border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.82em;font-weight:600;font-family:inherit;"><i class="fa-solid fa-xmark"></i></button>' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +
+            '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px;"><div style="font-size:.68em;font-weight:700;color:#64748b;text-transform:uppercase;">Date incident</div><div style="font-size:.88em;font-weight:600;color:#e2e8f0;">' + escH(r.date_incident || '-') + (r.heure_incident ? ' ' + escH(r.heure_incident) : '') + '</div></div>' +
+            '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px;"><div style="font-size:.68em;font-weight:700;color:#64748b;text-transform:uppercase;">Lieu</div><div style="font-size:.88em;font-weight:600;color:#e2e8f0;">' + escH(r.lieu || '-') + '</div></div>' +
+            '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px;"><div style="font-size:.68em;font-weight:700;color:#64748b;text-transform:uppercase;">Suspects</div><div style="font-size:.88em;font-weight:600;color:#e2e8f0;">' + escH(r.suspects || '-') + '</div></div>' +
+            '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:10px;"><div style="font-size:.68em;font-weight:700;color:#64748b;text-transform:uppercase;">Agents</div><div style="font-size:.88em;font-weight:600;color:#e2e8f0;">' + escH(agents) + '</div></div>' +
+            '</div>' +
+            (r.contenu ? '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px;margin-bottom:12px;font-size:.85em;color:#94a3b8;white-space:pre-wrap;max-height:300px;overflow-y:auto;">' + escH(r.contenu) + '</div>' : '') +
+            charges +
+            '<div style="margin-top:12px;font-size:.72em;color:#475569;text-align:right;">Cree le ' + escH(r.created_at || '') + '</div>' +
+            '</div>';
+
+        document.body.appendChild(detail);
+        detail.onclick = function(e) { if (e.target === detail) { detail.remove(); var o = document.getElementById('histOverlay'); if (o) o.style.display = 'flex'; } };
+    }
+
+    function escH(s) { if (!s) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+    var SAISIE_WEAPONS_DB = [
+        { cat: 'Pistolets', icon: 'fa-gun', items: ['Beretta','Beretta Mk II','Pistolet de combat','Pistolet AP','Cal 50','Pétoire','Pétoire Mk II','Pistolet lourd','Pistolet vintage','Pistolet de tireur','Pistolet Perico','Pistolet ceramique','Pistolet WM 29','Revolver lourd','Revolver lourd Mk II','Revolver double-action','Revolver Navy','Pistolet de detresse','Up-n-Atomizer'] },
+        { cat: 'SMGs', icon: 'fa-gun', items: ['Micro SMG','SMG','SMG Mk II','SMG d\'assaut','Combat PDW','Pistolet-mitrailleur','Mini SMG','SMG tactique'] },
+        { cat: 'Fusils', icon: 'fa-gun', items: ['Fusil d\'assaut','Fusil d\'assaut Mk II','Carabine','Carabine Mk II','Fusil avance','Carabine speciale','Carabine speciale Mk II','Fusil bullpup','Fusil bullpup Mk II','Fusil compact','Fusil militaire','Fusil lourd','Fusil de combat','Carabine de service'] },
+        { cat: 'Fusils a pompe', icon: 'fa-gun', items: ['Fusil a pompe','Fusil a pompe Mk II','Canon scie','Fusil a pompe d\'assaut','Fusil a pompe bullpup','Fusil a pompe lourd','Fusil double canon','Fusil a pompe rapide','Fusil a pompe de combat'] },
+        { cat: 'Snipers', icon: 'fa-crosshairs', items: ['Fusil sniper','Sniper lourd','Sniper lourd Mk II','Fusil de precision','Fusil de precision Mk II','Fusil precision','Mousquet'] },
+        { cat: 'Mitrailleuses', icon: 'fa-gun', items: ['Mitrailleuse','Mitrailleuse de combat','Mitrailleuse de combat Mk II','Gusenberg','Unholy Hellbringer'] },
+        { cat: 'Armes lourdes', icon: 'fa-bomb', items: ['Lance-roquettes','Lance-grenades','Lance-grenades compact','Minigun','Lance-missiles','Railgun','Lance feux d\'artifice','Widowmaker','Lance EMP compact'] },
+        { cat: 'Lancers', icon: 'fa-burst', items: ['Grenade','Bombe collante','Mine de proximite','Bombe artisanale','Molotov','Gaz lacrymogene','Gaz BZ','Fusee eclairante','Boule de neige','Balle'] },
+        { cat: 'Melee', icon: 'fa-hand-fist', items: ['Couteau','Matraque','Marteau','Batte de baseball','Pied de biche','Club de golf','Bouteille','Cran d\'arret','Machete','Hachette','Hachette de pierre','Hache de combat','Queue de billard','Cle a molette','Lampe torche','Dague ancienne','Candy Cane','Poing americain'] },
+        { cat: 'Divers', icon: 'fa-circle-info', items: ['Taser','Extincteur','Jerrican','Jerrican dangereux','Jerrican engrais','Lance boule de neige','Lance gaz lacrymo','Detecteur de metaux'] }
+    ];
+
+    (function() {
+        function normalize(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+        var input = document.getElementById('saisie-arme-modele');
+        var dropdown = document.getElementById('saisie-weapon-dropdown');
+        var selector = document.getElementById('saisie-weapon-selector');
+        if (!input || !dropdown || !selector) return;
+        var activeIdx = -1;
+        var flatItems = [];
+
+        function buildFlat(filter) {
+            flatItems = [];
+            var norm = filter ? normalize(filter) : '';
+            SAISIE_WEAPONS_DB.forEach(function(g) {
+                var matched = g.items.filter(function(w) { return !norm || normalize(w).indexOf(norm) !== -1; });
+                if (matched.length) {
+                    flatItems.push({ type: 'cat', label: g.cat });
+                    matched.forEach(function(w) { flatItems.push({ type: 'item', label: w, icon: g.icon, cat: g.cat }); });
+                }
+            });
+        }
+
+        function highlight(text, query) {
+            if (!query) return escH(text);
+            var n = normalize(query);
+            var nt = normalize(text);
+            var idx = nt.indexOf(n);
+            if (idx === -1) return escH(text);
+            return escH(text.substring(0, idx)) + '<span class="ws-match">' + escH(text.substring(idx, idx + query.length)) + '</span>' + escH(text.substring(idx + query.length));
+        }
+
+        function render(filter) {
+            buildFlat(filter);
+            activeIdx = -1;
+            if (!filter) { dropdown.innerHTML = '<div class="ws-hint"><i class="fa-solid fa-magnifying-glass"></i> Tapez pour rechercher une arme</div>'; return; }
+            if (!flatItems.length) { dropdown.innerHTML = '<div class="ws-empty"><i class="fa-solid fa-ban"></i> Aucune arme trouvee</div>'; return; }
+            var html = '';
+            flatItems.forEach(function(fi, i) {
+                if (fi.type === 'cat') {
+                    var iconCat = (SAISIE_WEAPONS_DB.find(function(g){return g.cat===fi.label;})||{}).icon || 'fa-circle';
+                    html += '<div class="ws-category"><i class="fa-solid ' + iconCat + '"></i> ' + escH(fi.label) + '</div>';
+                } else {
+                    html += '<div class="ws-item" data-idx="' + i + '" data-value="' + escH(fi.label) + '"><i class="fa-solid ' + fi.icon + '"></i> ' + highlight(fi.label, filter) + '</div>';
+                }
+            });
+            dropdown.innerHTML = html;
+        }
+
+        function open() { render(input.value.trim()); dropdown.classList.add('show'); selector.classList.add('open'); }
+        function close() { dropdown.classList.remove('show'); selector.classList.remove('open'); activeIdx = -1; }
+        function selectWeapon(name) { input.value = name; close(); }
+
+        function getItems() { return dropdown.querySelectorAll('.ws-item'); }
+        function scrollToActive() {
+            var items = getItems(); var c = 0;
+            for (var i = 0; i < items.length; i++) {
+                if (c === activeIdx) { items[i].classList.add('active'); items[i].scrollIntoView({ block: 'nearest' }); }
+                else items[i].classList.remove('active');
+                c++;
+            }
+        }
+
+        input.addEventListener('focus', open);
+        input.addEventListener('input', open);
+        input.addEventListener('keydown', function(e) {
+            if (!dropdown.classList.contains('show')) return;
+            var items = getItems(); var total = items.length;
+            if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = (activeIdx + 1) % total; scrollToActive(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = (activeIdx - 1 + total) % total; scrollToActive(); }
+            else if (e.key === 'Enter') { e.preventDefault(); if (activeIdx >= 0 && activeIdx < total) selectWeapon(items[activeIdx].getAttribute('data-value')); }
+            else if (e.key === 'Escape') close();
+        });
+        dropdown.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var t = e.target.closest('.ws-item');
+            if (t) selectWeapon(t.getAttribute('data-value'));
+        });
+        document.addEventListener('click', function(e) { if (!selector.contains(e.target)) close(); });
+        render('');
+    })();
+</script>
+<script>
+(function(){
+  function fullUrl(u){ return u.indexOf("http")===0 ? u : (location.origin + u); }
+  window.mdtPickPhoto = function(){
+    if (!window.MDT_IMG_PICKER) { document.getElementById("photoInput").click(); return; }
+    MDT_IMG_PICKER(function(url, kind){
+      if (kind !== "image") { toast("Seules les images sont acceptées", false); return; }
+      if (!state.photos) state.photos = [];
+      state.photos.push(url); renderPhotos();
+    });
+  };
+  window.renderPhotos = function(){ var host=document.getElementById("photoList"); if(!host) return; host.innerHTML=(state.photos||[]).map(function(u,i){ return '<div style="position:relative;width:90px;height:90px;border-radius:9px;overflow:hidden;border:1px solid var(--border);"><img src="'+escHtml(u)+'" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="removePhoto('+i+')" style="position:absolute;top:3px;right:3px;width:22px;height:22px;border:none;border-radius:6px;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;">&times;</button></div>'; }).join(""); };
+  window.removePhoto = function(i){ state.photos.splice(i,1); renderPhotos(); if(window.generate) generate(); };
+  function uploadPhoto(file){ if(!file || !/^image\//.test(file.type)) return; var host=document.getElementById("photoList"); var ph=document.createElement("div"); ph.style.cssText="width:90px;height:90px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);"; ph.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i>'; if(host) host.appendChild(ph); var fd=new FormData(); fd.append("file", file, file.name||"screenshot.png"); var xhr=new XMLHttpRequest(); xhr.open("POST","/upload_api.php?action=upload"); xhr.setRequestHeader("Authorization","Bearer "+(localStorage.getItem("mdt_auth_token")||"")); xhr.onload=function(){ var d=null; try{d=JSON.parse(xhr.responseText);}catch(e){} if(ph.parentNode)ph.parentNode.removeChild(ph); if(xhr.status===200&&d&&d.success){ state.photos.push(fullUrl(d.item.url)); renderPhotos(); if(window.generate) generate(); } else if(window.toast){ toast((d&&d.error)||"Upload photo echoue", false); } }; xhr.onerror=function(){ if(ph.parentNode)ph.parentNode.removeChild(ph); if(window.toast)toast("Erreur reseau", false); }; xhr.send(fd); }
+  function wire(){ var drop=document.getElementById("photoDrop"), input=document.getElementById("photoInput"); if(!drop||!input){ return setTimeout(wire,120); } if(!state.photos) state.photos=[]; drop.addEventListener("click",function(){ input.click(); }); input.addEventListener("change",function(){ Array.prototype.forEach.call(input.files, uploadPhoto); input.value=""; }); ["dragenter","dragover"].forEach(function(ev){ drop.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();drop.style.borderColor="var(--primary)";}); }); ["dragleave","drop"].forEach(function(ev){ drop.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();drop.style.borderColor="var(--border)";}); }); drop.addEventListener("drop",function(e){ if(e.dataTransfer&&e.dataTransfer.files) Array.prototype.forEach.call(e.dataTransfer.files, uploadPhoto); }); document.addEventListener("paste",function(e){ var items=(e.clipboardData&&e.clipboardData.items)||[]; for(var i=0;i<items.length;i++){ if(items[i].type&&items[i].type.indexOf("image")===0){ var g=items[i].getAsFile(); if(g) uploadPhoto(g); } } }); }
+  wire();
+})();
+</script>
+<script>window.MDT_SHELL = { module: 'mdt', title: 'MDT — Assistant de Rapport', icon: 'fa-file-lines', back: { href: '/', label: 'Menu' }, nav: [] };</script>
+<script src="/login/secure.js"></script>
+<script src="/assets/app-boot.js"></script>
+<script src="/assets/skeleton.js"></script>
+<script src="/assets/select.js"></script>
+<script src="/assets/chatwidget.js"></script>
+<script src="/assets/modules.js"></script>
+<script src="/assets/toast.js"></script>
+<script src="/assets/app-shell.js"></script>
+<script src="/assets/dock.js"></script>
+<script src="/assets/ui-dialog.js"></script>
+<script src="/dispatch_widget.js?v=18"></script>
+<script src="/nui-bridge.js"></script>
+<script>(function(){function reloc(){var right=document.querySelector(".app-topbar .ash-right");var bar=document.getElementById("mdtActions");if(!right||!bar){return setTimeout(reloc,60);}Array.prototype.slice.call(bar.children).reverse().forEach(function(el){el.style.margin="0 0 0 8px";el.style.fontSize="0.76em";right.insertBefore(el,right.firstChild);});bar.style.display="none";}reloc();})();</script>
+<script src="/assets/imgpicker.js"></script>
+</body>
+</html>

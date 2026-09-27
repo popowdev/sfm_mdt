@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>RP MDT Dispatch Overlay</title>
+    <link rel="stylesheet" href="renderer.css">
+</head>
+<body>
+    <div class="overlay-wrap" id="overlay-wrap">
+        <header class="title-bar" id="title-bar">
+            <div class="title-left">
+                <span class="title-text">RP MDT Dispatch</span>
+                <span class="title-version" id="title-version">v1.0.0</span>
+                <span class="title-hotkey" id="title-hotkey">F8</span>
+            </div>
+            <div class="title-right">
+                <button class="btn-mini" id="btn-opacity" title="Opacite : clic pour cycler">100%</button>
+                <button class="btn-mini" id="btn-settings" title="Parametres" aria-label="settings">&#x2699;</button>
+                <button class="btn-mini" id="btn-reload" title="Recharger" aria-label="reload">&#x21bb;</button>
+                <button class="btn-mini btn-close" id="btn-close" title="Masquer (F8)" aria-label="close">&#x2715;</button>
+            </div>
+        </header>
+        <main class="content">
+            <iframe id="dispatch-frame" src="about:blank" class="dispatch-frame" allow="clipboard-read; clipboard-write; autoplay"></iframe>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div class="loading-text">Chargement du dispatch MDT...</div>
+                <div class="loading-hint">Si le chargement persiste, vérifie ta connexion ou la connexion Discord</div>
+            </div>
+        </main>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>RP MDT Dispatch - In-Game</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { width:100%; height:100%; background:transparent; color:#e2e8f0; font-family:'Segoe UI', sans-serif; overflow:hidden; }
+        .frame-wrap { width:100%; height:100%; background:rgba(15,23,42,0.92); border:1px solid rgba(6,182,212,0.5); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.7); overflow:hidden; display:flex; flex-direction:column; }
+        .title-bar { -webkit-app-region:drag; height:34px; background:linear-gradient(135deg,rgba(15,23,42,0.95),rgba(30,41,59,0.95)); border-bottom:1px solid rgba(51,65,85,0.6); display:flex; align-items:center; justify-content:space-between; padding:0 8px 0 12px; flex-shrink:0; }
+        .title-text { font-weight:700; font-size:.82em; color:#f1f5f9; }
+        .title-hotkey { font-size:.65em; color:#67e8f9; background:rgba(6,182,212,0.15); border:1px solid rgba(6,182,212,0.4); padding:1px 6px; border-radius:4px; font-weight:700; font-family:monospace; margin-left:8px; }
+        .controls { -webkit-app-region:no-drag; display:flex; gap:2px; }
+        .btn-mini { min-width:30px; height:24px; background:transparent; border:none; color:#94a3b8; cursor:pointer; border-radius:4px; font-size:13px; padding:0 6px; transition:.15s; font-family:inherit; }
+        .btn-mini:hover { background:rgba(255,255,255,0.08); color:#f1f5f9; }
+        .btn-close:hover { background:#ef4444; color:white; }
+        .content { flex:1; position:relative; overflow:hidden; }
+        .dispatch-frame { width:100%; height:100%; border:0; display:block; background:#0f172a; }
+        .loading { position:absolute; inset:0; background:#0f172a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:5; transition:opacity .3s; }
+        .loading.hidden { opacity:0; pointer-events:none; }
+        .spinner { width:42px; height:42px; border:3px solid #1e293b; border-top-color:#06b6d4; border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="frame-wrap" id="frame-wrap">
+        <header class="title-bar">
+            <div>
+                <span class="title-text">RP MDT Dispatch</span>
+                <span class="title-hotkey" id="title-hotkey">F8</span>
+            </div>
+            <div class="controls">
+                <button class="btn-mini" id="btn-opacity" title="Opacite">100%</button>
+                <button class="btn-mini" id="btn-reload" title="Recharger">&#x21bb;</button>
+                <button class="btn-mini btn-close" id="btn-close" title="Masquer (F8)">&#x2715;</button>
+            </div>
+        </header>
+        <main class="content">
+            <iframe id="dispatch-frame" src="" class="dispatch-frame"></iframe>
+            <div class="loading" id="loading"><div class="spinner"></div><div>Chargement du dispatch...</div></div>
+        </main>
+    </div>
+    <script src="in_game.js"></script>
+</body>
+</html>
