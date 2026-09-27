@@ -5,6 +5,13 @@ Application web PHP, authentification Discord OAuth2, droits adossés aux rôles
 Discord. Modules : fiches d'individus, dossiers d'enquête, documents, plaintes,
 dispatch, messagerie, code pénal, carte tactique, saisies, examens, annonces.
 
+## Attribution obligatoire
+
+L'usage de ce logiciel est conditionné au maintien d'une mention visible
+« Développé par Surf Smart » avec un lien vers https://surfsmart.fr sur chaque
+page publiquement accessible. La mention est déjà en place : `web/assets/credit.js`,
+chargé par les 26 pages. Son retrait résilie la licence. Voir `LICENSE` et `NOTICE`.
+
 ## Structure
 
 | Dossier | Contenu |
